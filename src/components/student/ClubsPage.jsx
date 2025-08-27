@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Calendar, Clock, MapPin, Filter, Search, ExternalLink } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const ClubsPage = () => {
+  const { t } = useLanguage();
   const [activities, setActivities] = useState([]);
   const [filteredActivities, setFilteredActivities] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -132,8 +134,8 @@ const ClubsPage = () => {
     <div className="space-y-4">
       {/* 页面标题 */}
       <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">社团活动</h2>
-        <p className="text-gray-600">发现并参与UCL丰富多彩的社团活动</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('clubs.title')}</h2>
+        <p className="text-gray-600">{t('clubs.description')}</p>
       </div>
 
       {/* 搜索和过滤 */}
@@ -144,7 +146,7 @@ const ClubsPage = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="搜索活动或社团..."
+              placeholder={t('clubs.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -159,11 +161,11 @@ const ClubsPage = () => {
               onChange={(e) => setSelectedFilter(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="all">全部分类</option>
-              <option value="cultural">文化活动</option>
-              <option value="academic">学术活动</option>
-              <option value="wellness">健康运动</option>
-              <option value="arts">艺术表演</option>
+              <option value="all">{t('clubs.categories.all')}</option>
+              <option value="cultural">{t('clubs.categories.cultural')}</option>
+              <option value="academic">{t('clubs.categories.academic')}</option>
+              <option value="wellness">{t('clubs.categories.wellness')}</option>
+              <option value="arts">{t('clubs.categories.arts')}</option>
             </select>
           </div>
         </div>
@@ -173,8 +175,8 @@ const ClubsPage = () => {
       <div className="space-y-4">
         {filteredActivities.length === 0 ? (
           <div className="bg-white rounded-xl p-8 border border-gray-200 text-center">
-            <div className="text-gray-500 text-lg mb-2">没有找到匹配的活动</div>
-            <p className="text-gray-400">试试调整搜索条件或分类筛选</p>
+            <div className="text-gray-500 text-lg mb-2">{t('clubs.noResults')}</div>
+            <p className="text-gray-400">{t('clubs.noResultsDesc')}</p>
           </div>
         ) : (
           filteredActivities.map((activity) => (
@@ -185,7 +187,7 @@ const ClubsPage = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <span className={`text-xs px-2 py-1 rounded-full border ${getCategoryColor(activity.category)}`}>
-                          {getCategoryIcon(activity.category)} {activity.category === 'cultural' ? '文化' : activity.category === 'academic' ? '学术' : activity.category === 'wellness' ? '健康' : '艺术'}
+                          {getCategoryIcon(activity.category)} {t(`clubs.categoryLabels.${activity.category}`)}
                         </span>
                         <span className="text-sm text-gray-500">{formatDate(activity.date)}</span>
                       </div>
@@ -208,14 +210,14 @@ const ClubsPage = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Users className="w-4 h-4" />
-                      <span>{activity.participants}/{activity.maxParticipants} 人参与</span>
+                      <span>{activity.participants}/{activity.maxParticipants} {t('clubs.participants')}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2 lg:flex-col">
                   <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2">
-                    <span>加入活动</span>
+                    <span>{t('clubs.joinActivity')}</span>
                   </button>
                   <a 
                     href={activity.website}
@@ -224,7 +226,7 @@ const ClubsPage = () => {
                     className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
                   >
                     <ExternalLink className="w-4 h-4" />
-                    <span>详情</span>
+                    <span>{t('clubs.details')}</span>
                   </a>
                 </div>
               </div>
@@ -232,7 +234,7 @@ const ClubsPage = () => {
               {/* 进度条 */}
               <div className="mt-4">
                 <div className="flex justify-between text-sm text-gray-600 mb-1">
-                  <span>报名进度</span>
+                  <span>{t('clubs.progress')}</span>
                   <span>{Math.round((activity.participants / activity.maxParticipants) * 100)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -251,10 +253,10 @@ const ClubsPage = () => {
       <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
         <div className="flex items-center space-x-2 text-blue-700">
           <Calendar className="w-5 h-5" />
-          <span className="font-medium">活动数据来源</span>
+          <span className="font-medium">{t('clubs.dataSource')}</span>
         </div>
         <p className="text-blue-600 text-sm mt-1">
-          数据同步自 UCL Students' Union 官方活动日历，每日更新
+          {t('clubs.dataSourceDesc')}
         </p>
       </div>
     </div>

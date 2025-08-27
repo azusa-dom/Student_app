@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Users, MapPin } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const ActivityPreview = () => {
+  const { t } = useLanguage();
   const [previewActivity, setPreviewActivity] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -66,7 +68,7 @@ const ActivityPreview = () => {
   if (!previewActivity) {
     return (
       <div className="flex items-center justify-center p-6">
-        <div className="animate-pulse text-gray-500">加载今日活动...</div>
+        <div className="animate-pulse text-gray-500">{t('activityPreview.loadingToday')}</div>
       </div>
     );
   }
@@ -77,10 +79,10 @@ const ActivityPreview = () => {
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
             <span className={`text-xs px-2 py-1 rounded-full font-medium ${getActivityTypeColor(previewActivity.type)}`}>
-              今日推荐
+              {t('clubs.todayRecommended')}
             </span>
             <span className="text-xs text-gray-500">
-              {currentTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })} 更新
+              {currentTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })} {t('clubs.updateTime')}
             </span>
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-1">
@@ -104,11 +106,11 @@ const ActivityPreview = () => {
         </div>
         <div className="flex items-center space-x-2 text-gray-600">
           <Users className="w-4 h-4" />
-          <span>{previewActivity.participants}/{previewActivity.maxParticipants} 人</span>
+          <span>{previewActivity.participants}/{previewActivity.maxParticipants} {t('clubs.participants')}</span>
         </div>
         <div className="flex justify-end">
           <button className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-700 transition-colors">
-            查看详情
+            {t('clubs.viewDetails')}
           </button>
         </div>
       </div>
