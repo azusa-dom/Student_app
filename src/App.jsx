@@ -117,7 +117,7 @@ const App = () => {
   return (
     <ErrorBoundary>
       <AppProvider>
-        <Router>
+        <Router basename="/Student_app">
           <Suspense fallback={<LoadingScreen />}>
             <AppRoutes />
           </Suspense>
