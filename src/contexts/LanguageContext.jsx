@@ -24,6 +24,7 @@ const translations = {
     // 导航和标签
     nav: {
       home: '首页',
+      calendar: '日历',
       grades: '成绩',
       jobs: '就业',
       clubs: '社团',
@@ -200,6 +201,36 @@ const translations = {
       }
     },
     
+    // 日历
+    calendar: {
+      title: '日程表',
+      today: '今天',
+      month: '月',
+      week: '周',
+      day: '日',
+      filter: '筛选',
+      addEvent: '添加事件',
+      showEventTypes: '显示事件类型',
+      noEventsToday: '今天没有安排的事件',
+      eventsCount: '{count} 个事件',
+      moreEvents: '+{count} 更多',
+      eventTypes: {
+        class_event: '课程',
+        assignment_due: '作业',
+        exam: '考试',
+        club_activity: '社团活动'
+      },
+      weekdays: {
+        sun: '周日',
+        mon: '周一',
+        tue: '周二',
+        wed: '周三',
+        thu: '周四',
+        fri: '周五',
+        sat: '周六'
+      }
+    },
+
     // 用户信息
     user: {
       name: '张伟',
@@ -230,6 +261,7 @@ const translations = {
     // 导航和标签
     nav: {
       home: 'Home',
+      calendar: 'Calendar',
       grades: 'Grades',
       jobs: 'Jobs',
       clubs: 'Clubs',
@@ -406,6 +438,36 @@ const translations = {
       }
     },
     
+    // 日历
+    calendar: {
+      title: 'Schedule',
+      today: 'Today',
+      month: 'Month',
+      week: 'Week',
+      day: 'Day',
+      filter: 'Filter',
+      addEvent: 'Add Event',
+      showEventTypes: 'Show Event Types',
+      noEventsToday: 'No events scheduled for today',
+      eventsCount: '{count} events',
+      moreEvents: '+{count} more',
+      eventTypes: {
+        class_event: 'Classes',
+        assignment_due: 'Assignments',
+        exam: 'Exams',
+        club_activity: 'Club Activities'
+      },
+      weekdays: {
+        sun: 'Sun',
+        mon: 'Mon',
+        tue: 'Tue',
+        wed: 'Wed',
+        thu: 'Thu',
+        fri: 'Fri',
+        sat: 'Sat'
+      }
+    },
+
     // 用户信息
     user: {
       name: 'Zhang Wei',
