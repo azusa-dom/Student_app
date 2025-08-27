@@ -17,7 +17,7 @@ const StudentDashboard = () => {
 
   const handleAvatarChange = (newAvatar) => {
     setAvatar(newAvatar);
-    alert('头像已更新！');
+    alert('Avatar updated');
   };
 
   const TABS = useMemo(() => [
@@ -37,9 +37,11 @@ const StudentDashboard = () => {
       case 'clubs': return <ClubsPage />;
       case 'emergency': return <EmergencyPage />;
       case 'settings': return (
-        <div className="p-4">
-          <h2 className="text-xl font-light text-white mb-4">Settings</h2>
-          <AvatarUploader currentAvatar={avatar} onAvatarChange={handleAvatarChange} />
+        <div className="p-6">
+          <h2 className="text-xl font-light text-white mb-6">Settings</h2>
+          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
+            <AvatarUploader currentAvatar={avatar} onAvatarChange={handleAvatarChange} />
+          </div>
         </div>
       );
       default: return <HomePage />;
@@ -50,23 +52,37 @@ const StudentDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pb-20">
       
       {/* Header */}
-            <header className="sticky top-0 z-10 backdrop-blur-xl bg-white/80 border-b border-gray-100/50">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
-            <ActivityPreview />
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-semibold text-gray-900 truncate">张同学 - UCL</h2>
-              <p className="text-sm text-gray-600 flex items-center">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
-                在线
-              </p>
+      <header className="backdrop-blur-2xl bg-white/5 border-b border-white/10">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <div className="w-6 h-6 bg-white rounded-lg"></div>
+              </div>
+              <div>
+                <h2 className="font-light text-white text-lg">Zhang - UCL</h2>
+                <p className="text-white/60 text-sm flex items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 mr-2"></span>
+                  {currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} GMT
+                </p>
+              </div>
             </div>
+            <button className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-200">
+              <Bell className="w-5 h-5 text-white" />
+            </button>
           </div>
         </div>
       </header>
 
+      {/* Activity Preview Section */}
+      <div className="max-w-4xl mx-auto px-6 py-4">
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20">
+          <ActivityPreview />
+        </div>
+      </div>
+
       {/* Content */}
-      <main className="max-w-4xl mx-auto px-6 py-6">
+      <main className="max-w-4xl mx-auto px-6 py-2">
         {renderContent()}
       </main>
 
