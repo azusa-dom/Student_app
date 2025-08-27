@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Home, GraduationCap, Briefcase, Users, Phone, Settings, Bell, Plus, Globe } from 'lucide-react';
+import { Home, GraduationCap, Briefcase, Users, Phone, Settings, Bell, Plus, Globe, Calendar } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import ActivityPreview from './ActivityPreview';
@@ -7,6 +7,7 @@ import HomePage from './HomePage';
 import GradesPage from './GradesPage';
 import JobsPage from './JobsPage';
 import ClubsPage from './ClubsPage';
+import CalendarPage from './CalendarPage';
 import EmergencyPage from './EmergencyPage';
 import SettingsPage from './SettingsPage';
 import AvatarUploader from './AvatarUploader';
@@ -24,6 +25,7 @@ const StudentDashboard = () => {
 
   const TABS = useMemo(() => [
     { id: 'home', icon: Home, label: t('nav.home') },
+    { id: 'calendar', icon: Calendar, label: t('nav.calendar') },
     { id: 'grades', icon: GraduationCap, label: t('nav.grades'), badge: grades.length > 0 },
     { id: 'jobs', icon: Briefcase, label: t('nav.jobs') },
     { id: 'clubs', icon: Users, label: t('nav.clubs') },
@@ -34,6 +36,7 @@ const StudentDashboard = () => {
   const renderContent = () => {
     switch (selectedTab) {
       case 'home': return <HomePage />;
+      case 'calendar': return <CalendarPage />;
       case 'grades': return <GradesPage />;
       case 'jobs': return <JobsPage />;
       case 'clubs': return <ClubsPage />;
@@ -94,8 +97,8 @@ const StudentDashboard = () => {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-lg">
-        <div className="max-w-4xl mx-auto px-6 py-3">
-          <div className="flex justify-around">
+        <div className="max-w-4xl mx-auto px-2 py-2">
+          <div className="grid grid-cols-7 gap-1">
             {TABS.map(tab => {
               const Icon = tab.icon;
               const isSelected = selectedTab === tab.id;
@@ -104,7 +107,7 @@ const StudentDashboard = () => {
                   key={tab.id} 
                   onClick={() => setSelectedTab(tab.id)} 
                   className={`
-                    flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200
+                    flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200
                     ${isSelected 
                       ? 'bg-blue-600 text-white shadow-md' 
                       : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
@@ -112,12 +115,12 @@ const StudentDashboard = () => {
                   `}
                 >
                   <div className="relative">
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-4 h-4" />
                     {tab.badge && (
                       <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
                     )}
                   </div>
-                  <span className="text-xs mt-1 font-medium">{tab.label}</span>
+                  <span className="text-xs mt-1 font-medium leading-tight">{tab.label}</span>
                 </button>
               );
             })}
