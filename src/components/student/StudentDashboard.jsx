@@ -20,12 +20,12 @@ const StudentDashboard = () => {
   };
 
   const TABS = useMemo(() => [
-    { id: 'home', icon: Home, label: '首页' },
-    { id: 'grades', icon: GraduationCap, label: '成绩', badge: grades.length > 0 },
-    { id: 'jobs', icon: Briefcase, label: '求职' },
-    { id: 'clubs', icon: Users, label: '社团' },
-    { id: 'emergency', icon: Phone, label: '紧急' },
-    { id: 'settings', icon: Settings, label: '设置' }
+    { id: 'home', icon: Home, label: 'Home' },
+    { id: 'grades', icon: GraduationCap, label: 'Grades', badge: grades.length > 0 },
+    { id: 'jobs', icon: Briefcase, label: 'Jobs' },
+    { id: 'clubs', icon: Users, label: 'Clubs' },
+    { id: 'emergency', icon: Phone, label: 'Help' },
+    { id: 'settings', icon: Settings, label: 'Settings' }
   ], [grades.length]);
 
   const renderContent = () => {
@@ -37,7 +37,7 @@ const StudentDashboard = () => {
       case 'emergency': return <EmergencyPage />;
       case 'settings': return (
         <div className="p-4">
-          <h2 className="text-xl font-semibold mb-4">个人设置</h2>
+          <h2 className="text-xl font-light text-white mb-4">Settings</h2>
           <AvatarUploader currentAvatar={avatar} onAvatarChange={handleAvatarChange} />
         </div>
       );
@@ -46,40 +46,38 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 pb-24 relative">
-      <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.015] pointer-events-none" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pb-20">
       
-      <header className="sticky top-0 z-10 backdrop-blur-xl bg-white/80 border-b border-gray-100/50">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+      {/* Header */}
+      <header className="backdrop-blur-2xl bg-white/5 border-b border-white/10">
+        <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <User className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <User className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">张同学 - UCL</h2>
-                <p className="text-sm text-gray-600 flex items-center">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
-                  {currentTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })} 伦敦时间
+                <h2 className="font-light text-white text-lg">Zhang - UCL</h2>
+                <p className="text-white/60 text-sm">
+                  {currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} GMT
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <button className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl relative group transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10">
-                <Bell className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full ring-4 ring-white"></div>
-              </button>
-            </div>
+            <button className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-200">
+              <Bell className="w-5 h-5 text-white" />
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      {/* Content */}
+      <main className="max-w-4xl mx-auto px-6 py-6">
         {renderContent()}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 backdrop-blur-xl bg-white/80 border-t border-gray-100/50 safe-area-pb">
-        <div className="max-w-6xl mx-auto px-4 py-2">
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 backdrop-blur-2xl bg-white/5 border-t border-white/10">
+        <div className="max-w-4xl mx-auto px-6 py-3">
           <div className="flex justify-around">
             {TABS.map(tab => {
               const Icon = tab.icon;
@@ -89,17 +87,17 @@ const StudentDashboard = () => {
                   key={tab.id} 
                   onClick={() => setSelectedTab(tab.id)} 
                   className={`
-                    flex flex-col items-center py-2 px-4 rounded-xl transition-all duration-300
+                    flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200
                     ${isSelected 
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/20 scale-110' 
-                      : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                      ? 'bg-white text-gray-900' 
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
                     }
                   `}
                 >
                   <div className="relative">
-                    <Icon className={`w-5 h-5 transition-transform ${isSelected ? 'animate-bounce' : 'group-hover:scale-110'}`} />
+                    <Icon className="w-5 h-5" />
                     {tab.badge && (
-                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
                     )}
                   </div>
                   <span className="text-xs mt-1 font-medium">{tab.label}</span>
@@ -110,13 +108,12 @@ const StudentDashboard = () => {
         </div>
       </nav>
 
+      {/* FAB */}
       <button 
-        onClick={() => alert('功能待开发：手动添加事件')}
-        className="fixed bottom-24 right-6 group">
-        <div className="absolute inset-0 bg-blue-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
-        <div className="relative w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-110 transition-all duration-300">
-          <Plus className="w-6 h-6 text-white group-hover:rotate-90 transition-transform duration-300" />
-        </div>
+        onClick={() => alert('Add new item')}
+        className="fixed bottom-24 right-6 w-12 h-12 bg-white text-gray-900 rounded-xl shadow-2xl hover:scale-105 transition-all duration-200 flex items-center justify-center backdrop-blur-sm"
+      >
+        <Plus className="w-5 h-5" />
       </button>
     </div>
   );
