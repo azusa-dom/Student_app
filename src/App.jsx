@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useAppContext } from './contexts/AppContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { GraduationCap } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -116,13 +117,15 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <ErrorBoundary>
-      <AppProvider>
-        <Router basename="/Student_app">
-          <Suspense fallback={<LoadingScreen />}>
-            <AppRoutes />
-          </Suspense>
-        </Router>
-      </AppProvider>
+      <LanguageProvider>
+        <AppProvider>
+          <Router basename="/Student_app">
+            <Suspense fallback={<LoadingScreen />}>
+              <AppRoutes />
+            </Suspense>
+          </Router>
+        </AppProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 };

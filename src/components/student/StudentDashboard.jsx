@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Home, GraduationCap, Briefcase, Users, Phone, Settings, Bell, Plus } from 'lucide-react';
+import { Home, GraduationCap, Briefcase, Users, Phone, Settings, Bell, Plus, Globe } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import ActivityPreview from './ActivityPreview';
 import HomePage from './HomePage';
 import GradesPage from './GradesPage';
@@ -12,6 +13,7 @@ import AvatarUploader from './AvatarUploader';
 
 const StudentDashboard = () => {
   const { currentTime, grades } = useAppContext();
+  const { t, language, changeLanguage } = useLanguage();
   const [selectedTab, setSelectedTab] = useState('home');
   const [avatar, setAvatar] = useState(null);
 
@@ -21,13 +23,13 @@ const StudentDashboard = () => {
   };
 
   const TABS = useMemo(() => [
-    { id: 'home', icon: Home, label: 'Home' },
-    { id: 'grades', icon: GraduationCap, label: 'Grades', badge: grades.length > 0 },
-    { id: 'jobs', icon: Briefcase, label: 'Jobs' },
-    { id: 'clubs', icon: Users, label: 'Clubs' },
-    { id: 'emergency', icon: Phone, label: 'Help' },
-    { id: 'settings', icon: Settings, label: 'Settings' }
-  ], [grades.length]);
+    { id: 'home', icon: Home, label: t('nav.home') },
+    { id: 'grades', icon: GraduationCap, label: t('nav.grades'), badge: grades.length > 0 },
+    { id: 'jobs', icon: Briefcase, label: t('nav.jobs') },
+    { id: 'clubs', icon: Users, label: t('nav.clubs') },
+    { id: 'emergency', icon: Phone, label: t('nav.emergency') },
+    { id: 'settings', icon: Settings, label: t('nav.settings') }
+  ], [grades.length, t]);
 
   const renderContent = () => {
     switch (selectedTab) {
@@ -36,14 +38,7 @@ const StudentDashboard = () => {
       case 'jobs': return <JobsPage />;
       case 'clubs': return <ClubsPage />;
       case 'emergency': return <EmergencyPage />;
-      case 'settings': return (
-        <div className="p-6">
-          <h2 className="text-xl font-light text-white mb-6">Settings</h2>
-          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-            <AvatarUploader currentAvatar={avatar} onAvatarChange={handleAvatarChange} />
-          </div>
-        </div>
-      );
+      case 'settings': return <SettingsPage />;
       default: return <HomePage />;
     }
   };
@@ -60,16 +55,29 @@ const StudentDashboard = () => {
                 <div className="w-6 h-6 bg-white rounded-lg"></div>
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900 text-lg">Zhang - UCL</h2>
+                <h2 className="font-semibold text-gray-900 text-lg">{t('user.name')} - UCL</h2>
                 <p className="text-gray-600 text-sm flex items-center">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-2"></span>
-                  {currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} GMT
+                  {currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} {t('user.status')}
                 </p>
               </div>
             </div>
-            <button className="p-2 bg-gray-100 rounded-lg border border-gray-200 hover:bg-gray-200 transition-all duration-200">
-              <Bell className="w-5 h-5 text-gray-700" />
-            </button>
+            <div className="flex items-center space-x-2">
+              {/* 语言切换按钮 */}
+              <button 
+                onClick={() => changeLanguage(language === 'zh' ? 'en' : 'zh')}
+                className="p-2 bg-gray-100 rounded-lg border border-gray-200 hover:bg-gray-200 transition-all duration-200 flex items-center space-x-1"
+                title={language === 'zh' ? 'Switch to English' : '切换到中文'}
+              >
+                <Globe className="w-4 h-4 text-gray-700" />
+                <span className="text-xs font-medium text-gray-700">
+                  {language === 'zh' ? 'EN' : '中'}
+                </span>
+              </button>
+              <button className="p-2 bg-gray-100 rounded-lg border border-gray-200 hover:bg-gray-200 transition-all duration-200">
+                <Bell className="w-5 h-5 text-gray-700" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
