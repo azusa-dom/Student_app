@@ -1,4 +1,4 @@
-import{c as e}from"./index-M-UvOPOB.js";/**
+import{c as e}from"./index-D_EsRAQp.js";/**
  * @license lucide-react v0.309.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -38,4 +38,4 @@ import{c as e}from"./index-M-UvOPOB.js";/**
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
- */const p=e("User",[["path",{d:"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2",key:"975kel"}],["circle",{cx:"12",cy:"7",r:"4",key:"17ys0d"}]]),f=a=>{const t=new Date,n=new Date(a).getTime()-t.getTime();if(n<0)return"已过期";const o=Math.floor(n/(1e3*60*60)),r=Math.floor(o/24);return r>0?`${r}天后`:o>0?`${o}小时后`:"即将到期"},g=a=>({class_event:l,assignment_due:y,system_notice:c,activity:s,recruitment:i})[a]||s,v=a=>({class_event:"from-blue-500 to-indigo-600",assignment_due:"from-red-500 to-pink-600",system_notice:"from-amber-500 to-orange-600",activity:"from-green-500 to-emerald-600",recruitment:"from-purple-500 to-violet-600"})[a]||"from-blue-500 to-indigo-600";export{i as B,y as C,m as P,d as S,p as U,v as a,s as b,c,f,g};
+ */const p=e("User",[["path",{d:"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2",key:"975kel"}],["circle",{cx:"12",cy:"7",r:"4",key:"17ys0d"}]]),f=a=>{const t=new Date,n=new Date(a).getTime()-t.getTime();if(n<0)return"已过期";const o=Math.floor(n/(1e3*60*60)),r=Math.floor(o/24);return r>0?`${r}天后`:o>0?`${o}小时后`:"即将到期"},g=a=>({class_event:l,assignment_due:y,system_notice:c,activity:s,recruitment:i})[a]||s,v=a=>({class_event:"from-blue-500 to-indigo-600",assignment_due:"from-red-500 to-pink-600",system_notice:"from-amber-500 to-orange-600",activity:"from-green-500 to-emerald-600",recruitment:"from-purple-500 to-violet-600"})[a]||"from-blue-500 to-indigo-600";export{i as B,s as C,m as P,d as S,p as U,y as a,v as b,c,f,g};
