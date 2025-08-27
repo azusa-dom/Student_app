@@ -7,10 +7,17 @@ import JobsPage from './JobsPage';
 import ClubsPage from './ClubsPage';
 import EmergencyPage from './EmergencyPage';
 import SettingsPage from './SettingsPage';
+import AvatarUploader from './AvatarUploader';
 
 const StudentDashboard = () => {
   const { currentTime, grades } = useAppContext();
   const [selectedTab, setSelectedTab] = useState('home');
+  const [avatar, setAvatar] = useState(null);
+
+  const handleAvatarChange = (newAvatar) => {
+    setAvatar(newAvatar);
+    alert('头像已更新！');
+  };
 
   const TABS = useMemo(() => [
     { id: 'home', icon: Home, label: '首页' },
@@ -28,7 +35,12 @@ const StudentDashboard = () => {
       case 'jobs': return <JobsPage />;
       case 'clubs': return <ClubsPage />;
       case 'emergency': return <EmergencyPage />;
-      case 'settings': return <SettingsPage />;
+      case 'settings': return (
+        <div className="p-4">
+          <h2 className="text-xl font-semibold mb-4">个人设置</h2>
+          <AvatarUploader currentAvatar={avatar} onAvatarChange={handleAvatarChange} />
+        </div>
+      );
       default: return <HomePage />;
     }
   };
@@ -62,7 +74,9 @@ const StudentDashboard = () => {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto p-4">{renderContent()}</main>
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {renderContent()}
+      </main>
 
       <nav className="fixed bottom-0 left-0 right-0 backdrop-blur-xl bg-white/80 border-t border-gray-100/50 safe-area-pb">
         <div className="max-w-6xl mx-auto px-4 py-2">
