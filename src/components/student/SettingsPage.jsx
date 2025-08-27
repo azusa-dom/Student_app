@@ -8,6 +8,7 @@ import {
 import { useAppContext } from '../../contexts/AppContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import AvatarUploader from './AvatarUploader';
+import ThemeSettings from './ThemeSettings';
 
 const SettingsPage = () => {
   const { selectedProvider, userType } = useAppContext();
@@ -394,6 +395,8 @@ const SettingsPage = () => {
       {/* 应用设置 */}
       <SettingSection id="app" title="应用设置" icon={SettingsIcon}>
         <div className="space-y-4">
+          <ThemeSettings />
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">语言选择</label>
             <select 
