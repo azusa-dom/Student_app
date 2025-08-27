@@ -28,16 +28,27 @@ export const AppProvider = ({ children }) => {
     setClubs(data.clubs);
   };
 
-  const handleEmailAuth = (provider) => {
-    setSelectedProvider(provider);
-    setLoading(true);
-    
-    setTimeout(() => {
-      loadData().then(() => {
-        setIsAuthorized(true);
-        setLoading(false);
+  const handleEmailAuth = async (provider) => {
+    try {
+      setSelectedProvider(provider);
+      setLoading(true);
+
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          loadData()
+            .then(() => {
+              setIsAuthorized(true);
+              resolve();
+            })
+            .catch(reject);
+        }, 2000);
       });
-    }, 2000);
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      alert('认证失败，请重试！');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {
