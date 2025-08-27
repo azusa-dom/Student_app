@@ -4,147 +4,86 @@ import { useAppContext } from '../contexts/AppContext';
 const OnboardingScreen = () => {
   const { userType, setUserType, handleEmailAuth, loading, selectedProvider } = useAppContext();
 
-  const features = [
-    { title: '自动生成课程表', emoji: '📅', description: '智能排课' },
-    { title: '作业DDL提醒', emoji: '⏰', description: '不错过任何截止日期' },
-    { title: '成绩自动获取', emoji: '📊', description: '实时成绩追踪' },
-    { title: '求职信息整合', emoji: '💼', description: '职业规划助手' },
-    { title: '家长同步摘要', emoji: '👨‍👩‍👧‍👦', description: '家校沟通桥梁' },
-    { title: '学习分析', emoji: '🎯', description: '个性化学习建议' },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-100 via-purple-100 to-indigo-100 flex items-center justify-center p-6">
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-6xl border border-white/40 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[600px]">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        
+        {/* Main Card */}
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
           
-          {/* Left Column - Main Content */}
-          <div className="flex flex-col justify-center p-8 lg:p-12">
-            {/* Logo and Title */}
-            <div className="text-center lg:text-left mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl mb-6 shadow-lg">
-                <span className="text-3xl">🎓</span>
-              </div>
-              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-3 tracking-tight">
-                留学生家校通
-              </h1>
-              <p className="text-xl text-gray-600 font-medium">
-                智能管理，学业无忧
-              </p>
+          {/* Header */}
+          <div className="text-center mb-12">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
             </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">留学生家校通</h1>
+            <p className="text-gray-600">智能管理，学业无忧</p>
+          </div>
 
-            {/* Auth Buttons */}
-            <div className="space-y-4 mb-8">
-              {!loading && !selectedProvider && (
-                <>
-                  <button 
-                    onClick={() => handleEmailAuth('gmail')} 
-                    className="w-full py-4 px-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-semibold text-lg shadow-xl hover:shadow-purple-500/30 transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <div className="flex items-center justify-center space-x-3">
-                      <span className="text-2xl">📧</span>
-                      <span>使用 Gmail 授权</span>
-                    </div>
-                  </button>
-                  
-                  <button 
-                    onClick={() => handleEmailAuth('outlook')} 
-                    className="w-full py-4 px-8 bg-white text-gray-700 rounded-2xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98] border-2 border-gray-200 hover:border-gray-300"
-                  >
-                    <div className="flex items-center justify-center space-x-3">
-                      <span className="text-2xl">📮</span>
-                      <span>使用 Outlook 授权</span>
-                    </div>
-                  </button>
-                </>
-              )}
+          {/* Auth Section */}
+          <div className="space-y-4 mb-8">
+            {!loading && !selectedProvider && (
+              <>
+                <button 
+                  onClick={() => handleEmailAuth('gmail')} 
+                  className="w-full py-4 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-1"
+                >
+                  使用 Gmail 授权
+                </button>
+                
+                <button 
+                  onClick={() => handleEmailAuth('outlook')} 
+                  className="w-full py-4 px-6 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border-2 border-gray-100 hover:border-gray-200"
+                >
+                  使用 Outlook 授权
+                </button>
+              </>
+            )}
 
-              {loading && (
-                <div className="text-center py-12">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full mb-6 shadow-lg animate-pulse">
-                    <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                  <p className="text-xl font-semibold text-purple-800 mb-2">正在授权并同步数据...</p>
-                  <p className="text-purple-600 opacity-80">连接邮箱和Moodle系统</p>
-                </div>
-              )}
-            </div>
-
-            {/* User Type Toggle */}
-            {!loading && (
-              <div className="bg-purple-50/80 p-2 rounded-2xl border border-purple-200/50">
-                <div className="grid grid-cols-2 gap-1">
-                  <button 
-                    onClick={() => setUserType('student')} 
-                    className={`py-3 px-6 rounded-xl text-base font-semibold transition-all duration-300 ${
-                      userType === 'student' 
-                        ? 'bg-white text-purple-700 shadow-lg transform scale-105' 
-                        : 'text-gray-600 hover:text-purple-700 hover:bg-white/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center space-x-2">
-                      <span>👨‍🎓</span>
-                      <span>学生端</span>
-                    </div>
-                  </button>
-                  <button 
-                    onClick={() => setUserType('parent')} 
-                    className={`py-3 px-6 rounded-xl text-base font-semibold transition-all duration-300 ${
-                      userType === 'parent' 
-                        ? 'bg-white text-purple-700 shadow-lg transform scale-105' 
-                        : 'text-gray-600 hover:text-purple-700 hover:bg-white/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center space-x-2">
-                      <span>👨‍👩‍👧‍👦</span>
-                      <span>家长端</span>
-                    </div>
-                  </button>
-                </div>
+            {loading && (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-blue-800 font-medium">正在授权并同步数据...</p>
+                <p className="text-gray-500 text-sm mt-2">连接邮箱和Moodle系统</p>
               </div>
             )}
           </div>
 
-          {/* Right Column - Features Grid */}
-          <div className="bg-gradient-to-br from-purple-50/50 to-indigo-50/50 p-8 lg:p-12">
-            <div className="h-full flex flex-col">
-              <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">
-                ✨ 核心功能
-              </h2>
-              
-              <div className="grid grid-cols-2 gap-6 flex-1">
-                {features.map((feature, index) => (
-                  <div 
-                    key={index} 
-                    className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:scale-105 border border-white/60 group cursor-pointer"
-                    style={{
-                      animationDelay: `${index * 0.1}s`,
-                    }}
-                  >
-                    <div className="text-center h-full flex flex-col justify-center">
-                      <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">
-                        {feature.emoji}
-                      </div>
-                      <h3 className="font-bold text-gray-800 text-sm mb-2 leading-tight">
-                        {feature.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 opacity-80">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Bottom decoration */}
-              <div className="text-center mt-8 opacity-60">
-                <p className="text-sm text-gray-500">
-                  🚀 让学习变得更简单高效
-                </p>
+          {/* User Type Toggle */}
+          {!loading && (
+            <div className="bg-gray-100/80 p-1 rounded-xl">
+              <div className="grid grid-cols-2 gap-1">
+                <button 
+                  onClick={() => setUserType('student')} 
+                  className={`py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    userType === 'student' 
+                      ? 'bg-white text-blue-700 shadow-sm' 
+                      : 'text-gray-600 hover:text-blue-700'
+                  }`}
+                >
+                  学生端
+                </button>
+                <button 
+                  onClick={() => setUserType('parent')} 
+                  className={`py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    userType === 'parent' 
+                      ? 'bg-white text-blue-700 shadow-sm' 
+                      : 'text-gray-600 hover:text-blue-700'
+                  }`}
+                >
+                  家长端
+                </button>
               </div>
             </div>
-          </div>
+          )}
         </div>
+
+        {/* Bottom Text */}
+        <p className="text-center text-gray-500 text-sm mt-6">
+          安全连接，数据加密保护
+        </p>
       </div>
     </div>
   );
