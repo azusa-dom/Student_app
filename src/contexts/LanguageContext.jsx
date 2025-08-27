@@ -13,7 +13,7 @@ const translations = {
     search: '搜索',
     filter: '筛选',
     all: '全部',
-    settings: '设置',
+    settingsLabel: '设置',
     back: '返回',
     next: '下一步',
     previous: '上一步',
@@ -24,6 +24,8 @@ const translations = {
     // 导航和标签
     nav: {
       home: '首页',
+      mail: '邮件',
+      campus: '校园',
       calendar: '日历',
       grades: '成绩',
       jobs: '就业',
@@ -250,7 +252,7 @@ const translations = {
     search: 'Search',
     filter: 'Filter',
     all: 'All',
-    settings: 'Settings',
+    settingsLabel: 'Settings',
     back: 'Back',
     next: 'Next',
     previous: 'Previous',
@@ -261,6 +263,8 @@ const translations = {
     // 导航和标签
     nav: {
       home: 'Home',
+      mail: 'Mail',
+      campus: 'Campus',
       calendar: 'Calendar',
       grades: 'Grades',
       jobs: 'Jobs',

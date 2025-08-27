@@ -4,6 +4,15 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  safelist: [
+    // 动态颜色类（CampusPage 图标背景/前景）
+    {
+      pattern: /(bg|text)-(blue|green|purple|orange|pink)-(50|100|200|300|400|500)\/?(10|20|30|40|50)?/,
+    },
+    // 动态透明/模糊强度（ThemeContext 生成）
+    { pattern: /bg-white\/(\d{1,2}|100)/ },
+    { pattern: /backdrop-blur-(\d)xl/ },
+  ],
   theme: {
     extend: {
       colors: {

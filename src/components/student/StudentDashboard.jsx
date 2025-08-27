@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Home, GraduationCap, Briefcase, Users, Phone, Settings, Bell, Plus, Globe, Calendar } from 'lucide-react';
+import { Home, GraduationCap, Briefcase, Users, Phone, Settings, Bell, Plus, Globe, Calendar, Mail, Building2 } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import ActivityPreview from './ActivityPreview';
 import HomePage from './HomePage';
 import GradesPage from './GradesPage';
 import JobsPage from './JobsPage';
+import MailPage from './MailPage';
+import CampusPage from './CampusPage';
 import ClubsPage from './ClubsPage';
 import CalendarPage from './CalendarPage';
 import EmergencyPage from './EmergencyPage';
@@ -25,22 +27,22 @@ const StudentDashboard = () => {
 
   const TABS = useMemo(() => [
     { id: 'home', icon: Home, label: t('nav.home') },
-    { id: 'calendar', icon: Calendar, label: t('nav.calendar') },
+    { id: 'mail', icon: Mail, label: t('nav.mail'), badge: true },
     { id: 'grades', icon: GraduationCap, label: t('nav.grades'), badge: grades.length > 0 },
+    { id: 'campus', icon: Building2, label: t('nav.campus') },
     { id: 'jobs', icon: Briefcase, label: t('nav.jobs') },
-    { id: 'clubs', icon: Users, label: t('nav.clubs') },
-    { id: 'emergency', icon: Phone, label: t('nav.emergency') },
+    { id: 'calendar', icon: Calendar, label: t('nav.calendar') },
     { id: 'settings', icon: Settings, label: t('nav.settings') }
   ], [grades.length, t]);
 
   const renderContent = () => {
     switch (selectedTab) {
       case 'home': return <HomePage />;
-      case 'calendar': return <CalendarPage />;
+      case 'mail': return <MailPage />;
       case 'grades': return <GradesPage />;
+      case 'campus': return <CampusPage />;
       case 'jobs': return <JobsPage />;
-      case 'clubs': return <ClubsPage />;
-      case 'emergency': return <EmergencyPage />;
+      case 'calendar': return <CalendarPage />;
       case 'settings': return <SettingsPage />;
       default: return <HomePage />;
     }
