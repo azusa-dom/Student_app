@@ -49,26 +49,26 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 pb-20">
       
       {/* Header */}
-      <header className="backdrop-blur-2xl bg-white/5 border-b border-white/10">
+      <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200 shadow-sm">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                 <div className="w-6 h-6 bg-white rounded-lg"></div>
               </div>
               <div>
-                <h2 className="font-light text-white text-lg">Zhang - UCL</h2>
-                <p className="text-white/60 text-sm flex items-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 mr-2"></span>
+                <h2 className="font-semibold text-gray-900 text-lg">Zhang - UCL</h2>
+                <p className="text-gray-600 text-sm flex items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-2"></span>
                   {currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} GMT
                 </p>
               </div>
             </div>
-            <button className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-200">
-              <Bell className="w-5 h-5 text-white" />
+            <button className="p-2 bg-gray-100 rounded-lg border border-gray-200 hover:bg-gray-200 transition-all duration-200">
+              <Bell className="w-5 h-5 text-gray-700" />
             </button>
           </div>
         </div>
@@ -76,9 +76,7 @@ const StudentDashboard = () => {
 
       {/* Activity Preview Section */}
       <div className="max-w-4xl mx-auto px-6 py-4">
-        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20">
-          <ActivityPreview />
-        </div>
+        <ActivityPreview />
       </div>
 
       {/* Content */}
@@ -87,7 +85,7 @@ const StudentDashboard = () => {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 backdrop-blur-2xl bg-white/5 border-t border-white/10">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-lg">
         <div className="max-w-4xl mx-auto px-6 py-3">
           <div className="flex justify-around">
             {TABS.map(tab => {
@@ -100,8 +98,8 @@ const StudentDashboard = () => {
                   className={`
                     flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200
                     ${isSelected 
-                      ? 'bg-white text-gray-900' 
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                      ? 'bg-blue-600 text-white shadow-md' 
+                      : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
                     }
                   `}
                 >
@@ -122,7 +120,7 @@ const StudentDashboard = () => {
       {/* FAB */}
       <button 
         onClick={() => alert('Add new item')}
-        className="fixed bottom-24 right-6 w-12 h-12 bg-white text-gray-900 rounded-xl shadow-2xl hover:scale-105 transition-all duration-200 flex items-center justify-center backdrop-blur-sm"
+        className="fixed bottom-24 right-6 w-12 h-12 bg-blue-600 text-white rounded-xl shadow-lg hover:scale-105 hover:bg-blue-700 transition-all duration-200 flex items-center justify-center"
       >
         <Plus className="w-5 h-5" />
       </button>

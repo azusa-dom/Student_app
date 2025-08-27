@@ -13,37 +13,22 @@ const HomePage = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
-          <div className="relative bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-600 rounded-3xl p-8 text-white overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-32 translate-x-32"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full translate-y-24 -translate-x-24"></div>
-            
-            <h2 className="text-2xl font-bold mb-2">今日概览</h2>
-            <p className="text-blue-100 mb-8">你今天有 {events.length} 个重要事项需要关注</p>
-            
-            <div className="grid grid-cols-3 gap-6">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-black/5 rounded-2xl backdrop-blur-lg group-hover:bg-black/10 transition-colors"></div>
-                <div className="relative p-4 text-center">
-                  <div className="text-3xl font-bold mb-1">{todayClassesCount}</div>
-                  <div className="text-sm text-blue-100">今日课程</div>
-                </div>
-              </div>
-              <div className="relative group">
-                <div className="absolute inset-0 bg-black/5 rounded-2xl backdrop-blur-lg group-hover:bg-black/10 transition-colors"></div>
-                <div className="relative p-4 text-center">
-                  <div className="text-3xl font-bold mb-1">{pendingAssignmentsCount}</div>
-                  <div className="text-sm text-blue-100">待交作业</div>
-                </div>
-              </div>
-              <div className="relative group">
-                <div className="absolute inset-0 bg-black/5 rounded-2xl backdrop-blur-lg group-hover:bg-black/10 transition-colors"></div>
-                <div className="relative p-4 text-center">
-                  <div className="text-3xl font-bold mb-1">{grades.length}</div>
-                  <div className="text-sm text-blue-100">新成绩</div>
-                </div>
-              </div>
+        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <h2 className="text-2xl font-bold mb-2 text-gray-900">今日概览</h2>
+          <p className="text-gray-600 mb-6">你今天有 {events.length} 个重要事项需要关注</p>
+          
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-blue-50 rounded-lg p-4 text-center border border-blue-100">
+              <div className="text-3xl font-bold mb-1 text-blue-600">{todayClassesCount}</div>
+              <div className="text-sm text-blue-700">今日课程</div>
+            </div>
+            <div className="bg-orange-50 rounded-lg p-4 text-center border border-orange-100">
+              <div className="text-3xl font-bold mb-1 text-orange-600">{pendingAssignmentsCount}</div>
+              <div className="text-sm text-orange-700">待交作业</div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4 text-center border border-green-100">
+              <div className="text-3xl font-bold mb-1 text-green-600">{grades.length}</div>
+              <div className="text-sm text-green-700">新成绩</div>
             </div>
           </div>
         </div>
