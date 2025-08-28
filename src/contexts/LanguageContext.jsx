@@ -5,6 +5,37 @@ const translations = {
   zh: {
     // 通用
     save: '保存',
+    
+    // 就业服务
+    jobs: {
+      tabs: {
+        events: '招聘活动',
+        services: 'UCL就业服务',
+        resources: '求职资源'
+      },
+      events: {
+        title: '校园招聘活动',
+        register: '立即报名'
+      },
+      services: {
+        title: 'UCL就业服务',
+        jobBoard: 'UCL就业机会',
+        jobBoardDesc: '浏览最新校园招聘、实习和全职工作机会',
+        cvService: '简历优化服务',
+        cvServiceDesc: '由专业顾问提供简历编写和面试指导',
+        careerConsulting: '职业咨询',
+        careerConsultingDesc: '一对一职业规划和发展建议',
+        workshops: '职业技能工作坊',
+        workshopsDesc: '提升求职技能和职场软实力'
+      },
+      resources: {
+        title: '求职学习资源',
+        interviewPrep: '面试准备指南',
+        interviewPrepDesc: '面试技巧、案例分析和模拟训练',
+        industryInsights: '行业洞察',
+        industryInsightsDesc: '了解不同行业的职业发展路径和要求'
+      }
+    },
     cancel: '取消',
     edit: '编辑',
     delete: '删除',
@@ -244,6 +275,37 @@ const translations = {
   en: {
     // 通用
     save: 'Save',
+    
+    // Job Services
+    jobs: {
+      tabs: {
+        events: 'Career Events',
+        services: 'UCL Careers',
+        resources: 'Resources'
+      },
+      events: {
+        title: 'Campus Recruitment Events',
+        register: 'Register Now'
+      },
+      services: {
+        title: 'UCL Career Services',
+        jobBoard: 'UCL Job Board',
+        jobBoardDesc: 'Browse latest campus recruitment, internships and full-time positions',
+        cvService: 'CV Review Service',
+        cvServiceDesc: 'Professional CV writing and interview guidance',
+        careerConsulting: 'Career Consulting',
+        careerConsultingDesc: 'One-on-one career planning and development advice',
+        workshops: 'Skills Workshops',
+        workshopsDesc: 'Enhance job hunting skills and workplace soft skills'
+      },
+      resources: {
+        title: 'Career Learning Resources',
+        interviewPrep: 'Interview Preparation',
+        interviewPrepDesc: 'Interview skills, case studies and mock interviews',
+        industryInsights: 'Industry Insights',
+        industryInsightsDesc: 'Learn about career paths and requirements in different industries'
+      }
+    },
     cancel: 'Cancel',
     edit: 'Edit',
     delete: 'Delete',
