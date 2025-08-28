@@ -1,60 +1,71 @@
-import React, { createContext, useState, useContext } from 'react';
-import { getMockData } from '../api/mockData';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [userType, setUserType] = useState('student');
-  const [loading, setLoading] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState(null);
-
-  const handleEmailAuth = async (provider) => {
-    try {
-      setSelectedProvider(provider);
-      setLoading(true);
-
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          getMockData()
-            .then(() => {
-              setIsAuthorized(true);
-              resolve();
-            })
-            .catch(reject);
-        }, 2000);
-      });
-    } catch (error) {
-      console.error('Authentication failed:', error);
-      throw new Error(t('auth.failed'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = () => {
-    setIsAuthorized(false);
-    setSelectedProvider(null);
-    // 可以添加其他清理逻辑
-  };
-
-  const value = {
-    isAuthorized,
-    userType,
-    setUserType,
-    loading,
-    handleEmailAuth,
-    selectedProvider,
-    logout
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
+
+export const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [userType, setUserType] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // 检查本地存储中的认证状态
+    const savedAuth = localStorage.getItem('isAuthenticated');
+    const savedUser = localStorage.getItem('user');
+    const savedUserType = localStorage.getItem('userType');
+
+    if (savedAuth === 'true' && savedUser && savedUserType) {
+      setIsAuthenticated(true);
+      setUser(JSON.parse(savedUser));
+      setUserType(savedUserType);
+    }
+    setLoading(false);
+  }, []);
+
+  const login = (userData, type) => {
+    setIsAuthenticated(true);
+    setUser(userData);
+    setUserType(type);
+
+    // 保存到本地存储
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('userType', type);
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    setUser(null);
+    setUserType(null);
+
+    // 清除本地存储
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userType');
+  };
+
+  const value = {
+    isAuthenticated,
+    user,
+    userType,
+    loading,
+    login,
+    logout
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// 检查AuthContext的完整内容

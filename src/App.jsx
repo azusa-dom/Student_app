@@ -12,6 +12,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 const OnboardingScreen = lazy(() => import('./components/OnboardingScreen'));
 const StudentRoutes = lazy(() => import('./components/StudentRoutes'));
 const ParentRoutes = lazy(() => import('./components/ParentRoutes'));
+const TestPage = lazy(() => import('./components/TestPage'));
 
 function App() {
   return (
@@ -27,6 +28,11 @@ function App() {
                       <Route path="/" element={
                         <Suspense fallback={<LoadingSpinner />}>
                           <OnboardingScreen />
+                        </Suspense>
+                      } />
+                      <Route path="/test" element={
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <TestPage />
                         </Suspense>
                       } />
                       <Route path="/student/*" element={
