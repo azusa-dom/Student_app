@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, GraduationCap, Briefcase, Users, Phone, Settings, Bell, Plus, Globe, Calendar, Mail, Building2 } from 'lucide-react';
+import { Home, GraduationCap, Briefcase, Users, Phone, Settings, Bell, Plus, Globe, Calendar, Mail, Building2, Bot } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -40,7 +40,7 @@ const StudentDashboard = ({ children }) => {
     { id: 'grades', icon: GraduationCap, label: t('nav.grades'), badge: grades.length > 0, path: '/student/grades' },
     { id: 'campus', icon: Building2, label: t('nav.campus'), path: '/student/campus' },
     { id: 'jobs', icon: Briefcase, label: t('nav.jobs'), path: '/student/jobs' },
-    { id: 'calendar', icon: Calendar, label: t('nav.calendar'), path: '/student/calendar' },
+    { id: 'ai', icon: Bot, label: t('ai.title'), path: '/student/ai' },
     { id: 'settings', icon: Settings, label: t('nav.settings'), path: '/student/settings' }
   ], [grades.length, t]);
 
