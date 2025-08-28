@@ -444,6 +444,8 @@ const CalendarPage = () => {
                 <label key={type} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
+                    name={`filter-${type}`}
+                    id={`filter-${type}`}
                     checked={enabled}
                     onChange={(e) => setSelectedFilters(prev => ({ ...prev, [type]: e.target.checked }))}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
