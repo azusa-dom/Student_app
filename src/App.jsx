@@ -22,6 +22,7 @@ const CalendarPage = lazy(() => import('./components/student/CalendarPage'));
 const ClubsPage = lazy(() => import('./components/student/ClubsPage'));
 const EmergencyPage = lazy(() => import('./components/student/EmergencyPage'));
 const SettingsPage = lazy(() => import('./components/student/SettingsPage'));
+const AIChat = lazy(() => import('./components/AIChat'));
 
 // 加载动画组件
 const LoadingScreen = () => (
@@ -66,6 +67,7 @@ const StudentRoutes = () => {
       <Route path="/jobs" element={<JobsPage />} />
       <Route path="/calendar" element={<CalendarPage />} />
       <Route path="/clubs" element={<ClubsPage />} />
+  <Route path="/ai" element={<AIChat />} />
       <Route path="/emergency" element={<EmergencyPage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="*" element={<Navigate to="/home" replace />} />
