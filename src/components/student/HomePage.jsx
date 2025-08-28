@@ -4,7 +4,7 @@ import { useAppContext } from '../../contexts/AppContext';
 import SmartCard from '../SmartCard';
 
 const HomePage = () => {
-  const { events, grades } = useAppContext();
+  const { events, grades, setStudentTab } = useAppContext();
 
   // 动态计算概览数据
   const todayClassesCount = events.filter(e => e.type === 'class_event' && new Date(e.start_at).toDateString() === new Date().toDateString()).length;
@@ -45,15 +45,15 @@ const HomePage = () => {
           <div className="relative p-6">
             <h3 className="font-semibold text-gray-900 mb-4">快速操作</h3>
             <div className="space-y-3">
-              <button className="w-full flex items-center space-x-3 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-blue-100/50 hover:from-blue-100 hover:to-blue-200/50 transition-all duration-300 group">
+              <button onClick={() => window.open('https://moodle.ucl.ac.uk/', '_blank')} className="w-full flex items-center space-x-3 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-blue-100/50 hover:from-blue-100 hover:to-blue-200/50 transition-all duration-300 group">
                 <ExternalLink className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
                 <span className="font-medium">打开Moodle</span>
               </button>
-              <button className="w-full flex items-center space-x-3 p-4 rounded-xl bg-gradient-to-r from-green-50 to-green-100/50 hover:from-green-100 hover:to-green-200/50 transition-all duration-300 group">
+              <button onClick={() => setStudentTab && setStudentTab('calendar')} className="w-full flex items-center space-x-3 p-4 rounded-xl bg-gradient-to-r from-green-50 to-green-100/50 hover:from-green-100 hover:to-green-200/50 transition-all duration-300 group">
                 <Calendar className="w-5 h-5 text-green-600 group-hover:scale-110 transition-transform" />
                 <span className="font-medium">查看课程表</span>
               </button>
-              <button className="w-full flex items-center space-x-3 p-4 rounded-xl bg-gradient-to-r from-purple-50 to-purple-100/50 hover:from-purple-100 hover:to-purple-200/50 transition-all duration-300 group">
+              <button onClick={() => setStudentTab && setStudentTab('grades')} className="w-full flex items-center space-x-3 p-4 rounded-xl bg-gradient-to-r from-purple-50 to-purple-100/50 hover:from-purple-100 hover:to-purple-200/50 transition-all duration-300 group">
                 <GraduationCap className="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" />
                 <span className="font-medium">查看成绩</span>
               </button>

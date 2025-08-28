@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 import { Clock, Calendar, MapPin, User, ExternalLink, Check, AlertTriangle } from 'lucide-react';
 import { getEventIcon, getEventColor, formatTimeRemaining } from '../utils/helpers';
 
@@ -7,9 +8,12 @@ const SmartCard = ({ event }) => {
   const [isCompleted, setIsCompleted] = useState(event.status === 'completed');
   const [isAddedToCalendar, setIsAddedToCalendar] = useState(false);
 
+  const { getThemeConfig } = useTheme();
+  const themeConfig = getThemeConfig();
+
   return (
     <div className={`relative group ${isCompleted ? 'opacity-75' : ''}`}>
-      <div className="absolute inset-0 bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-gray-200/50 group-hover:shadow-2xl group-hover:shadow-gray-300/50 transition-all duration-300"></div>
+      <div className={`absolute inset-0 rounded-3xl shadow-xl group-hover:shadow-2xl transition-all duration-300 ${themeConfig.card}`}></div>
       <div className="relative p-6">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-start space-x-4">

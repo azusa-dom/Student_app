@@ -8,7 +8,7 @@ import { useAppContext } from '../../contexts/AppContext';
 
 const CalendarPage = () => {
   const { t } = useLanguage();
-  const { events } = useAppContext();
+  const { events, addEvent } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('month'); // month, week, day
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -124,7 +124,10 @@ const CalendarPage = () => {
                 className={`min-h-[120px] border-r border-b border-gray-100 p-2 cursor-pointer hover:bg-gray-50 transition-colors ${
                   !isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : ''
                 }`}
-                onClick={() => setSelectedDate(new Date(date))}
+                onClick={() => {
+                  setSelectedDate(new Date(date));
+                  setViewMode('day');
+                }}
               >
                 <div className={`text-sm font-medium mb-2 ${
                   isToday ? 'bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center' :
@@ -413,7 +416,19 @@ const CalendarPage = () => {
             </div>
 
             {/* 添加事件按钮 */}
-            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <button
+              onClick={() => {
+                const title = prompt('事件标题');
+                if (!title) return;
+                const time = prompt('开始时间（例如 14:00）');
+                const [hh, mm] = (time || '09:00').split(':');
+                const start = new Date(selectedDate);
+                start.setHours(Number(hh) || 9, Number(mm) || 0, 0, 0);
+                addEvent({ title, type: 'class_event', start_at: start.toISOString() });
+                alert('已添加到日历');
+              }}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
               <Plus className="w-4 h-4" />
               <span>{t('calendar.addEvent')}</span>
             </button>
