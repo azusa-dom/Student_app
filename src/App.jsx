@@ -1,5 +1,5 @@
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -79,6 +79,20 @@ const StudentRoutes = () => {
 // 主要路由内容
 const AppRoutes = () => {
   const { isAuthorized, userType } = useAppContext();
+  const navigate = useNavigate();
+
+  // 处理GitHub Pages路由
+  useEffect(() => {
+    const redirectPath = sessionStorage.getItem('redirectPath');
+    if (redirectPath && redirectPath !== '/Student_app/' && redirectPath !== '/') {
+      sessionStorage.removeItem('redirectPath');
+      // 从URL中移除 /Student_app 前缀
+      const cleanPath = redirectPath.replace(/^\/Student_app/, '');
+      if (cleanPath) {
+        navigate(cleanPath);
+      }
+    }
+  }, [navigate]);
 
   return (
     <Routes>
