@@ -6,6 +6,21 @@ const translations = {
     // 通用
     save: '保存',
     
+    // 活动和概览
+    activities: {
+      projectYoga: '乐活瑜伽',
+      healthWellness: 'UCL健康与保健',
+      sportsCenter: '体育中心',
+      participants: '{count} 人参与'
+    },
+    overview: {
+      dueToday: '今日截止',
+      classes: '课程安排',
+      activities: '社团活动',
+      newGrades: '新成绩',
+      unreadMails: '未读邮件'
+    },
+    
     // 就业服务
     jobs: {
       tabs: {
@@ -568,6 +583,9 @@ export const LanguageProvider = ({ children }) => {
     localStorage.setItem('language', preferredLang);
     return preferredLang;
   });
+  
+  // 添加一个版本号来强制所有使用 t() 的组件重新渲染
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     // 监听其他标签页的语言变化
@@ -587,6 +605,7 @@ export const LanguageProvider = ({ children }) => {
       return;
     }
     setLanguage(newLanguage);
+    setVersion(v => v + 1); // 增加版本号强制更新
     localStorage.setItem('language', newLanguage);
     // 添加语言切换后的文档标题更新
     document.title = newLanguage === 'zh' ? '留学生家校通' : 'Student Portal';
@@ -594,6 +613,9 @@ export const LanguageProvider = ({ children }) => {
 
   // 获取翻译文本的函数
   const t = (key, params = {}) => {
+    // eslint-disable-next-line no-unused-vars
+    const _ = version; // 通过读取版本号来强制重新渲染
+    
     if (!key) {
       console.warn('Translation key is undefined or empty');
       return '';
