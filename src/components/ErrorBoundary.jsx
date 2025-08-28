@@ -31,13 +31,17 @@ class ErrorBoundary extends React.Component {
               >
                 刷新页面
               </button>
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mt-4 p-4 bg-gray-900 rounded-xl w-full overflow-auto">
-                  <pre className="text-red-400 text-sm">
-                    {this.state.error?.toString()}
-                  </pre>
-                </div>
-              )}
+              {/* 临时在生产环境显示错误信息以便调试 */}
+              <div className="mt-4 p-4 bg-gray-900 rounded-xl w-full overflow-auto">
+                <pre className="text-red-400 text-sm">
+                  {this.state.error?.toString()}
+                  {this.state.error?.stack && (
+                    <div className="mt-2 text-xs opacity-70">
+                      {this.state.error.stack}
+                    </div>
+                  )}
+                </pre>
+              </div>
             </div>
           </div>
         </div>
