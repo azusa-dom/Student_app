@@ -493,17 +493,50 @@ export const useLanguage = () => {
 
 export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState(() => {
-    // 从 localStorage 获取保存的语言设置，默认为中文
-    return localStorage.getItem('language') || 'zh';
+    // 优先使用 localStorage 中的设置，其次使用浏览器语言，最后默认中文
+    const savedLanguage = localStorage.getItem('language');
+    if (savedLanguage && (savedLanguage === 'zh' || savedLanguage === 'en')) {
+      return savedLanguage;
+    }
+    
+    // 检测浏览器语言
+    const browserLang = navigator.language || navigator.userLanguage;
+    const preferredLang = browserLang.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+    
+    localStorage.setItem('language', preferredLang);
+    return preferredLang;
   });
 
+  useEffect(() => {
+    // 监听其他标签页的语言变化
+    const handleStorageChange = (e) => {
+      if (e.key === 'language' && e.newValue !== language) {
+        setLanguage(e.newValue);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [language]);
+
   const changeLanguage = (newLanguage) => {
+    if (newLanguage !== 'zh' && newLanguage !== 'en') {
+      console.warn('Invalid language code:', newLanguage);
+      return;
+    }
     setLanguage(newLanguage);
     localStorage.setItem('language', newLanguage);
+    // 添加语言切换后的文档标题更新
+    document.title = newLanguage === 'zh' ? '留学生家校通' : 'Student Portal';
   };
 
   // 获取翻译文本的函数
   const t = (key, params = {}) => {
+    if (!key) {
+      console.warn('Translation key is undefined or empty');
+      return '';
+    }
+
     const keys = key.split('.');
     let value = translations[language];
     
@@ -512,18 +545,32 @@ export const LanguageProvider = ({ children }) => {
         value = value[k];
       } else {
         console.warn(`Translation key "${key}" not found for language "${language}"`);
-        return key;
+        // 如果当前语言找不到翻译，尝试使用另一种语言
+        const fallbackLang = language === 'zh' ? 'en' : 'zh';
+        let fallbackValue = translations[fallbackLang];
+        for (const fk of keys) {
+          if (fallbackValue && typeof fallbackValue === 'object' && fk in fallbackValue) {
+            fallbackValue = fallbackValue[fk];
+          } else {
+            return key;
+          }
+        }
+        value = fallbackValue;
       }
     }
     
     // 处理参数替换
     if (typeof value === 'string') {
       return value.replace(/\{(\w+)\}/g, (match, param) => {
-        return params[param] !== undefined ? params[param] : match;
+        if (params[param] === undefined) {
+          console.warn(`Parameter "${param}" not provided for key "${key}"`);
+          return match;
+        }
+        return params[param];
       });
     }
     
-    return value;
+    return value || key;
   };
 
   const value = {
