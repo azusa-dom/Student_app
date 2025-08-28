@@ -1,32 +1,24 @@
 import React, { useState, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, GraduationCap, Briefcase, Users, Phone, Settings, Bell, Plus, Globe, Calendar, Mail, Building2 } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import ActivityPreview from './ActivityPreview';
-import HomePage from './HomePage';
-import GradesPage from './GradesPage';
-import JobsPage from './JobsPage';
-import MailPage from './MailPage';
-import CampusPage from './CampusPage';
-import ClubsPage from './ClubsPage';
-import CalendarPage from './CalendarPage';
-import EmergencyPage from './EmergencyPage';
-import SettingsPage from './SettingsPage';
-import AvatarUploader from './AvatarUploader';
 
-const StudentDashboard = () => {
-  const { currentTime, grades, studentTab, setStudentTab } = useAppContext();
+const StudentDashboard = ({ children }) => {
+  const { currentTime, grades } = useAppContext();
   const { t, language, changeLanguage } = useLanguage();
   const { getThemeConfig, getBackgroundClass } = useTheme();
-  const [selectedTab, setSelectedTab] = useState(studentTab || 'home');
-  // 同步全局 tab，供首页快速操作跳转
-  React.useEffect(() => {
-    if (studentTab && studentTab !== selectedTab) {
-      setSelectedTab(studentTab);
-    }
-  }, [studentTab]);
+  const location = useLocation();
+  const navigate = useNavigate();
   const [avatar, setAvatar] = useState(null);
+
+  // 从当前路径获取活跃的标签
+  const currentTab = useMemo(() => {
+    const path = location.pathname.split('/').pop();
+    return path || 'home';
+  }, [location.pathname]);
 
   const themeConfig = getThemeConfig();
   const backgroundClass = getBackgroundClass();
@@ -37,27 +29,20 @@ const StudentDashboard = () => {
   };
 
   const TABS = useMemo(() => [
-    { id: 'home', icon: Home, label: t('nav.home') },
-    { id: 'mail', icon: Mail, label: t('nav.mail'), badge: true },
-    { id: 'grades', icon: GraduationCap, label: t('nav.grades'), badge: grades.length > 0 },
-    { id: 'campus', icon: Building2, label: t('nav.campus') },
-    { id: 'jobs', icon: Briefcase, label: t('nav.jobs') },
-    { id: 'calendar', icon: Calendar, label: t('nav.calendar') },
-    { id: 'settings', icon: Settings, label: t('nav.settings') }
+    { id: 'home', icon: Home, label: t('nav.home'), path: '/student/home' },
+    { id: 'mail', icon: Mail, label: t('nav.mail'), badge: true, path: '/student/mail' },
+    { id: 'grades', icon: GraduationCap, label: t('nav.grades'), badge: grades.length > 0, path: '/student/grades' },
+    { id: 'campus', icon: Building2, label: t('nav.campus'), path: '/student/campus' },
+    { id: 'jobs', icon: Briefcase, label: t('nav.jobs'), path: '/student/jobs' },
+    { id: 'calendar', icon: Calendar, label: t('nav.calendar'), path: '/student/calendar' },
+    { id: 'settings', icon: Settings, label: t('nav.settings'), path: '/student/settings' }
   ], [grades.length, t]);
 
-  const renderContent = () => {
-    switch (selectedTab) {
-      case 'home': return <HomePage />;
-      case 'mail': return <MailPage />;
-      case 'grades': return <GradesPage />;
-      case 'campus': return <CampusPage />;
-      case 'jobs': return <JobsPage />;
-      case 'calendar': return <CalendarPage />;
-      case 'settings': return <SettingsPage />;
-      default: return <HomePage />;
-    }
+  const handleTabClick = (tab) => {
+    navigate(tab.path);
   };
+
+  const showActivityPreview = currentTab === 'home';
 
   return (
     <div className={`min-h-screen ${backgroundClass} pb-20`}>
@@ -98,18 +83,18 @@ const StudentDashboard = () => {
         </div>
       </header>
 
-      {/* Activity Preview Section */}
-      {selectedTab === 'home' && (
+      {/* Activity Preview Section - 只在首页显示 */}
+      {showActivityPreview && (
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className={`${themeConfig.card} rounded-2xl p-4 border border-white/20`}>
-            <ActivityPreview />
+            <ActivityPreview onNavigate={navigate} />
           </div>
         </div>
       )}
 
-      {/* Content */}
+      {/* Main Content - 渲染子路由 */}
       <main className="max-w-4xl mx-auto px-6 py-2">
-        {renderContent()}
+        {children}
       </main>
 
       {/* Bottom Navigation */}
@@ -118,14 +103,11 @@ const StudentDashboard = () => {
           <div className="grid grid-cols-7 gap-1">
             {TABS.map(tab => {
               const Icon = tab.icon;
-              const isSelected = selectedTab === tab.id;
+              const isSelected = currentTab === tab.id;
               return (
                 <button 
                   key={tab.id} 
-                  onClick={() => {
-                    setSelectedTab(tab.id);
-                    setStudentTab && setStudentTab(tab.id);
-                  }} 
+                  onClick={() => handleTabClick(tab)} 
                   className={`
                     flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200
                     ${isSelected ? `${themeConfig.button} shadow-md` : `${themeConfig.textSecondary} ${themeConfig.cardHover}`}
@@ -147,8 +129,9 @@ const StudentDashboard = () => {
 
       {/* FAB */}
       <button 
-        onClick={() => alert('Add new item')}
+        onClick={() => navigate('/student/calendar')} // 跳转到日历页面添加新事件
         className={`fixed bottom-24 right-6 w-12 h-12 ${themeConfig.button} rounded-xl shadow-lg hover:scale-105 transition-all duration-200 flex items-center justify-center`}
+        title="添加新事件"
       >
         <Plus className="w-5 h-5" />
       </button>
