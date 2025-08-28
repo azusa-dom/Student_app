@@ -141,7 +141,7 @@ const CalendarPage = () => {
                     <div
                       key={eventIndex}
                       className={`text-xs px-1.5 py-0.5 rounded truncate ${getEventColor(event.type)}`}
-                      title={event.title}
+                      title={(event.title && typeof event.title === 'object') ? (event.title[event.language || 'zh'] || event.title.zh || event.title.en) : event.title}
                     >
                       {event.title}
                     </div>

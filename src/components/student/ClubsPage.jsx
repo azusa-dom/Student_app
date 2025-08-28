@@ -192,7 +192,7 @@ const ClubsPage = () => {
                         <span className="text-sm text-gray-500">{formatDate(activity.date)}</span>
                       </div>
                       <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                        {activity.title}
+                        {(activity.title && typeof activity.title === 'object') ? (activity.title[activity.language || 'zh'] || activity.title.zh || activity.title.en) : activity.title}
                       </h3>
                       <p className="text-lg text-blue-600 font-medium mb-2">{activity.club}</p>
                       <p className="text-gray-600 mb-3">{activity.description}</p>

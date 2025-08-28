@@ -20,6 +20,25 @@ const translations = {
       newGrades: '新成绩',
       unreadMails: '未读邮件'
     },
+    cards: {
+      advancedStats: '高级统计讲座',
+      mlCoursework: '机器学习作业1',
+      libraryMaintenance: '图书馆系统维护',
+      date_example_1: '{date}',
+      date_example_2: '{date}',
+      location_example: '{location}',
+      instructor: '讲师',
+      due_in_days: '截止：{days} 天后'
+    },
+    actions: {
+      addToCalendar: '加入日历',
+      markDone: '标记完成',
+      openMoodle: '打开Moodle'
+    },
+    quick: {
+      moodle: '打开Moodle',
+      viewGrades: '查看成绩'
+    },
     
     // 就业服务
     jobs: {

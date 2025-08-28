@@ -2,12 +2,12 @@ import React from 'react';
 import { Clock, Calendar, BookOpen, Briefcase, Mail, Building2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useAppContext } from '../../contexts/AppContext';
+import { useData } from '../../contexts/DataContext';
 
 const ActivityPreview = ({ onNavigate }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { getThemeConfig } = useTheme();
-  const { grades } = useAppContext();
+  const { grades, events } = useData();
   const themeConfig = getThemeConfig();
 
   // 快速操作数据
@@ -45,14 +45,14 @@ const ActivityPreview = ({ onNavigate }) => {
       bgColor: 'bg-orange-50',
       action: () => onNavigate('/student/calendar')
     },
-    {
-      id: 'activities',
-      number: '3',
-      label: '新活动',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      action: () => onNavigate('/student/calendar')
-    }
+        {
+          id: 'activities',
+          number: '3',
+          label: t('overview.activities'),
+          color: 'text-green-600',
+          bgColor: 'bg-green-50',
+          action: () => onNavigate('/student/calendar')
+        }
   ];
 
   // 智能卡片流数据
@@ -60,10 +60,10 @@ const ActivityPreview = ({ onNavigate }) => {
     {
       id: 'advanced-stats',
       icon: BookOpen,
-      title: 'Advanced Statistics Lecture',
+          title: t('cards.advancedStats'),
       code: 'STAT7001',
-      date: '8月28日 20:27',
-      location: 'Room 301, Math Building',
+          date: t('cards.date_example_1', { date: '8月28日 20:27' }),
+          location: t('cards.location_example', { location: 'Room 301, Math Building' }),
       instructor: 'Prof. Smith',
       actions: [
         { label: '加入日历', primary: true, action: () => onNavigate('/student/calendar') },
@@ -73,9 +73,9 @@ const ActivityPreview = ({ onNavigate }) => {
     {
       id: 'ml-coursework',
       icon: Clock,
-      title: 'Machine Learning Coursework 1',
+          title: t('cards.mlCoursework'),
       code: 'CS7012',
-      status: '截止：1天后',
+          status: t('cards.due_in_days', { days: 1 }),
       statusColor: 'text-red-600',
       actions: [
         { label: '加入日历', primary: true, action: () => onNavigate('/student/calendar') },
@@ -86,8 +86,8 @@ const ActivityPreview = ({ onNavigate }) => {
     {
       id: 'library-maintenance',
       icon: Building2,
-      title: 'Library System Maintenance',
-      date: '8月29日 18:27',
+          title: t('cards.libraryMaintenance'),
+          date: t('cards.date_example_2', { date: '8月29日 18:27' }),
       actions: [
         { label: '加入日历', primary: true, action: () => onNavigate('/student/calendar') },
         { label: '标记完成', primary: false }
@@ -100,21 +100,21 @@ const ActivityPreview = ({ onNavigate }) => {
     {
       id: 'moodle',
       icon: BookOpen,
-      label: '打开Moodle',
+          label: t('quick.moodle'),
       color: 'text-blue-600',
       action: () => window.open('https://moodle.ucl.ac.uk', '_blank')
     },
     {
       id: 'grades',
       icon: BookOpen,
-      label: '查看成绩',
+          label: t('quick.viewGrades'),
       color: 'text-green-600',
       action: () => onNavigate('/student/grades')
     },
     {
       id: 'grades-info',
       icon: BookOpen,
-      label: '查看成绩',
+          label: t('quick.viewGrades'),
       color: 'text-purple-600',
       action: () => onNavigate('/student/grades')
     }
@@ -175,9 +175,9 @@ const ActivityPreview = ({ onNavigate }) => {
       <div>
         <h4 className={`font-semibold ${themeConfig.text} mb-3 flex items-center space-x-2`}>
           <Calendar className="w-4 h-4" />
-          <span>今日概览</span>
+        <span>{t('overview.title')}</span>
         </h4>
-        <p className={`${themeConfig.textSecondary} text-sm mb-4`}>你今天有 4 个课程事项需要关注</p>
+      <p className={`${themeConfig.textSecondary} text-sm mb-4`}>{t('home.description', { count: 4 })}</p>
         
         <div className="grid grid-cols-3 gap-3 mb-4">
           {todayOverview.map(item => (
@@ -211,7 +211,7 @@ const ActivityPreview = ({ onNavigate }) => {
       <div>
         <h4 className={`font-semibold ${themeConfig.text} mb-3 flex items-center space-x-2`}>
           <BookOpen className="w-4 h-4" />
-          <span>智能卡片流</span>
+           <span>{t('home.smartCards')}</span>
         </h4>
         
         <div className="space-y-3">
@@ -239,7 +239,7 @@ const ActivityPreview = ({ onNavigate }) => {
                     </p>
                   )}
                   {card.instructor && (
-                    <p className={`${themeConfig.textSecondary} text-xs mb-2`}>讲师: {card.instructor}</p>
+                    <p className={`${themeConfig.textSecondary} text-xs mb-2`}>{t('cards.instructor')}: {card.instructor}</p>
                   )}
                   {card.status && (
                     <p className={`text-xs mb-2 ${card.statusColor}`}>{card.status}</p>
@@ -271,7 +271,7 @@ const ActivityPreview = ({ onNavigate }) => {
       <div>
         <h4 className={`font-semibold ${themeConfig.text} mb-3 flex items-center space-x-2`}>
           <GraduationCap className="w-4 h-4" />
-          <span>最新成绩</span>
+          <span>{t('home.newGrades')}</span>
         </h4>
         
         <div className="space-y-2">
