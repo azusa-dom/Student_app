@@ -7,12 +7,18 @@ import { useTheme } from '../../contexts/ThemeContext';
 import ActivityPreview from './ActivityPreview';
 
 const StudentDashboard = ({ children }) => {
-  const { currentTime, grades } = useAppContext();
+  const { grades } = useAppContext();
   const { t, language, changeLanguage } = useLanguage();
   const { getThemeConfig, getBackgroundClass } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  const [avatar, setAvatar] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // 添加时间更新效果
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // 从当前路径获取活跃的标签
   const currentTab = useMemo(() => {
