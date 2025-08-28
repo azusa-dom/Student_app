@@ -67,8 +67,8 @@ export default function AIChat() {
       <h1 className="text-2xl font-semibold mb-4">{t('ai.title') || 'AI 助手'}</h1>
 
       <div className="mb-3">
-        <label className="block text-sm text-gray-600 mb-1">{t('ai.apiKey') || 'OpenAI API Key (可选)'}</label>
-        <input value={apiKey} onChange={e => setApiKey(e.target.value)} className="w-full rounded-md border px-3 py-2" placeholder="sk-..." />
+        <label htmlFor="ai-api-key" className="block text-sm text-gray-600 mb-1">{t('ai.apiKey') || 'OpenAI API Key (可选)'}</label>
+        <input id="ai-api-key" name="ai-api-key" value={apiKey} onChange={e => setApiKey(e.target.value)} className="w-full rounded-md border px-3 py-2" placeholder="sk-..." />
         <p className="text-xs text-gray-500 mt-1">{t('ai.apiKeyHint') || '输入临时 key 可直接调用 OpenAI（自行承担费用），留空则使用本地模拟模式。'}</p>
       </div>
 
@@ -83,7 +83,8 @@ export default function AIChat() {
       </div>
 
       <div className="mt-3 flex space-x-2">
-        <input value={input} onChange={e => setInput(e.target.value)} className="flex-1 rounded-md border px-3 py-2" placeholder={t('ai.placeholder') || '问我一些关于作业、截止日期或校园服务的问题'} />
+        <label htmlFor="ai-user-input" className="sr-only">{t('ai.placeholder') || '请输入问题'}</label>
+        <input id="ai-user-input" name="ai-user-input" value={input} onChange={e => setInput(e.target.value)} className="flex-1 rounded-md border px-3 py-2" placeholder={t('ai.placeholder') || '问我一些关于作业、截止日期或校园服务的问题'} />
         <button onClick={handleSend} disabled={loading} className="px-4 py-2 bg-indigo-600 text-white rounded-md">{loading ? (t('loading') || 'Loading...') : (t('ai.send') || '发送')}</button>
       </div>
     </div>

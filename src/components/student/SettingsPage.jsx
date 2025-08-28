@@ -176,9 +176,11 @@ const SettingsPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+        <label htmlFor="profile-name" className="block text-sm font-medium text-gray-700 mb-1">姓名</label>
                 {editingProfile ? (
                   <input
+          id="profile-name"
+          name="profile-name"
                     type="text"
                     value={profileData.name}
                     onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
@@ -190,9 +192,11 @@ const SettingsPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">学号</label>
+        <label htmlFor="profile-student-id" className="block text-sm font-medium text-gray-700 mb-1">学号</label>
                 {editingProfile ? (
                   <input
+          id="profile-student-id"
+          name="profile-student-id"
                     type="text"
                     value={profileData.studentId}
                     onChange={(e) => setProfileData(prev => ({ ...prev, studentId: e.target.value }))}
@@ -204,9 +208,11 @@ const SettingsPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+        <label htmlFor="profile-email" className="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
                 {editingProfile ? (
                   <input
+          id="profile-email"
+          name="profile-email"
                     type="email"
                     value={profileData.email}
                     onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
@@ -218,9 +224,11 @@ const SettingsPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">电话</label>
+        <label htmlFor="profile-phone" className="block text-sm font-medium text-gray-700 mb-1">电话</label>
                 {editingProfile ? (
                   <input
+          id="profile-phone"
+          name="profile-phone"
                     type="tel"
                     value={profileData.phone}
                     onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
@@ -249,8 +257,8 @@ const SettingsPage = () => {
       <SettingSection id="academic" title="学术设置" icon={BookOpen}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">学年选择</label>
-            <select className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <label htmlFor="select-academic-year" className="block text-sm font-medium text-gray-700 mb-2">学年选择</label>
+            <select id="select-academic-year" name="select-academic-year" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <option value="2023/24">2023/24学年</option>
               <option value="2024/25">2024/25学年</option>
             </select>
@@ -324,12 +332,12 @@ const SettingsPage = () => {
             <h4 className="font-medium text-gray-900 mb-2">通知时间设置</h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-gray-700 mb-1">安静时间开始</label>
-                <input type="time" defaultValue="22:00" className="w-full p-2 border border-gray-300 rounded-lg" />
+                <label htmlFor="quiet-start" className="block text-sm text-gray-700 mb-1">安静时间开始</label>
+                <input id="quiet-start" name="quiet-start" type="time" defaultValue="22:00" className="w-full p-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">安静时间结束</label>
-                <input type="time" defaultValue="08:00" className="w-full p-2 border border-gray-300 rounded-lg" />
+                <label htmlFor="quiet-end" className="block text-sm text-gray-700 mb-1">安静时间结束</label>
+                <input id="quiet-end" name="quiet-end" type="time" defaultValue="08:00" className="w-full p-2 border border-gray-300 rounded-lg" />
               </div>
             </div>
           </div>

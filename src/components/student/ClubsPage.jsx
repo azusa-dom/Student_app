@@ -143,8 +143,11 @@ const ClubsPage = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           {/* 搜索框 */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
+            <label htmlFor="clubs-search" className="sr-only">{t('clubs.searchPlaceholder')}</label>
             <input
+              id="clubs-search"
+              name="clubs-search"
               type="text"
               placeholder={t('clubs.searchPlaceholder')}
               value={searchTerm}
@@ -155,8 +158,11 @@ const ClubsPage = () => {
 
           {/* 分类过滤 */}
           <div className="flex items-center space-x-2">
-            <Filter className="w-5 h-5 text-gray-400" />
+            <Filter className="w-5 h-5 text-gray-400" aria-hidden="true" />
+            <label htmlFor="clubs-filter" className="sr-only">{t('clubs.categories.all')}</label>
             <select
+              id="clubs-filter"
+              name="clubs-filter"
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
