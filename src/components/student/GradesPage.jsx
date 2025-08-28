@@ -3,7 +3,7 @@ import { Plus, GraduationCap } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 
 const GradesPage = () => {
-  const { grades } = useAppContext();
+  const { grades, addGrade } = useAppContext();
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -18,7 +18,16 @@ const GradesPage = () => {
               <h2 className="text-3xl font-bold mb-2">成绩管理</h2>
               <p className="text-emerald-100 text-lg">本学期已更新 {grades.length} 门课程成绩</p>
             </div>
-            <button className="relative group px-6 py-3 bg-white/10 hover:bg-white/20 rounded-2xl backdrop-blur-lg transition-all duration-300">
+            <button
+              onClick={() => {
+                const course = prompt('课程名称');
+                if (!course) return;
+                const assignment = prompt('作业/考试名称');
+                const grade = prompt('成绩（例如 85 或 A）');
+                addGrade({ course, assignment: assignment || 'Assessment', grade: grade || 'N/A', date: new Date().toLocaleDateString('zh-CN') });
+              }}
+              className="relative group px-6 py-3 bg-white/10 hover:bg-white/20 rounded-2xl backdrop-blur-lg transition-all duration-300"
+            >
               <div className="flex items-center space-x-2">
                 <Plus className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-500" />
                 <span className="font-medium text-white">手动添加</span>

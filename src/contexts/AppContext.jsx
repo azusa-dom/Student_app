@@ -14,6 +14,7 @@ export const AppProvider = ({ children }) => {
   const [jobFairs, setJobFairs] = useState([]);
   const [clubs, setClubs] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [studentTab, setStudentTab] = useState('home');
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -26,6 +27,17 @@ export const AppProvider = ({ children }) => {
     setGrades(data.grades);
     setJobFairs(data.jobFairs);
     setClubs(data.clubs);
+  };
+
+  // 事件操作
+  const addEvent = (newEvent) => {
+    const id = Math.max(0, ...events.map(e => e.id || 0)) + 1;
+    setEvents(prev => [...prev, { id, ...newEvent }]);
+  };
+
+  // 成绩操作
+  const addGrade = (newGrade) => {
+    setGrades(prev => [newGrade, ...prev]);
   };
 
   const handleEmailAuth = async (provider) => {
@@ -59,10 +71,14 @@ export const AppProvider = ({ children }) => {
     handleEmailAuth,
     selectedProvider,
     events,
+    addEvent,
     grades,
+    addGrade,
     jobFairs,
     clubs,
     currentTime,
+    studentTab,
+    setStudentTab,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

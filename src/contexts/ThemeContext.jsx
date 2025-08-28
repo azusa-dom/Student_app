@@ -11,10 +11,10 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light');
-  const [backgroundStyle, setBackgroundStyle] = useState('classic');
-  const [blurIntensity, setBlurIntensity] = useState(2);
-  const [transparency, setTransparency] = useState(10);
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [backgroundStyle, setBackgroundStyle] = useState(() => localStorage.getItem('backgroundStyle') || 'classic');
+  const [blurIntensity, setBlurIntensity] = useState(() => Number(localStorage.getItem('blurIntensity') || 2));
+  const [transparency, setTransparency] = useState(() => Number(localStorage.getItem('transparency') || 10));
 
   const themes = {
     dark: {
@@ -70,6 +70,20 @@ export const ThemeProvider = ({ children }) => {
       return () => mediaQuery.removeEventListener?.('change', handleChange);
     }
   }, [theme]);
+
+  // 持久化设置
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+  useEffect(() => {
+    localStorage.setItem('backgroundStyle', backgroundStyle);
+  }, [backgroundStyle]);
+  useEffect(() => {
+    localStorage.setItem('blurIntensity', String(blurIntensity));
+  }, [blurIntensity]);
+  useEffect(() => {
+    localStorage.setItem('transparency', String(transparency));
+  }, [transparency]);
 
   const getCurrentTheme = () => {
     if (theme === 'auto') {

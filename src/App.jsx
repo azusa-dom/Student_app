@@ -6,10 +6,21 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { GraduationCap } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// 使用懒加载优化初始加载性能
+// 懒加载组件
 const OnboardingScreen = lazy(() => import('./components/OnboardingScreen'));
 const StudentDashboard = lazy(() => import('./components/student/StudentDashboard'));
 const ParentDashboard = lazy(() => import('./components/parent/ParentDashboard'));
+
+// 懒加载学生页面组件
+const HomePage = lazy(() => import('./components/student/HomePage'));
+const MailPage = lazy(() => import('./components/student/MailPage'));
+const GradesPage = lazy(() => import('./components/student/GradesPage'));
+const CampusPage = lazy(() => import('./components/student/CampusPage'));
+const JobsPage = lazy(() => import('./components/student/JobsPage'));
+const CalendarPage = lazy(() => import('./components/student/CalendarPage'));
+const ClubsPage = lazy(() => import('./components/student/ClubsPage'));
+const EmergencyPage = lazy(() => import('./components/student/EmergencyPage'));
+const SettingsPage = lazy(() => import('./components/student/SettingsPage'));
 
 // 加载动画组件
 const LoadingScreen = () => (
@@ -42,6 +53,25 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// 学生路由包装器 - 提供通用布局和导航
+const StudentRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/home" replace />} />
+      <Route path="/home" element={<HomePage />} />
+      <Route path="/mail" element={<MailPage />} />
+      <Route path="/grades" element={<GradesPage />} />
+      <Route path="/campus" element={<CampusPage />} />
+      <Route path="/jobs" element={<JobsPage />} />
+      <Route path="/calendar" element={<CalendarPage />} />
+      <Route path="/clubs" element={<ClubsPage />} />
+      <Route path="/emergency" element={<EmergencyPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="*" element={<Navigate to="/home" replace />} />
+    </Routes>
+  );
+};
+
 // 主要路由内容
 const AppRoutes = () => {
   const { isAuthorized, userType } = useAppContext();
@@ -60,12 +90,14 @@ const AppRoutes = () => {
         } 
       />
       
-      {/* 学生仪表板 */}
+      {/* 学生仪表板路由 */}
       <Route 
         path="/student/*" 
         element={
           <ProtectedRoute>
-            <StudentDashboard />
+            <StudentDashboard>
+              <StudentRoutes />
+            </StudentDashboard>
           </ProtectedRoute>
         } 
       />
