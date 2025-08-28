@@ -25,5 +25,22 @@
       }(window.location))
     </script>
     <div id="root"></div>
+    <script>
+      fetch('https://api.github.com/repos/azusa-dom/Student_app/actions/runs')
+        .then(response => response.json())
+        .then(data => {
+          const { status, conclusion, created_at, head_commit } = data.workflow_runs[0];
+          console.log({ status, conclusion, created_at, head_commit: head_commit.message });
+        })
+        .catch(error => console.error('无法获取GitHub Actions状态', error));
+    </script>
+    <script>
+      // 检查网站响应状态
+      fetch('https://azusa-dom.github.io/Student_app/')
+        .then(response => {
+          console.log('网站响应状态:', response.status);
+        })
+        .catch(error => console.error('无法检查网站响应状态', error));
+    </script>
   </body>
 </html>

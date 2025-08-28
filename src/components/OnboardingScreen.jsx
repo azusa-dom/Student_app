@@ -1,86 +1,98 @@
-import React from 'react';
-import { useAppContext } from '../contexts/AppContext';
+import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useNavigate } from 'react-router-dom';
+import SimpleAuthTest from './SimpleAuthTest';
 
 const OnboardingScreen = () => {
-  const { userType, setUserType, handleEmailAuth, loading, selectedProvider } = useAppContext();
+  const [selectedRole, setSelectedRole] = useState('');
+  const { login } = useAuth();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+
+  const handleRoleSelect = (role) => {
+    setSelectedRole(role);
+  };
+
+  const handleContinue = () => {
+    if (selectedRole) {
+      // 创建用户数据
+      const userData = {
+        id: Date.now(),
+        name: selectedRole === 'student' ? 'Student User' : 'Parent User',
+        role: selectedRole
+      };
+
+      // 登录用户
+      login(userData, selectedRole);
+
+      // 导航到相应的仪表板
+      if (selectedRole === 'student') {
+        navigate('/student');
+      } else {
+        navigate('/parent');
+      }
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        
-        {/* Main Card */}
-        <div className="bg-white/10 backdrop-blur-2xl rounded-2xl border border-white/20 p-8 shadow-2xl">
-          
-          {/* Header */}
-          <div className="text-center mb-10">
-            <div className="w-16 h-16 bg-white/20 rounded-xl mx-auto mb-6 flex items-center justify-center backdrop-blur-sm">
-              <div className="w-8 h-8 bg-white rounded-lg"></div>
-            </div>
-            <h1 className="text-2xl font-light text-white mb-2">EduConnect</h1>
-            <div className="w-12 h-px bg-white/30 mx-auto"></div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+        {/* AuthProvider 测试 */}
+        <SimpleAuthTest />
 
-          {/* Auth Section */}
-          <div className="space-y-3 mb-8">
-            {!loading && !selectedProvider && (
-              <>
-                <button 
-                  onClick={() => handleEmailAuth('gmail')} 
-                  className="w-full py-4 px-6 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-50 transition-all duration-200"
-                >
-                  Continue with Gmail
-                </button>
-                
-                <button 
-                  onClick={() => handleEmailAuth('outlook')} 
-                  className="w-full py-4 px-6 bg-white/10 text-white rounded-lg font-medium border border-white/20 hover:bg-white/20 transition-all duration-200"
-                >
-                  Continue with Outlook
-                </button>
-              </>
-            )}
-
-            {loading && (
-              <div className="text-center py-8">
-                <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-white/80 text-sm">Connecting...</p>
-              </div>
-            )}
-          </div>
-
-          {/* User Type Toggle */}
-          {!loading && (
-            <div className="bg-white/10 p-1 rounded-lg border border-white/20">
-              <div className="grid grid-cols-2 gap-1">
-                <button 
-                  onClick={() => setUserType('student')} 
-                  className={`py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
-                    userType === 'student' 
-                      ? 'bg-white text-gray-900' 
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  Student
-                </button>
-                <button 
-                  onClick={() => setUserType('parent')} 
-                  className={`py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
-                    userType === 'parent' 
-                      ? 'bg-white text-gray-900' 
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  Parent
-                </button>
-              </div>
-            </div>
-          )}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">{t('welcome')}</h1>
+          <p className="text-gray-600">{t('selectRole')}</p>
         </div>
 
-        {/* Bottom minimal indicator */}
-        <div className="flex justify-center mt-8">
-          <div className="w-1 h-1 bg-white/30 rounded-full"></div>
+        <div className="space-y-4 mb-8">
+          <button
+            onClick={() => handleRoleSelect('student')}
+            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${
+              selectedRole === 'student'
+                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                : 'border-gray-200 hover:border-blue-300'
+            }`}
+          >
+            <div className="flex items-center">
+              <div className="text-2xl mr-3">🎓</div>
+              <div className="text-left">
+                <h3 className="font-semibold">{t('student')}</h3>
+                <p className="text-sm text-gray-500">{t('studentDescription')}</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleRoleSelect('parent')}
+            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${
+              selectedRole === 'parent'
+                ? 'border-purple-500 bg-purple-50 text-purple-700'
+                : 'border-gray-200 hover:border-purple-300'
+            }`}
+          >
+            <div className="flex items-center">
+              <div className="text-2xl mr-3">👨‍👩‍👧‍👦</div>
+              <div className="text-left">
+                <h3 className="font-semibold">{t('parent')}</h3>
+                <p className="text-sm text-gray-500">{t('parentDescription')}</p>
+              </div>
+            </div>
+          </button>
         </div>
+
+        <button
+          onClick={handleContinue}
+          disabled={!selectedRole}
+          className={`w-full py-3 rounded-xl font-semibold transition-all duration-200 ${
+            selectedRole
+              ? 'bg-blue-500 text-white hover:bg-blue-600'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          {t('continue')}
+        </button>
       </div>
     </div>
   );
