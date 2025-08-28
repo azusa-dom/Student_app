@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { AppProvider, useAppContext } from './contexts/AppContext';
 import { GraduationCap } from 'lucide-react';
 import ErrorBoundary from './components/ErrorBoundary';
 
