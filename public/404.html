@@ -4,17 +4,40 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/Student_app/graduation-cap.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>留学生家校通 - 页面未找到</title>
+    <title>留学生家校通 - 重定向中</title>
     <script type="text/javascript">
-      // 重定向到首页
-      window.location.href = '/Student_app/';
+      // GitHub Pages SPA路由解决方案
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+      
+      // 如果不是特殊的重定向路径，就重定向到首页
+      if (!window.location.search.startsWith('?/')) {
+        var segmentCount = 1;
+        var l = window.location;
+        l.replace(
+          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+          l.pathname.split('/').slice(0, 1 + segmentCount).join('/') + 
+          '/?/' + 
+          l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash
+        );
+      }
     </script>
   </head>
   <body>
     <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center;">
       <div>
-        <h1>404 - 页面未找到</h1>
-        <p>正在重定向到首页...</p>
+        <h1>正在加载...</h1>
+        <p>请稍等，正在为您重定向到正确的页面</p>
       </div>
     </div>
   </body>
