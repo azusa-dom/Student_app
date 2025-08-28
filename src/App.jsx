@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider, useAppContext } from './contexts/AppContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { DataProvider } from './contexts/DataContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { GraduationCap } from 'lucide-react';
@@ -44,7 +45,7 @@ const LoadingScreen = () => (
 
 // 受保护的路由组件
 const ProtectedRoute = ({ children }) => {
-  const { isAuthorized } = useAppContext();
+  const { isAuthorized } = useAuth();
   
   if (!isAuthorized) {
     return <Navigate to="/onboarding" replace />;
