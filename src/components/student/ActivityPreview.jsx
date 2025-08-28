@@ -15,11 +15,11 @@ const ActivityPreview = ({ onNavigate }) => {
     {
       id: 'project-yoga',
       icon: Clock,
-      title: 'Project Active Yoga',
-      subtitle: 'UCL Health & Wellness',
+      title: t('activities.projectYoga'),
+      subtitle: t('activities.healthWellness'),
       time: '17:00 - 18:00',
-      location: 'Sports Centre',
-      attendees: '25/30 人参与',
+      location: t('activities.sportsCenter'),
+      attendees: t('activities.participants', { count: '25/30' }),
       status: 'upcoming',
       bgColor: 'bg-green-50',
       iconColor: 'text-green-600',
@@ -32,7 +32,7 @@ const ActivityPreview = ({ onNavigate }) => {
     {
       id: 'assignments',
       number: '2',
-      label: '今日截止',
+      label: t('overview.dueToday'),
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
       action: () => onNavigate('/student/grades')
@@ -40,7 +40,7 @@ const ActivityPreview = ({ onNavigate }) => {
     {
       id: 'schedule',
       number: '1',
-      label: '课程安排',
+      label: t('overview.classes'),
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
       action: () => onNavigate('/student/calendar')
