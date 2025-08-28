@@ -60,7 +60,7 @@ const ParentDashboard = () => {
                       {React.createElement(getEventIcon(event.type), { className: "w-4 h-4 text-white" })}
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 text-sm">{event.title}</h4>
+                      <h4 className="font-medium text-gray-900 text-sm">{(event.title && typeof event.title === 'object') ? (event.title.zh || event.title.en) : event.title}</h4>
                       {event.course && <p className="text-xs text-blue-600">{event.course}</p>}
                       {event.due_at && <p className="text-xs text-red-600">截止: {formatTimeRemaining(event.due_at)}</p>}
                       {event.start_at && <p className="text-xs text-gray-500">{new Date(event.start_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}

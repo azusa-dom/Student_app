@@ -22,7 +22,7 @@ const SmartCard = ({ event }) => {
               <Icon className="w-7 h-7 text-white transition-transform group-hover:scale-110" />
             </div>
             <div className="flex-1 pt-1">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2 leading-tight">{event.title}</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2 leading-tight">{(event.title && typeof event.title === 'object') ? (event.title?.[event.language || 'zh'] || event.title?.zh || event.title?.en) : event.title}</h3>
               {event.course && (
                 <span className="inline-block px-4 py-1 text-sm font-medium bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 rounded-full shadow-sm">
                   {event.course}
