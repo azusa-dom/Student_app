@@ -11,6 +11,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 
 // 懒加载组件
 const OnboardingScreen = lazy(() => import('./components/NewOnboardingScreen'));
+const LoginPage = lazy(() => import('./auth/LoginPage'));
 const StudentRoutes = lazy(() => import('./components/StudentRoutes'));
 const ParentRoutes = lazy(() => import('./components/ParentRoutes'));
 const TestPage = lazy(() => import('./components/TestPage'));
@@ -30,6 +31,11 @@ function App() {
                         <Route path="/" element={
                           <Suspense fallback={<LoadingSpinner />}>
                             <OnboardingScreen />
+                          </Suspense>
+                        } />
+                        <Route path="/login" element={
+                          <Suspense fallback={<LoadingSpinner />}>
+                            <LoginPage />
                           </Suspense>
                         } />
                         <Route path="/test" element={
