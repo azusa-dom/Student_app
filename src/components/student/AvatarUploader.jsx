@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Camera, Upload, Check } from 'lucide-react';
+import { useUser } from '../../contexts/UserContext';
 
 const AvatarUploader = ({ currentAvatar, onAvatarChange }) => {
+  const { getInitials } = useUser();
   const [preview, setPreview] = useState(currentAvatar || null);
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  // 当currentAvatar属性改变时，更新preview状态
+  useEffect(() => {
+    setPreview(currentAvatar || null);
+  }, [currentAvatar]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -38,11 +45,6 @@ const AvatarUploader = ({ currentAvatar, onAvatarChange }) => {
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  // 生成默认头像（使用用户姓名首字符）
-  const getInitials = () => {
-    return '张'; // 可以从用户数据中获取
   };
 
   return (

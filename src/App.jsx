@@ -10,7 +10,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // 懒加载组件
-const OnboardingScreen = lazy(() => import('./components/OnboardingScreen'));
+const OnboardingScreen = lazy(() => import('./components/NewOnboardingScreen'));
 const StudentRoutes = lazy(() => import('./components/StudentRoutes'));
 const ParentRoutes = lazy(() => import('./components/ParentRoutes'));
 const TestPage = lazy(() => import('./components/TestPage'));
