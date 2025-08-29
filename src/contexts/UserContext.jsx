@@ -12,7 +12,7 @@ export const useUser = () => {
 };
 
 export const UserProvider = ({ children }) => {
-  const [userData] = useState({
+  const [userData, setUserData] = useState({
     name: '张伟',
     email: 'zhangwei@ucl.ac.uk',
     studentId: 'UCL2021001',
@@ -37,6 +37,7 @@ export const UserProvider = ({ children }) => {
   };
 
   const updateUserData = (newData) => {
+    setUserData(prev => ({ ...prev, ...newData }));
     console.log('Updating user data:', newData);
   };
 
