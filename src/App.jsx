@@ -12,6 +12,10 @@ import MailPage from './components/student/MailPage';
 import GradesPage from './components/student/GradesPage';
 import JobsPage from './components/student/JobsPage';
 import CalendarPage from './components/student/CalendarPage';
+import CampusPage from './components/student/CampusPage';
+import EmergencyPage from './components/student/EmergencyPage';
+import SettingsPage from './components/student/SettingsPage';
+import AIChat from './components/AIChat';
 
 function App() {
   return (
@@ -34,6 +38,10 @@ function App() {
                   <Route path="grades" element={<GradesPage />} />
                   <Route path="jobs" element={<JobsPage />} />
                   <Route path="calendar" element={<CalendarPage />} />
+                  <Route path="campus" element={<CampusPage />} />
+                  <Route path="emergency" element={<EmergencyPage />} />
+                  <Route path="ai" element={<AIChat />} />
+                  <Route path="settings" element={<SettingsPage />} />
                   <Route index element={<HomePage />} />
                 </Route>
                 

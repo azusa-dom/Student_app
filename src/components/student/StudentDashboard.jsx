@@ -1,14 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { Home, GraduationCap, Briefcase, Users, Phone, Settings, Bell, Plus, Globe, Calendar, Mail, Building2, Bot } from 'lucide-react';
 import { useAppContext } from '../../contexts/AppContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useUser } from '../../contexts/UserContext';
 import ActivityPreview from './ActivityPreview';
-import HomePage from './HomePage';
 
-const StudentDashboard = ({ children }) => {
+const StudentDashboard = () => {
   const { grades } = useAppContext();
   const { t, language, changeLanguage } = useLanguage();
   const { getThemeConfig, getBackgroundClass } = useTheme();
@@ -107,9 +106,9 @@ const StudentDashboard = ({ children }) => {
         </div>
       )}
 
-      {/* Main Content - 渲染子路由或默认主页 */}
+      {/* Main Content - 使用 Outlet 渲染子路由 */}
       <main className="max-w-4xl mx-auto px-6 py-2">
-        {children || (currentTab === 'home' ? <HomePage /> : null)}
+        <Outlet />
       </main>
 
       {/* Bottom Navigation */}
