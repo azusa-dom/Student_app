@@ -5,6 +5,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { AppProvider } from './contexts/AppContext';
+import { UserProvider } from './contexts/UserContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/LoadingSpinner';
 
@@ -20,37 +21,39 @@ function App() {
       <LanguageProvider>
         <ThemeProvider>
           <AuthProvider>
-            <DataProvider>
-              <AppProvider>
-                <Router basename="/Student_app">
-                  <div className="App">
-                    <Routes>
-                      <Route path="/" element={
-                        <Suspense fallback={<LoadingSpinner />}>
-                          <OnboardingScreen />
-                        </Suspense>
-                      } />
-                      <Route path="/test" element={
-                        <Suspense fallback={<LoadingSpinner />}>
-                          <TestPage />
-                        </Suspense>
-                      } />
-                      <Route path="/student/*" element={
-                        <Suspense fallback={<LoadingSpinner />}>
-                          <StudentRoutes />
-                        </Suspense>
-                      } />
-                      <Route path="/parent/*" element={
-                        <Suspense fallback={<LoadingSpinner />}>
-                          <ParentRoutes />
-                        </Suspense>
-                      } />
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                  </div>
-                </Router>
-              </AppProvider>
-            </DataProvider>
+            <UserProvider>
+              <DataProvider>
+                <AppProvider>
+                  <Router basename="/Student_app">
+                    <div className="App">
+                      <Routes>
+                        <Route path="/" element={
+                          <Suspense fallback={<LoadingSpinner />}>
+                            <OnboardingScreen />
+                          </Suspense>
+                        } />
+                        <Route path="/test" element={
+                          <Suspense fallback={<LoadingSpinner />}>
+                            <TestPage />
+                          </Suspense>
+                        } />
+                        <Route path="/student/*" element={
+                          <Suspense fallback={<LoadingSpinner />}>
+                            <StudentRoutes />
+                          </Suspense>
+                        } />
+                        <Route path="/parent/*" element={
+                          <Suspense fallback={<LoadingSpinner />}>
+                            <ParentRoutes />
+                          </Suspense>
+                        } />
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                      </Routes>
+                    </div>
+                  </Router>
+                </AppProvider>
+              </DataProvider>
+            </UserProvider>
           </AuthProvider>
         </ThemeProvider>
       </LanguageProvider>

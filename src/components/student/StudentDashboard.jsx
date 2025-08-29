@@ -4,12 +4,14 @@ import { Home, GraduationCap, Briefcase, Users, Phone, Settings, Bell, Plus, Glo
 import { useAppContext } from '../../contexts/AppContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useUser } from '../../contexts/UserContext';
 import ActivityPreview from './ActivityPreview';
 
 const StudentDashboard = ({ children }) => {
   const { grades } = useAppContext();
   const { t, language, changeLanguage } = useLanguage();
   const { getThemeConfig, getBackgroundClass } = useTheme();
+  const { userData, getInitials } = useUser();
   const location = useLocation();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -58,11 +60,17 @@ const StudentDashboard = ({ children }) => {
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className={`w-10 h-10 ${themeConfig.card} rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20`}>
-                <div className="w-6 h-6 bg-white rounded-lg"></div>
+              <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border-2 border-white/20">
+                {userData.avatar ? (
+                  <img src={userData.avatar} alt="用户头像" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                    <span className="text-white font-semibold text-sm">{getInitials()}</span>
+                  </div>
+                )}
               </div>
               <div>
-                <h2 className={`font-semibold ${themeConfig.text} text-lg`}>{t('user.name')} - UCL</h2>
+                <h2 className={`font-semibold ${themeConfig.text} text-lg`}>{userData.name} - UCL</h2>
                 <p className={`${themeConfig.textSecondary} text-sm flex items-center`}>
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-2"></span>
                   {currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} {t('user.status')}
