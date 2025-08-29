@@ -1,810 +1,404 @@
 import React, { useState, useEffect } from 'react';
-import { useUser } from '../../contexts/UserContext';
+import { Search, Bell, Settings, Globe, Star, Archive, Trash2, Edit3 } from 'lucide-react';
+import { useAppContext } from '../../contexts/AppContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const MailPage = () => {
-  const { userData } = useUser();
+  const { user } = useAppContext();
+  const { t } = useLanguage();
+  const [activeFilter, setActiveFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState('全部');
-  const [aiSorting, setAiSorting] = useState(false);
+  const [isAISorting, setIsAISorting] = useState(false);
 
-  // 模拟邮件数据
-  const [emails] = useState([
+  // 邮件数据
+  const [emails, setEmails] = useState([
     {
       id: 1,
       sender: {
         name: 'Prof. Smith',
-        category: '学术导师',
         avatar: 'PS',
-        avatarClass: 'prof-avatar'
+        category: '学术导师',
+        type: 'prof'
       },
       subject: 'Assignment 2 Feedback - Urgent Review Required',
       preview: '你好张伟，关于你提交的Assignment 2，我需要和你讨论一些重要的修改建议。请查看附件中的详细反馈，并安排时间进行一对一讨论...',
       timestamp: '2小时前',
-      priority: '紧急',
-      priorityClass: 'priority-high',
+      priority: 'high',
+      isRead: false,
+      isUrgent: true,
       tags: ['作业反馈', '重要'],
-      unread: true,
-      urgent: true
+      type: 'assignment'
     },
     {
       id: 2,
       sender: {
         name: 'UCL Registry',
-        category: '学校官方',
         avatar: 'UR',
-        avatarClass: 'registry-avatar'
+        category: '学校官方',
+        type: 'registry'
       },
       subject: 'Semester Results Available - Check Your Portal',
       preview: '亲爱的学生，您的本学期成绩已经公布，请登录学生门户网站查看详细成绩单。如有任何疑问，请联系学术事务办公室...',
       timestamp: '1天前',
-      priority: '重要',
-      priorityClass: 'priority-medium',
+      priority: 'medium',
+      isRead: false,
+      isUrgent: false,
       tags: ['成绩通知', '官方'],
-      unread: true,
-      urgent: false
+      type: 'notification'
     },
     {
       id: 3,
       sender: {
         name: 'Career Services',
-        category: '职业服务',
         avatar: 'CS',
-        avatarClass: 'career-avatar'
+        category: '职业服务',
+        type: 'career'
       },
       subject: 'Tech Career Fair 2024 - Registration Now Open',
       preview: '技术职业博览会2024即将开始报名！这是与顶尖科技公司面对面交流的绝佳机会，包括Google、Microsoft、Amazon等知名企业...',
       timestamp: '3天前',
-      priority: null,
-      priorityClass: null,
+      priority: 'normal',
+      isRead: true,
+      isUrgent: false,
       tags: ['职业发展', '招聘会'],
-      unread: false,
-      urgent: false
+      type: 'career'
     }
   ]);
 
-  const [filteredEmails, setFilteredEmails] = useState(emails);
+  // 统计数据
+  const mailStats = {
+    urgent: emails.filter(email => email.isUrgent).length,
+    pending: emails.filter(email => !email.isRead).length,
+    assignments: emails.filter(email => email.type === 'assignment').length,
+    accuracy: 95
+  };
+
+  // 筛选标签
+  const filterTabs = [
+    { id: 'all', label: '全部', count: emails.length },
+    { id: 'assignment', label: '作业', count: emails.filter(e => e.type === 'assignment').length },
+    { id: 'notification', label: '通知', count: emails.filter(e => e.type === 'notification').length },
+    { id: 'promotion', label: '推广', count: 0 },
+    { id: 'spam', label: '垃圾邮件', count: 0 },
+    { id: 'read', label: '已读', count: emails.filter(e => e.isRead).length },
+    { id: 'unread', label: '未读', count: emails.filter(e => !e.isRead).length }
+  ];
 
   // 过滤邮件
-  useEffect(() => {
-    let filtered = emails;
+  const filteredEmails = emails.filter(email => {
+    const matchesSearch = searchTerm === '' || 
+      email.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      email.preview.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      email.sender.name.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // 搜索过滤
-    if (searchTerm) {
-      filtered = filtered.filter(email =>
-        email.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        email.preview.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        email.sender.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+    const matchesFilter = activeFilter === 'all' || 
+      (activeFilter === 'read' && email.isRead) ||
+      (activeFilter === 'unread' && !email.isRead) ||
+      email.type === activeFilter;
 
-    // 标签过滤
-    if (activeFilter !== '全部') {
-      switch (activeFilter) {
-        case '作业':
-          filtered = filtered.filter(email => 
-            email.tags.some(tag => tag.includes('作业'))
-          );
-          break;
-        case '通知':
-          filtered = filtered.filter(email => 
-            email.tags.some(tag => tag.includes('通知'))
-          );
-          break;
-        case '未读':
-          filtered = filtered.filter(email => email.unread);
-          break;
-        case '已读':
-          filtered = filtered.filter(email => !email.unread);
-          break;
-        default:
-          break;
-      }
-    }
+    return matchesSearch && matchesFilter;
+  });
 
-    setFilteredEmails(filtered);
-  }, [searchTerm, activeFilter, emails]);
+  // 获取发件人头像样式
+  const getAvatarStyle = (type) => {
+    const styles = {
+      prof: 'bg-gradient-to-r from-blue-500 to-blue-600',
+      registry: 'bg-gradient-to-r from-green-500 to-green-600',
+      career: 'bg-gradient-to-r from-amber-500 to-amber-600'
+    };
+    return styles[type] || 'bg-gradient-to-r from-gray-500 to-gray-600';
+  };
+
+  // 获取邮件标签样式
+  const getTagStyle = (tag) => {
+    if (tag.includes('作业') || tag.includes('反馈')) return 'bg-blue-50 text-blue-600';
+    if (tag.includes('通知') || tag.includes('官方')) return 'bg-green-50 text-green-600';
+    if (tag.includes('职业') || tag.includes('招聘')) return 'bg-amber-50 text-amber-600';
+    return 'bg-gray-50 text-gray-600';
+  };
 
   // AI智能排序
-  const handleAiSort = () => {
-    setAiSorting(true);
+  const handleAISort = () => {
+    setIsAISorting(true);
     setTimeout(() => {
-      // 模拟AI排序逻辑：紧急邮件优先
-      const sorted = [...filteredEmails].sort((a, b) => {
-        if (a.urgent && !b.urgent) return -1;
-        if (!a.urgent && b.urgent) return 1;
-        if (a.unread && !b.unread) return -1;
-        if (!a.unread && b.unread) return 1;
-        return 0;
+      // 模拟AI排序：按优先级和时间排序
+      const sorted = [...emails].sort((a, b) => {
+        const priorityOrder = { high: 3, medium: 2, normal: 1 };
+        const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(b.timestamp) - new Date(a.timestamp);
       });
-      setFilteredEmails(sorted);
-      setAiSorting(false);
+      setEmails(sorted);
+      setIsAISorting(false);
     }, 2000);
   };
 
   // 邮件操作
-  const handleEmailAction = (emailId, action) => {
-    switch (action) {
-      case '标记为重要':
-        console.log(`标记邮件 ${emailId} 为重要`);
-        break;
-      case '归档':
-        console.log(`归档邮件 ${emailId}`);
-        break;
-      case '删除':
-        if (window.confirm('确定要删除这封邮件吗？')) {
-          console.log(`删除邮件 ${emailId}`);
+  const handleEmailAction = (emailId, action, event) => {
+    event.stopPropagation();
+    
+    setEmails(prevEmails => {
+      return prevEmails.map(email => {
+        if (email.id === emailId) {
+          switch (action) {
+            case 'star':
+              return { ...email, isStarred: !email.isStarred };
+            case 'read':
+              return { ...email, isRead: !email.isRead };
+            default:
+              return email;
+          }
         }
-        break;
-      default:
-        break;
+        return email;
+      }).filter(email => {
+        if (action === 'delete' && email.id === emailId) {
+          return false;
+        }
+        return true;
+      });
+    });
+
+    if (action === 'archive') {
+      // 归档动画效果
+      setTimeout(() => {
+        setEmails(prev => prev.filter(email => email.id !== emailId));
+      }, 300);
     }
   };
 
-  const getInitials = (name) => {
-    return name ? name.charAt(0).toUpperCase() : 'U';
-  };
-
   return (
-    <div style={styles.container}>
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
       {/* 顶部导航 */}
-      <div style={styles.header}>
-        <div style={styles.headerContent}>
-          <div style={styles.userInfo}>
-            <div style={styles.avatar}>
-              {getInitials(userData?.name || '用户')}
+      <div className="bg-white border-b border-gray-200 -mx-4 px-4 py-4 sticky top-0 z-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold">
+              张
             </div>
-            <div style={styles.userDetails}>
-              <h1 style={styles.title}>智能邮件中心</h1>
-              <div style={styles.userStatus}>
-                <div style={styles.statusDot}></div>
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">智能邮件中心</h1>
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span>02:53 已同步</span>
               </div>
             </div>
           </div>
-          <div style={styles.headerActions}>
-            <button style={styles.actionBtn} title="语言切换">🌐</button>
-            <button style={styles.actionBtn} title="通知">🔔</button>
-            <button style={styles.actionBtn} title="设置">⚙️</button>
+          <div className="flex items-center space-x-2">
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <Globe className="w-5 h-5" />
+            </button>
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <Bell className="w-5 h-5" />
+            </button>
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <Settings className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
 
       {/* AI智能摘要 */}
-      <div style={styles.aiSummary}>
-        <div style={styles.summaryContent}>
-          <div style={styles.summaryHeader}>
-            <div style={styles.aiIcon}>🤖</div>
+      <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-6 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-white opacity-10 rounded-full -mr-24 -mt-24"></div>
+        <div className="relative z-10">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center text-xl backdrop-blur-sm">
+              🤖
+            </div>
             <div>
-              <h2 style={styles.summaryTitle}>今日邮件摘要</h2>
-              <p style={styles.summarySubtitle}>AI为您智能分析和归类邮件内容</p>
+              <h2 className="text-xl font-semibold">今日邮件摘要</h2>
+              <p className="text-purple-100">AI为您智能分析和归类邮件内容</p>
             </div>
           </div>
-          <div style={styles.summaryStats}>
-            <div style={styles.statItem}>
-              <span style={styles.statNumber}>3</span>
-              <span style={styles.statLabel}>紧急邮件</span>
-            </div>
-            <div style={styles.statItem}>
-              <span style={styles.statNumber}>7</span>
-              <span style={styles.statLabel}>待处理</span>
-            </div>
-            <div style={styles.statItem}>
-              <span style={styles.statNumber}>2</span>
-              <span style={styles.statLabel}>作业相关</span>
-            </div>
-            <div style={styles.statItem}>
-              <span style={styles.statNumber}>95%</span>
-              <span style={styles.statLabel}>分类准确率</span>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: '紧急邮件', value: mailStats.urgent },
+              { label: '待处理', value: mailStats.pending },
+              { label: '作业相关', value: mailStats.assignments },
+              { label: '分类准确率', value: `${mailStats.accuracy}%` }
+            ].map((stat, index) => (
+              <div key={index} className="text-center bg-white bg-opacity-10 rounded-xl p-3 backdrop-blur-sm">
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-sm text-purple-100">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* 搜索和过滤栏 */}
-      <div style={styles.searchFilterBar}>
-        <div style={styles.searchSection}>
-          <div style={styles.searchContainer}>
-            <div style={styles.searchIcon}>🔍</div>
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        {/* 搜索栏 */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              style={styles.searchInput}
               placeholder="搜索邮件内容、发件人或关键词..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500 focus:ring-opacity-20 transition-colors"
             />
           </div>
           <button
-            style={styles.aiSortBtn}
-            onClick={handleAiSort}
-            disabled={aiSorting}
+            onClick={handleAISort}
+            disabled={isAISorting}
+            className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:transform-none flex items-center space-x-2"
           >
-            <span>{aiSorting ? '🔄' : '🧠'}</span>
-            <span>{aiSorting ? 'AI排序中...' : 'AI智能排序'}</span>
+            {isAISorting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>AI排序中...</span>
+              </>
+            ) : (
+              <>
+                <span>🧠</span>
+                <span>AI智能排序</span>
+              </>
+            )}
           </button>
         </div>
-        <div style={styles.filterTabs}>
-          {['全部', '作业', '通知', '推广', '垃圾邮件', '已读', '未读'].map(filter => (
-            <div
-              key={filter}
-              style={{
-                ...styles.filterTab,
-                ...(activeFilter === filter ? styles.filterTabActive : {})
-              }}
-              onClick={() => setActiveFilter(filter)}
+
+        {/* 过滤标签 */}
+        <div className="flex flex-wrap gap-2">
+          {filterTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveFilter(tab.id)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                activeFilter === tab.id
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
             >
-              {filter}
-              {(filter === '作业' || filter === '未读') && (
-                <span style={styles.badge}>
-                  {filter === '作业' ? '2' : '5'}
+              {tab.label}
+              {tab.count > 0 && (
+                <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                  activeFilter === tab.id ? 'bg-white text-purple-600' : 'bg-red-500 text-white'
+                }`}>
+                  {tab.count}
                 </span>
               )}
-            </div>
+            </button>
           ))}
         </div>
       </div>
 
       {/* 邮件列表 */}
-      <div style={styles.mailList}>
-        {filteredEmails.map(email => (
-          <div
-            key={email.id}
-            style={{
-              ...styles.mailItem,
-              ...(email.unread ? styles.mailItemUnread : {}),
-              ...(email.urgent ? styles.mailItemUrgent : {})
-            }}
-          >
-            <div style={styles.mailHeader}>
-              <div style={styles.senderInfo}>
-                <div style={{
-                  ...styles.senderAvatar,
-                  ...styles[email.sender.avatarClass]
-                }}>
-                  {email.sender.avatar}
-                </div>
-                <div style={styles.senderDetails}>
-                  <h3 style={styles.senderName}>{email.sender.name}</h3>
-                  <div style={styles.senderCategory}>{email.sender.category}</div>
-                </div>
-              </div>
-              <div style={styles.mailMeta}>
-                <div style={styles.timeStamp}>{email.timestamp}</div>
-                {email.priority && (
-                  <div style={{
-                    ...styles.priorityIndicator,
-                    ...styles[email.priorityClass]
-                  }}>
-                    {email.priority}
-                  </div>
-                )}
-                <div style={styles.mailActions}>
-                  <button
-                    style={styles.actionIcon}
-                    title="标记为重要"
-                    onClick={() => handleEmailAction(email.id, '标记为重要')}
-                  >
-                    ⭐
-                  </button>
-                  <button
-                    style={styles.actionIcon}
-                    title="归档"
-                    onClick={() => handleEmailAction(email.id, '归档')}
-                  >
-                    📁
-                  </button>
-                  <button
-                    style={styles.actionIcon}
-                    title="删除"
-                    onClick={() => handleEmailAction(email.id, '删除')}
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {filteredEmails.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              📧
             </div>
-            <div style={styles.mailContent}>
-              <div style={styles.mailSubject}>{email.subject}</div>
-              <div style={styles.mailPreview}>{email.preview}</div>
-            </div>
-            <div style={styles.mailTags}>
-              {email.tags.map((tag, index) => (
-                <div
-                  key={index}
-                  style={{
-                    ...styles.mailTag,
-                    ...(tag.includes('作业') ? styles.tagAssignment : {}),
-                    ...(tag.includes('通知') ? styles.tagNotification : {}),
-                    ...(tag.includes('职业') ? styles.tagCareer : {})
-                  }}
-                >
-                  {tag}
-                </div>
-              ))}
-            </div>
+            <p className="text-gray-500">没有找到匹配的邮件</p>
           </div>
-        ))}
+        ) : (
+          filteredEmails.map((email, index) => (
+            <div
+              key={email.id}
+              className={`p-6 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer transition-colors relative ${
+                !email.isRead ? 'bg-purple-50 bg-opacity-50 border-l-4 border-l-purple-500' : ''
+              } ${
+                email.isUrgent ? 'border-l-4 border-l-red-500 bg-red-50 bg-opacity-30' : ''
+              }`}
+            >
+              {/* 邮件头部 */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-semibold ${getAvatarStyle(email.sender.type)}`}>
+                    {email.sender.avatar}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{email.sender.name}</h3>
+                    <p className="text-sm text-gray-500">{email.sender.category}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-500">{email.timestamp}</span>
+                  {email.priority === 'high' && (
+                    <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-full">
+                      紧急
+                    </span>
+                  )}
+                  {email.priority === 'medium' && (
+                    <span className="px-2 py-1 bg-amber-100 text-amber-600 text-xs font-medium rounded-full">
+                      重要
+                    </span>
+                  )}
+                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => handleEmailAction(email.id, 'star', e)}
+                      className="p-1.5 text-gray-400 hover:text-amber-500 rounded-lg hover:bg-amber-50 transition-colors"
+                    >
+                      <Star className={`w-4 h-4 ${email.isStarred ? 'fill-amber-500 text-amber-500' : ''}`} />
+                    </button>
+                    <button
+                      onClick={(e) => handleEmailAction(email.id, 'archive', e)}
+                      className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <Archive className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => handleEmailAction(email.id, 'delete', e)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 邮件内容 */}
+              <div className="mb-3">
+                <h4 className="font-semibold text-gray-900 mb-1">{email.subject}</h4>
+                <p className="text-gray-600 text-sm line-clamp-2">{email.preview}</p>
+              </div>
+
+              {/* 邮件标签 */}
+              <div className="flex flex-wrap gap-2">
+                {email.tags.map((tag, tagIndex) => (
+                  <span
+                    key={tagIndex}
+                    className={`px-2 py-1 text-xs font-medium rounded-lg ${getTagStyle(tag)}`}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* AI建议面板 */}
-      <div style={styles.aiSuggestions}>
-        <div style={styles.suggestionsHeader}>
-          <div style={styles.suggestionIcon}>💡</div>
-          <div style={styles.suggestionsTitle}>AI智能建议</div>
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center text-white">
+            💡
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900">AI智能建议</h3>
         </div>
-        <div style={styles.suggestionList}>
-          <div style={styles.suggestionItem}>
-            <div style={styles.suggestionBullet}></div>
-            <div style={styles.suggestionText}>
-              Prof. Smith的邮件标记为紧急，建议优先回复并安排面谈时间
+        <div className="space-y-3">
+          {[
+            'Prof. Smith的邮件标记为紧急，建议优先回复并安排面谈时间',
+            '成绩通知邮件可以自动添加到日历提醒中，避免错过重要截止日期',
+            '职业博览会信息建议转发给感兴趣的同学，增加networking机会'
+          ].map((suggestion, index) => (
+            <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 cursor-pointer transition-colors">
+              <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
+              <p className="text-sm text-gray-700">{suggestion}</p>
             </div>
-          </div>
-          <div style={styles.suggestionItem}>
-            <div style={styles.suggestionBullet}></div>
-            <div style={styles.suggestionText}>
-              成绩通知邮件可以自动添加到日历提醒中，避免错过重要截止日期
-            </div>
-          </div>
-          <div style={styles.suggestionItem}>
-            <div style={styles.suggestionBullet}></div>
-            <div style={styles.suggestionText}>
-              职业博览会信息建议转发给感兴趣的同学，增加networking机会
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
       {/* 浮动写邮件按钮 */}
-      <button
-        style={styles.composeFab}
-        title="写邮件"
-        onClick={() => alert('打开写邮件窗口（示例）')}
-      >
-        ✏️
+      <button className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-110 flex items-center justify-center z-50">
+        <Edit3 className="w-6 h-6" />
       </button>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '0 16px',
-    backgroundColor: '#f8fafc',
-    minHeight: '100vh',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-  },
-  header: {
-    background: '#fff',
-    borderBottom: '1px solid #e2e8f0',
-    padding: '16px 0',
-    position: 'sticky',
-    top: 0,
-    zIndex: 100
-  },
-  headerContent: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  userInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px'
-  },
-  avatar: {
-    width: '40px',
-    height: '40px',
-    background: 'linear-gradient(135deg, #667eea, #764ba2)',
-    borderRadius: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#fff',
-    fontWeight: '600'
-  },
-  userDetails: {},
-  title: {
-    fontSize: '20px',
-    fontWeight: '600',
-    color: '#1a202c',
-    marginBottom: '2px',
-    margin: 0
-  },
-  userStatus: {
-    fontSize: '12px',
-    color: '#64748b',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px'
-  },
-  statusDot: {
-    width: '6px',
-    height: '6px',
-    background: '#10b981',
-    borderRadius: '50%'
-  },
-  headerActions: {
-    display: 'flex',
-    gap: '12px',
-    alignItems: 'center'
-  },
-  actionBtn: {
-    width: '40px',
-    height: '40px',
-    border: 'none',
-    background: '#f1f5f9',
-    borderRadius: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    color: '#64748b'
-  },
-  aiSummary: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    borderRadius: '20px',
-    padding: '24px',
-    margin: '24px 0',
-    color: '#fff',
-    position: 'relative',
-    overflow: 'hidden'
-  },
-  summaryContent: {
-    position: 'relative',
-    zIndex: 2
-  },
-  summaryHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    marginBottom: '16px'
-  },
-  aiIcon: {
-    width: '40px',
-    height: '40px',
-    background: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '20px',
-    backdropFilter: 'blur(10px)'
-  },
-  summaryTitle: {
-    margin: 0,
-    marginBottom: '4px'
-  },
-  summarySubtitle: {
-    margin: 0,
-    opacity: 0.9
-  },
-  summaryStats: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-    gap: '16px',
-    marginTop: '16px'
-  },
-  statItem: {
-    textAlign: 'center',
-    background: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: '12px',
-    padding: '12px',
-    backdropFilter: 'blur(10px)'
-  },
-  statNumber: {
-    fontSize: '24px',
-    fontWeight: '700',
-    marginBottom: '4px',
-    display: 'block'
-  },
-  statLabel: {
-    fontSize: '12px',
-    opacity: 0.9
-  },
-  searchFilterBar: {
-    background: '#fff',
-    borderRadius: '16px',
-    padding: '16px',
-    marginBottom: '24px',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-    border: '1px solid #e2e8f0'
-  },
-  searchSection: {
-    display: 'flex',
-    gap: '12px',
-    marginBottom: '16px'
-  },
-  searchContainer: {
-    position: 'relative',
-    flex: 1
-  },
-  searchIcon: {
-    position: 'absolute',
-    left: '12px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    color: '#64748b',
-    fontSize: '16px'
-  },
-  searchInput: {
-    flex: 1,
-    padding: '12px 16px 12px 40px',
-    border: '1px solid #e2e8f0',
-    borderRadius: '10px',
-    fontSize: '16px',
-    background: '#f8fafc',
-    width: '100%'
-  },
-  aiSortBtn: {
-    padding: '12px 20px',
-    background: 'linear-gradient(135deg, #10b981, #059669)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '10px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
-  },
-  filterTabs: {
-    display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap'
-  },
-  filterTab: {
-    padding: '8px 16px',
-    border: '1px solid #e2e8f0',
-    borderRadius: '20px',
-    background: '#fff',
-    color: '#64748b',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    fontSize: '14px',
-    fontWeight: '500',
-    position: 'relative'
-  },
-  filterTabActive: {
-    background: '#667eea',
-    color: '#fff',
-    borderColor: '#667eea'
-  },
-  badge: {
-    background: 'rgba(239, 68, 68, 0.9)',
-    color: '#fff',
-    borderRadius: '50%',
-    width: '18px',
-    height: '18px',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '11px',
-    fontWeight: '600',
-    marginLeft: '6px'
-  },
-  mailList: {
-    background: '#fff',
-    borderRadius: '16px',
-    overflow: 'hidden',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-    border: '1px solid #e2e8f0'
-  },
-  mailItem: {
-    padding: '20px',
-    borderBottom: '1px solid #f1f5f9',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    position: 'relative'
-  },
-  mailItemUnread: {
-    background: 'linear-gradient(90deg, rgba(102, 126, 234, 0.02), transparent)',
-    borderLeft: '3px solid #667eea'
-  },
-  mailItemUrgent: {
-    borderLeft: '3px solid #ef4444',
-    background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.02), transparent)'
-  },
-  mailHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '8px'
-  },
-  senderInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px'
-  },
-  senderAvatar: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: '600',
-    fontSize: '14px',
-    color: '#fff',
-    flexShrink: 0
-  },
-  'prof-avatar': {
-    background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)'
-  },
-  'registry-avatar': {
-    background: 'linear-gradient(135deg, #10b981, #059669)'
-  },
-  'career-avatar': {
-    background: 'linear-gradient(135deg, #f59e0b, #d97706)'
-  },
-  senderDetails: {},
-  senderName: {
-    fontWeight: '600',
-    color: '#1a202c',
-    fontSize: '16px',
-    marginBottom: '2px',
-    margin: 0
-  },
-  senderCategory: {
-    fontSize: '12px',
-    color: '#64748b'
-  },
-  mailMeta: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px'
-  },
-  timeStamp: {
-    fontSize: '12px',
-    color: '#64748b'
-  },
-  priorityIndicator: {
-    padding: '4px 8px',
-    borderRadius: '12px',
-    fontSize: '11px',
-    fontWeight: '600'
-  },
-  'priority-high': {
-    background: 'rgba(239, 68, 68, 0.1)',
-    color: '#dc2626'
-  },
-  'priority-medium': {
-    background: 'rgba(245, 158, 11, 0.1)',
-    color: '#d97706'
-  },
-  mailActions: {
-    display: 'flex',
-    gap: '8px',
-    opacity: 0,
-    transition: 'opacity 0.2s ease'
-  },
-  actionIcon: {
-    width: '32px',
-    height: '32px',
-    border: 'none',
-    background: '#f1f5f9',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    color: '#64748b'
-  },
-  mailContent: {
-    marginBottom: '12px'
-  },
-  mailSubject: {
-    fontWeight: '600',
-    color: '#1a202c',
-    marginBottom: '4px',
-    fontSize: '15px'
-  },
-  mailPreview: {
-    color: '#64748b',
-    fontSize: '14px',
-    lineHeight: '1.5'
-  },
-  mailTags: {
-    display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap',
-    marginTop: '8px'
-  },
-  mailTag: {
-    padding: '4px 8px',
-    background: '#f1f5f9',
-    borderRadius: '12px',
-    fontSize: '11px',
-    color: '#64748b',
-    fontWeight: '500'
-  },
-  tagAssignment: {
-    background: 'rgba(59, 130, 246, 0.1)',
-    color: '#3b82f6'
-  },
-  tagNotification: {
-    background: 'rgba(16, 185, 129, 0.1)',
-    color: '#10b981'
-  },
-  tagCareer: {
-    background: 'rgba(245, 158, 11, 0.1)',
-    color: '#f59e0b'
-  },
-  aiSuggestions: {
-    background: '#fff',
-    borderRadius: '16px',
-    padding: '20px',
-    marginTop: '24px',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-    border: '1px solid #e2e8f0'
-  },
-  suggestionsHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    marginBottom: '16px'
-  },
-  suggestionIcon: {
-    width: '32px',
-    height: '32px',
-    background: 'linear-gradient(135deg, #9333ea, #7c3aed)',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#fff',
-    fontSize: '16px'
-  },
-  suggestionsTitle: {
-    fontWeight: '600',
-    color: '#1a202c'
-  },
-  suggestionList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px'
-  },
-  suggestionItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '12px',
-    background: '#f8fafc',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
-  },
-  suggestionBullet: {
-    width: '8px',
-    height: '8px',
-    background: '#667eea',
-    borderRadius: '50%',
-    flexShrink: 0
-  },
-  suggestionText: {
-    fontSize: '14px',
-    color: '#374151',
-    flex: 1
-  },
-  composeFab: {
-    position: 'fixed',
-    bottom: '24px',
-    right: '24px',
-    width: '56px',
-    height: '56px',
-    background: 'linear-gradient(135deg, #667eea, #764ba2)',
-    border: 'none',
-    borderRadius: '16px',
-    color: '#fff',
-    fontSize: '24px',
-    cursor: 'pointer',
-    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
-    transition: 'all 0.2s ease',
-    zIndex: 1000
-  }
 };
 
 export default MailPage;

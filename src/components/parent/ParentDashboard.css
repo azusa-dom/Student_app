@@ -1,30 +1,125 @@
-/* 全局样式重置 */
-* {
+/* 作用域：只影响 .parent-dashboard 内部 */
+.parent-dashboard, .parent-dashboard * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* 容器布局 */
 .parent-dashboard {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  min-height: 100vh;
   color: #1a202c;
 }
 
-/* 头部区域 */
-.header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* 容器 */
+.parent-dashboard .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 顶部导航 */
+.parent-dashboard .header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.parent-dashboard .header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+}
+
+.parent-dashboard .user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.parent-dashboard .avatar {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
-  padding: 2rem;
-  border-radius: 0 0 24px 24px;
-  margin-bottom: 2rem;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.parent-dashboard .user-details h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 2px;
+}
+
+.parent-dashboard .user-status {
+  font-size: 13px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.parent-dashboard .status-dot {
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+}
+
+.parent-dashboard .header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.parent-dashboard .header-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.parent-dashboard .header-btn:hover {
+  background: #e2e8f0;
+  color: #374151;
+}
+
+/* 主内容区域 */
+.parent-dashboard .main-content {
+  padding: 24px 0;
+  display: grid;
+  gap: 24px;
+}
+
+/* 孩子信息卡片 */
+.parent-dashboard .student-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 32px;
+  color: white;
   position: relative;
   overflow: hidden;
 }
 
-.header::before {
+.parent-dashboard .student-card::before {
   content: '';
   position: absolute;
   top: -50%;
@@ -36,732 +131,713 @@
   z-index: 1;
 }
 
-.header-content {
+.parent-dashboard .student-info {
   position: relative;
   z-index: 2;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
-.welcome-section h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-  background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,255,255,1));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.welcome-section p {
-  font-size: 1.1rem;
-  opacity: 0.9;
-}
-
-.header-actions {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.notification-bell {
-  position: relative;
+.parent-dashboard .student-avatar {
+  width: 64px;
+  height: 64px;
   background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  padding: 0.75rem;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 1.2rem;
-  transition: all 0.2s ease;
-}
-
-.notification-bell:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-.notification-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #ef4444;
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.profile-menu {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.profile-menu:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-/* 主要内容区域 */
-.main-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
-
-/* 快速统计卡片 */
-.stats-overview {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.stat-card {
-  background: white;
-  padding: 1.5rem;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-}
-
-.stat-card.grades::before {
-  background: linear-gradient(90deg, #10b981, #059669);
-}
-
-.stat-card.attendance::before {
-  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-}
-
-.stat-card.assignments::before {
-  background: linear-gradient(90deg, #f59e0b, #d97706);
-}
-
-.stat-card.activities::before {
-  background: linear-gradient(90deg, #8b5cf6, #7c3aed);
-}
-
-.stat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  color: white;
+  font-size: 28px;
+  backdrop-filter: blur(10px);
 }
 
-.stat-icon.grades {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.stat-icon.attendance {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-}
-
-.stat-icon.assignments {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-}
-
-.stat-icon.activities {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-
-.stat-value {
-  font-size: 2rem;
+.parent-dashboard .student-details h3 {
+  font-size: 24px;
   font-weight: 700;
-  color: #1a202c;
-  margin-bottom: 0.25rem;
+  margin-bottom: 6px;
 }
 
-.stat-label {
-  color: #64748b;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
+.parent-dashboard .student-details p {
+  opacity: 0.9;
+  font-size: 16px;
+  margin-bottom: 2px;
 }
 
-.stat-change {
-  font-size: 0.85rem;
+.parent-dashboard .student-stats {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 24px;
+  text-align: center;
+}
+
+.parent-dashboard .stat-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px 16px;
+  backdrop-filter: blur(10px);
+}
+
+.parent-dashboard .stat-number {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.parent-dashboard .stat-label {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+/* 隐私设置通知 */
+.parent-dashboard .privacy-notice {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: start;
+  gap: 16px;
+}
+
+.parent-dashboard .privacy-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.parent-dashboard .privacy-content h4 {
+  color: #1e40af;
   font-weight: 600;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 16px;
 }
 
-.stat-change.positive {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-}
-
-.stat-change.negative {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-}
-
-.stat-change.neutral {
-  background: rgba(107, 114, 128, 0.1);
-  color: #6b7280;
+.parent-dashboard .privacy-content p {
+  color: #1e40af;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* 内容网格 */
-.content-grid {
+.parent-dashboard .content-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
 }
 
-/* 主要内容面板 */
-.main-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-/* 侧边栏 */
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-/* 卡片通用样式 */
-.card {
+.parent-dashboard .card {
   background: white;
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
 
-.card:hover {
+.parent-dashboard .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
-.card-header {
+.parent-dashboard .card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #f1f5f9;
 }
 
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1a202c;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.card-action {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: color 0.2s ease;
-}
-
-.card-action:hover {
-  color: #4c63d2;
-}
-
-/* 近期成绩卡片 */
-.grade-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 12px;
-  margin-bottom: 0.75rem;
-  transition: all 0.2s ease;
-}
-
-.grade-item:hover {
-  background: #f1f5f9;
-  transform: translateX(4px);
-}
-
-.grade-item:last-child {
-  margin-bottom: 0;
-}
-
-.grade-info h4 {
-  font-weight: 600;
-  color: #1a202c;
-  margin-bottom: 0.25rem;
-}
-
-.grade-meta {
-  color: #64748b;
-  font-size: 0.85rem;
-}
-
-.grade-score {
-  font-size: 1.5rem;
-  font-weight: 700;
-  padding: 0.5rem 1rem;
+.parent-dashboard .card-icon {
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
   color: white;
 }
 
-.grade-score.excellent {
+.parent-dashboard .card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a202c;
+}
+
+/* 近期安排 */
+.parent-dashboard .schedule-icon {
   background: linear-gradient(135deg, #10b981, #059669);
 }
 
-.grade-score.good {
+.parent-dashboard .schedule-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.parent-dashboard .schedule-item:hover {
+  background: #f1f5f9;
+}
+
+.parent-dashboard .schedule-type {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.parent-dashboard .type-class {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
 }
 
-.grade-score.average {
+.parent-dashboard .type-assignment {
   background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
-.grade-score.poor {
+.parent-dashboard .type-exam {
   background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
-/* 即将到期作业 */
-.assignment-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 12px;
-  margin-bottom: 0.75rem;
-  border-left: 4px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.assignment-item:hover {
-  background: #f1f5f9;
-  transform: translateX(4px);
-}
-
-.assignment-item.urgent {
-  border-left-color: #ef4444;
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.05), transparent);
-}
-
-.assignment-item.warning {
-  border-left-color: #f59e0b;
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.05), transparent);
-}
-
-.assignment-item.normal {
-  border-left-color: #10b981;
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.05), transparent);
-}
-
-.assignment-priority {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.assignment-priority.urgent {
-  background: #ef4444;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
-}
-
-.assignment-priority.warning {
-  background: #f59e0b;
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
-}
-
-.assignment-priority.normal {
-  background: #10b981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
-}
-
-.assignment-info h4 {
+.parent-dashboard .schedule-details h4 {
   font-weight: 600;
   color: #1a202c;
-  margin-bottom: 0.25rem;
+  margin-bottom: 4px;
+  font-size: 15px;
 }
 
-.assignment-meta {
-  color: #64748b;
-  font-size: 0.85rem;
+.parent-dashboard .schedule-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.assignment-due {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.due-date {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.due-date.urgent {
-  color: #ef4444;
-}
-
-.due-date.warning {
-  color: #f59e0b;
-}
-
-.due-date.normal {
-  color: #10b981;
-}
-
-.due-time {
-  font-size: 0.8rem;
+.parent-dashboard .schedule-meta span {
+  font-size: 13px;
   color: #64748b;
 }
 
-/* 出勤记录 */
-.attendance-summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.attendance-stat {
-  text-align: center;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.attendance-stat:hover {
-  background: #f1f5f9;
-  transform: translateY(-2px);
-}
-
-.attendance-number {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.attendance-number.present {
-  color: #10b981;
-}
-
-.attendance-number.absent {
-  color: #ef4444;
-}
-
-.attendance-number.late {
-  color: #f59e0b;
-}
-
-.attendance-label {
-  font-size: 0.85rem;
-  color: #64748b;
+.parent-dashboard .urgent {
+  color: #dc2626;
   font-weight: 500;
 }
 
-.attendance-calendar {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.25rem;
-  margin-top: 1rem;
+/* 成绩概览 */
+.parent-dashboard .grades-icon {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
 }
 
-.calendar-day {
-  aspect-ratio: 1;
+.parent-dashboard .grade-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.parent-dashboard .grade-info h4 {
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+.parent-dashboard .grade-info p {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.parent-dashboard .grade-score {
+  font-size: 20px;
+  font-weight: 700;
+  color: #10b981;
+}
+
+/* AI 成绩分析 */
+.parent-dashboard .ai-analysis-card {
+  border: 2px solid rgba(147, 51, 234, 0.1);
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.02), rgba(99, 102, 241, 0.02));
+}
+
+.parent-dashboard .ai-icon {
+  background: linear-gradient(135deg, #9333ea, #6366f1);
+}
+
+.parent-dashboard .ai-section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.parent-dashboard .ai-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.parent-dashboard .ai-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 综合表现圆形图 */
+.parent-dashboard .performance-chart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.parent-dashboard .chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.parent-dashboard .progress-ring {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(#9333ea 0deg 306deg, #e5e7eb 306deg 360deg);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.calendar-day.present {
-  background: rgba(16, 185, 129, 0.2);
+.parent-dashboard .progress-ring::before {
+  content: '';
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 50%;
+}
+
+.parent-dashboard .progress-value {
+  position: relative;
+  z-index: 1;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a202c;
+}
+
+.parent-dashboard .progress-label {
+  position: absolute;
+  bottom: 20px;
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+}
+
+.parent-dashboard .trend-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.parent-dashboard .trending-up {
+  background: rgba(16, 185, 129, 0.1);
   color: #059669;
 }
 
-.calendar-day.absent {
-  background: rgba(239, 68, 68, 0.2);
-  color: #dc2626;
+.parent-dashboard .trend-arrow {
+  font-size: 16px;
+  font-weight: bold;
 }
 
-.calendar-day.late {
-  background: rgba(245, 158, 11, 0.2);
-  color: #d97706;
-}
-
-.calendar-day.today {
-  background: #667eea;
-  color: white;
-}
-
-.calendar-day:hover {
-  transform: scale(1.1);
-}
-
-/* 联系教师按钮 */
-.contact-section {
-  margin-top: 1rem;
-}
-
-.contact-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.75rem;
-}
-
-.contact-btn {
+/* AI 洞察 */
+.parent-dashboard .insight-list {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.contact-btn.primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+.parent-dashboard .insight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 4px solid;
 }
 
-.contact-btn.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+.parent-dashboard .insight-positive {
+  background: rgba(16, 185, 129, 0.05);
+  border-left-color: #10b981;
 }
 
-.contact-btn.secondary {
+.parent-dashboard .insight-warning {
+  background: rgba(245, 158, 11, 0.05);
+  border-left-color: #f59e0b;
+}
+
+.parent-dashboard .insight-info {
+  background: rgba(59, 130, 246, 0.05);
+  border-left-color: #3b82f6;
+}
+
+.parent-dashboard .insight-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.parent-dashboard .insight-content {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #374151;
+}
+
+/* 学科对比 */
+.parent-dashboard .subject-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.parent-dashboard .subject-bar {
   background: #f8fafc;
-  color: #475569;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.parent-dashboard .subject-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.parent-dashboard .subject-name {
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.parent-dashboard .subject-score {
+  font-weight: 700;
+  color: #1a202c;
+  font-size: 16px;
+}
+
+.parent-dashboard .progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.parent-dashboard .progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.parent-dashboard .progress-fill.excellent {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.parent-dashboard .progress-fill.good {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+.parent-dashboard .progress-fill.fair {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.parent-dashboard .subject-rank {
+  font-size: 12px;
+  color: #64748b;
+  text-align: right;
+}
+
+/* 个性化建议 */
+.parent-dashboard .recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.parent-dashboard .recommendation-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
 }
 
-.contact-btn.secondary:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+.parent-dashboard .rec-priority {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  align-self: flex-start;
 }
 
-.contact-btn.success {
-  background: linear-gradient(135deg, #10b981, #059669);
+.parent-dashboard .rec-priority.high {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.parent-dashboard .rec-priority.medium {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.parent-dashboard .rec-content h5 {
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 6px;
+}
+
+.parent-dashboard .rec-content p {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* 紧急联系 */
+.parent-dashboard .emergency-icon {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.parent-dashboard .contact-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border: 1px solid;
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.parent-dashboard .contact-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.parent-dashboard .contact-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.parent-dashboard .contact-student {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.parent-dashboard .contact-student:hover {
+  background: #fee2e2;
+}
+
+.parent-dashboard .contact-student .contact-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.parent-dashboard .contact-student .contact-arrow {
+  color: #dc2626;
+}
+
+.parent-dashboard .contact-school {
+  border-color: #dbeafe;
+  background: #eff6ff;
+}
+
+.parent-dashboard .contact-school:hover {
+  background: #dbeafe;
+}
+
+.parent-dashboard .contact-school .contact-icon {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.parent-dashboard .contact-school .contact-arrow {
+  color: #3b82f6;
+}
+
+.parent-dashboard .contact-details h4 {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.parent-dashboard .contact-details p {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.parent-dashboard .contact-arrow {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* 本周摘要 */
+.parent-dashboard .summary-icon {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+
+.parent-dashboard .summary-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.parent-dashboard .summary-success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.parent-dashboard .summary-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.parent-dashboard .summary-info {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.parent-dashboard .summary-indicator {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.parent-dashboard .summary-success .summary-indicator {
+  background: #10b981;
   color: white;
 }
 
-.contact-btn.success:hover {
+.parent-dashboard .summary-warning .summary-indicator {
+  background: #f59e0b;
+  color: white;
+}
+
+.parent-dashboard .summary-info .summary-indicator {
+  background: #3b82f6;
+  color: white;
+}
+
+.parent-dashboard .summary-text {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.parent-dashboard .summary-success .summary-text {
+  color: #047857;
+}
+
+.parent-dashboard .summary-warning .summary-text {
+  color: #b45309;
+}
+
+.parent-dashboard .summary-info .summary-text {
+  color: #1e40af;
+}
+
+/* 底部操作区域 */
+.parent-dashboard .bottom-actions {
+  text-align: center;
+  margin-top: 32px;
+  padding: 24px 0;
+}
+
+.parent-dashboard .primary-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.parent-dashboard .primary-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 /* 响应式设计 */
-@media (max-width: 1024px) {
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .sidebar {
-    order: -1;
-  }
-}
-
 @media (max-width: 768px) {
-  .header {
-    padding: 1.5rem;
-  }
-  
-  .header-content {
+  .parent-dashboard .container { padding: 0 16px }
+  .parent-dashboard .student-card { padding: 24px }
+  .parent-dashboard .student-info {
     flex-direction: column;
     text-align: center;
+    gap: 16px;
   }
-  
-  .welcome-section h1 {
-    font-size: 2rem;
+  .parent-dashboard .student-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
-  
-  .stats-overview {
-    grid-template-columns: 1fr;
-  }
-  
-  .main-content {
-    padding: 0 0.5rem;
-  }
-  
-  .contact-buttons {
-    grid-template-columns: 1fr;
-  }
-  
-  .attendance-calendar {
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.125rem;
-  }
-  
-  .calendar-day {
-    font-size: 0.7rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .card {
-    padding: 1rem;
-  }
-  
-  .assignment-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  
-  .assignment-due {
-    text-align: left;
-    width: 100%;
-  }
-  
-  .grade-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
+  .parent-dashboard .content-grid { grid-template-columns: 1fr }
+  .parent-dashboard .main-content { padding: 16px 0 }
 }
 
 /* 动画效果 */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px) }
+  to { opacity: 1; transform: translateY(0) }
 }
 
-.animate-fade-in {
+.parent-dashboard .animate-fade-in {
   animation: fadeInUp 0.6s ease-out forwards;
-}
-
-/* 加载状态 */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #e2e8f0;
-  border-top: 4px solid #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 空状态 */
-.empty-state {
-  text-align: center;
-  padding: 2rem;
-  color: #64748b;
-}
-
-.empty-state-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
-
-.empty-state-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.empty-state-description {
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-/* 工具提示 */
-.tooltip {
-  position: relative;
-  display: inline-block;
-}
-
-.tooltip:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1a202c;
-  color: white;
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  z-index: 1000;
-  margin-bottom: 5px;
-}
-
-.tooltip:hover::before {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: #1a202c;
-  z-index: 1000;
 }

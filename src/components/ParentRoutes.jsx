@@ -5,8 +5,9 @@ import ParentDashboard from './parent/ParentDashboard';
 const ParentRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<ParentDashboard />} />
-      <Route path="/*" element={<ParentDashboard />} />
+      <Route path="/" element={<Navigate to="/parent/dashboard" replace />} />
+      <Route path="/dashboard" element={<ParentDashboard />} />
+      <Route path="/*" element={<Navigate to="/parent/dashboard" replace />} />
     </Routes>
   );
 };
