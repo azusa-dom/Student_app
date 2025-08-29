@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import StudentDashboard from './student/StudentDashboard';
+import MobileStudentDashboard from './MobileStudentDashboard';
 import HomePage from './student/HomePage';
 import TestHomePage from './student/TestHomePage';
 import GradesPage from './student/GradesPage';
@@ -14,7 +14,7 @@ import AIChat from './AIChat';
 
 const StudentRoutes = () => {
   return (
-    <StudentDashboard>
+    <MobileStudentDashboard>
       <Routes>
         <Route path="/" element={<Navigate to="home" replace />} />
         <Route path="/home" element={<HomePage />} />
@@ -28,7 +28,7 @@ const StudentRoutes = () => {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="home" replace />} />
       </Routes>
-    </StudentDashboard>
+    </MobileStudentDashboard>
   );
 };
 
