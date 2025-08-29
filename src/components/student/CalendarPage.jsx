@@ -104,7 +104,7 @@ const CalendarPage = () => {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {/* 星期标题 */}
         <div className="grid grid-cols-7 border-b border-gray-200">
-          {weekDays.map(day => (
+          {(weekDays || []).map(day => (
             <div key={day} className="p-3 text-center text-sm font-medium text-gray-500 bg-gray-50">
               {day}
             </div>
@@ -113,7 +113,7 @@ const CalendarPage = () => {
         
         {/* 日期网格 */}
         <div className="grid grid-cols-7">
-          {monthDates.map(({ date, isCurrentMonth }, index) => {
+          {(monthDates || []).map(({ date, isCurrentMonth }, index) => {
             const dayEvents = getEventsForDate(date);
             const isToday = date.toDateString() === new Date().toDateString();
             const isSelected = date.toDateString() === selectedDate.toDateString();
@@ -170,7 +170,7 @@ const CalendarPage = () => {
         {/* 日期标题 */}
         <div className="grid grid-cols-8 border-b border-gray-200">
           <div className="p-3 bg-gray-50"></div>
-          {weekDates.map(date => {
+          {(weekDates || []).map(date => {
             const isToday = date.toDateString() === new Date().toDateString();
             return (
               <div key={date.toISOString()} className={`p-3 text-center ${isToday ? 'bg-blue-50' : 'bg-gray-50'}`}>
@@ -196,7 +196,7 @@ const CalendarPage = () => {
               ))}
             </div>
             
-            {weekDates.map(date => (
+            {(weekDates || []).map(date => (
               <div key={date.toISOString()} className="border-r border-gray-200">
                 {hours.map(hour => {
                   const dayEvents = getEventsForDate(date).filter(event => {

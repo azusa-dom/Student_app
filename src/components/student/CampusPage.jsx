@@ -193,7 +193,7 @@ const CampusPage = () => {
             <p>一站式校园生活服务，让您的学习生活更便捷高效</p>
             
             <div className="quick-stats">
-              {campusStats.map((stat, index) => (
+              {(campusStats || []).map((stat, index) => (
                 <div key={index} className="stat-item">
                   <span className="stat-number">{stat.number}</span>
                   <span className="stat-label">{stat.label}</span>

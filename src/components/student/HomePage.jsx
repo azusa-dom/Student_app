@@ -159,7 +159,7 @@ const HomePage = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">今日概览</h2>
         <div className="grid grid-cols-1 gap-4">
-          {todayHighlights.map((highlight) => (
+          {(todayHighlights || []).map((highlight) => (
             <div key={highlight.id} className="flex items-center space-x-4 p-3 rounded-lg bg-gray-50">
               <div className={`w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center`}>
                 <highlight.icon className={`w-5 h-5 ${highlight.color}`} />
@@ -181,7 +181,7 @@ const HomePage = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">快速操作</h2>
         <div className="grid grid-cols-2 gap-4">
-          {quickActions.map((action) => (
+          {(quickActions || []).map((action) => (
             <button
               key={action.id}
               className="p-4 rounded-xl border border-gray-200 hover:shadow-md hover:border-purple-200 transition-all text-left group"
@@ -215,7 +215,7 @@ const HomePage = () => {
           </button>
         </div>
         <div className="space-y-3">
-          {recentNotifications.map((notification) => (
+          {(recentNotifications || []).map((notification) => (
             <div key={notification.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center mt-0.5 ${
                 notification.urgent ? 'bg-red-100' : 'bg-blue-100'

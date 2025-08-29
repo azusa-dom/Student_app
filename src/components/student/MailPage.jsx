@@ -261,7 +261,7 @@ const MailPage = () => {
 
         {/* 过滤标签 */}
         <div className="flex flex-wrap gap-2">
-          {filterTabs.map((tab) => (
+          {(filterTabs || []).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveFilter(tab.id)}
@@ -294,7 +294,7 @@ const MailPage = () => {
             <p className="text-gray-500">没有找到匹配的邮件</p>
           </div>
         ) : (
-          filteredEmails.map((email, index) => (
+          (filteredEmails || []).map((email, index) => (
             <div
               key={email.id}
               className={`p-6 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer transition-colors relative ${
