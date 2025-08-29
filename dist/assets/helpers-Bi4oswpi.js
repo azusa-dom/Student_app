@@ -1,4 +1,4 @@
-import{c as e}from"./index-Bywoeh_0.js";/**
+import{c as e}from"./index-BB0Wm9aF.js";/**
  * @license lucide-react v0.309.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -48,4 +48,4 @@ import{c as e}from"./index-Bywoeh_0.js";/**
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
- */const f=e("User",[["path",{d:"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2",key:"975kel"}],["circle",{cx:"12",cy:"7",r:"4",key:"17ys0d"}]]),g=a=>{const t=new Date,n=new Date(a).getTime()-t.getTime();if(n<0)return"已过期";const o=Math.floor(n/(1e3*60*60)),r=Math.floor(o/24);return r>0?`${r}天后`:o>0?`${o}小时后`:"即将到期"},M=a=>({class_event:i,assignment_due:y,system_notice:c,activity:s,recruitment:l})[a]||s,u=a=>({class_event:"from-blue-500 to-indigo-600",assignment_due:"from-red-500 to-pink-600",system_notice:"from-amber-500 to-orange-600",activity:"from-green-500 to-emerald-600",recruitment:"from-purple-500 to-violet-600"})[a]||"from-blue-500 to-indigo-600";export{l as B,y as C,k as G,p as M,m as P,v as S,f as U,u as a,s as b,i as c,c as d,g as f,M as g};
+ */const f=e("User",[["path",{d:"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2",key:"975kel"}],["circle",{cx:"12",cy:"7",r:"4",key:"17ys0d"}]]),g=a=>{const t=new Date,n=new Date(a).getTime()-t.getTime();if(n<0)return"已过期";const o=Math.floor(n/(1e3*60*60)),r=Math.floor(o/24);return r>0?`${r}天后`:o>0?`${o}小时后`:"即将到期"},M=a=>({class_event:i,assignment_due:y,system_notice:c,activity:s,recruitment:l})[a]||s,u=a=>({class_event:"from-blue-500 to-indigo-600",assignment_due:"from-red-500 to-pink-600",system_notice:"from-amber-500 to-orange-600",activity:"from-green-500 to-emerald-600",recruitment:"from-purple-500 to-violet-600"})[a]||"from-blue-500 to-indigo-600";export{i as B,y as C,k as G,p as M,m as P,v as S,f as U,s as a,l as b,c,u as d,g as f,M as g};
