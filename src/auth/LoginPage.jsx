@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./LoginPage.css"; // 把你原本的 <style> 复制进去
+import "./LoginPage.css";
 
 const LoginPage = () => {
   const [selectedRole, setSelectedRole] = useState(null);
