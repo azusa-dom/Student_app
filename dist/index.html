@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/Student_app/graduation-cap.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 暂时移除CSP以确保应用能正常运行 -->
+  <!-- <meta http-equiv="Content-Security-Policy" content="..." /> -->
+    <title>留学生家校通</title>
+    <script type="module" crossorigin src="/Student_app/assets/index-BO9KiXnO.js"></script>
+    <link rel="stylesheet" crossorigin href="/Student_app/assets/index-B2zDzK7-.css">
+  </head>
+  <body>
+    <script type="text/javascript">
+      // GitHub Pages SPA路由解决方案 - 处理从404页面传来的路径
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+    <div id="root"></div>
+  </body>
+</html>
