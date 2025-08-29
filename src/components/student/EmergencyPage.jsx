@@ -1,106 +1,311 @@
-import React from 'react';
-import { Phone } from 'lucide-react';
+import React, { useState } from 'react';
+import { Phone, AlertTriangle, Shield, Clock, MapPin, Globe, Heart, Users } from 'lucide-react';
+import './EmergencyPage.css';
 
 const EmergencyPage = () => {
+  const [activeTab, setActiveTab] = useState('emergency');
+
+  const emergencyContacts = [
+    {
+      id: 'police',
+      icon: '🚔',
+      title: '英国紧急报警',
+      number: '999',
+      description: '火警、急救、警察 - 24小时紧急服务',
+      type: 'critical',
+      available: '24/7全天候'
+    },
+    {
+      id: 'non-emergency',
+      icon: '📞',
+      title: '非紧急警察热线',
+      number: '101',
+      description: '非紧急情况下的警察服务',
+      type: 'standard',
+      available: '24/7全天候'
+    },
+    {
+      id: 'nhs',
+      icon: '🏥',
+      title: 'NHS 24小时热线',
+      number: '111',
+      description: '医疗建议和非紧急医疗服务',
+      type: 'medical',
+      available: '24/7全天候'
+    }
+  ];
+
+  const personalContacts = [
+    {
+      id: 'parents',
+      icon: '👨‍👩‍👧‍👦',
+      title: '联系家人',
+      description: '一键拨打家庭紧急联系人',
+      action: 'call-family',
+      type: 'family'
+    },
+    {
+      id: 'ucl-security',
+      icon: '🛡️',
+      title: 'UCL 校园安全',
+      number: '+44 20 3108 1000',
+      description: '校园内紧急情况和安全服务',
+      type: 'university',
+      available: '24/7全天候'
+    },
+    {
+      id: 'chinese-embassy',
+      icon: '🇨🇳',
+      title: '中国驻英领事馆',
+      number: '+44 20 7299 4049',
+      description: '领事保护和协助服务',
+      type: 'consular',
+      available: '工作时间'
+    }
+  ];
+
+  const supportServices = [
+    {
+      id: 'mental-health',
+      icon: '🧠',
+      title: '心理健康支持',
+      services: [
+        { name: 'UCL学生心理咨询', number: '+44 20 7679 0100' },
+        { name: 'Samaritans危机热线', number: '116 123' },
+        { name: 'Mind心理健康慈善机构', number: '0300 123 3393' }
+      ]
+    },
+    {
+      id: 'academic-support',
+      icon: '📚',
+      title: '学术紧急支持',
+      services: [
+        { name: 'UCL学生服务', number: '+44 20 7679 3000' },
+        { name: '国际学生办公室', number: '+44 20 7679 7765' },
+        { name: '学术不端举报', number: '+44 20 7679 2000' }
+      ]
+    }
+  ];
+
+  const quickActions = [
+    { id: 'location', icon: '📍', title: '发送位置', description: '向紧急联系人发送当前位置' },
+    { id: 'medical', icon: '💊', title: '医疗信息', description: '查看个人医疗信息和过敏史' },
+    { id: 'insurance', icon: '🛡️', title: '保险信息', description: '查看医疗保险和联系方式' },
+    { id: 'embassy', icon: '🏛️', title: '领事服务', description: '快速访问领事馆服务' }
+  ];
+
+  const handleEmergencyCall = (number) => {
+    if (number) {
+      window.location.href = `tel:${number}`;
+    }
+  };
+
+  const handleQuickAction = (actionId) => {
+    console.log('执行快速操作:', actionId);
+    // 这里可以添加具体的操作逻辑
+  };
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="relative group mb-8">
-        <div className="absolute inset-0 bg-gradient-to-tr from-red-600 to-rose-500 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
-        <div className="relative bg-gradient-to-tr from-red-600 via-rose-500 to-pink-500 rounded-3xl p-8 text-white overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-32 translate-x-32"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full translate-y-24 -translate-x-24"></div>
-          
-          <h2 className="text-3xl font-bold mb-4">紧急联系</h2>
-          <p className="text-red-100 text-lg mb-4">如遇紧急情况，请立即拨打以下电话获取帮助</p>
-          
-          <div className="grid grid-cols-3 gap-6">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-black/5 rounded-2xl backdrop-blur-lg group-hover:bg-black/10 transition-colors"></div>
-              <div className="relative p-4 text-center">
-                <Phone className="w-6 h-6 text-white mx-auto mb-2" />
-                <div className="text-sm text-red-100">24/7全天候支持</div>
-              </div>
+    <div className="emergency">
+      <div className="container">
+        {/* 头部警告区域 */}
+        <div className="emergency-header animate-fade-in">
+          <div className="header-content">
+            <div className="alert-indicator">
+              <AlertTriangle className="alert-icon" />
             </div>
-            <div className="relative group">
-              <div className="absolute inset-0 bg-black/5 rounded-2xl backdrop-blur-lg group-hover:bg-black/10 transition-colors"></div>
-              <div className="relative p-4 text-center">
-                <div className="text-3xl font-bold mb-1">112</div>
-                <div className="text-sm text-red-100">英国报警电话</div>
+            <h1>紧急联系中心</h1>
+            <p>如遇紧急情况，请立即拨打相应电话获取帮助</p>
+            
+            <div className="quick-stats">
+              <div className="stat-item critical">
+                <span className="stat-number">999</span>
+                <span className="stat-label">紧急报警</span>
               </div>
-            </div>
-            <div className="relative group">
-              <div className="absolute inset-0 bg-black/5 rounded-2xl backdrop-blur-lg group-hover:bg-black/10 transition-colors"></div>
-              <div className="relative p-4 text-center">
-                <div className="text-3xl font-bold mb-1">999</div>
-                <div className="text-sm text-red-100">救护车</div>
+              <div className="stat-item medical">
+                <span className="stat-number">111</span>
+                <span className="stat-label">医疗热线</span>
+              </div>
+              <div className="stat-item university">
+                <span className="stat-number">24/7</span>
+                <span className="stat-label">校园安全</span>
+              </div>
+              <div className="stat-item consular">
+                <Clock className="stat-icon" />
+                <span className="stat-label">领事服务</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid gap-6">
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
-          <button className="relative w-full flex items-center justify-between p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl shadow-red-500/5 hover:shadow-2xl hover:shadow-red-500/10 transition-all duration-300">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-red-500 to-rose-400 rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                <div className="relative w-14 h-14 bg-gradient-to-tr from-red-500 to-rose-400 rounded-xl flex items-center justify-center">
-                  <Phone className="w-7 h-7 text-white transform group-hover:rotate-12 transition-transform" />
-                </div>
-              </div>
-              <div className="text-left">
-                <p className="text-lg font-semibold text-gray-900 mb-1">呼叫家长</p>
-                <p className="text-base text-gray-600">一键拨号</p>
-              </div>
-            </div>
-            <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center group-hover:bg-red-100 transition-colors">
-              <span className="text-red-600 text-lg font-bold transform group-hover:translate-x-1 transition-transform">→</span>
-            </div>
-          </button>
+        {/* 标签导航 */}
+        <div className="tab-navigation animate-fade-in">
+          {[
+            { id: 'emergency', label: '紧急联系', icon: <Phone className="tab-icon" /> },
+            { id: 'support', label: '支持服务', icon: <Heart className="tab-icon" /> },
+            { id: 'quick', label: '快速操作', icon: <Shield className="tab-icon" /> }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
         </div>
-        
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
-          <button className="relative w-full flex items-center justify-between p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl shadow-blue-500/5 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-blue-500 to-indigo-400 rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                <div className="relative w-14 h-14 bg-gradient-to-tr from-blue-500 to-indigo-400 rounded-xl flex items-center justify-center">
-                  <Phone className="w-7 h-7 text-white transform group-hover:rotate-12 transition-transform" />
+
+        {/* 紧急联系 */}
+        {activeTab === 'emergency' && (
+          <div className="emergency-grid">
+            <div className="section-title">
+              <h2>🚨 紧急服务热线</h2>
+              <p className="muted">生命安全相关的紧急情况</p>
+            </div>
+            
+            <div className="contacts-grid critical-contacts">
+              {emergencyContacts.map((contact) => (
+                <div key={contact.id} className={`contact-card ${contact.type} animate-fade-in`}>
+                  <div className="contact-header">
+                    <div className="contact-icon">{contact.icon}</div>
+                    <div className="contact-info">
+                      <h3>{contact.title}</h3>
+                      <p>{contact.description}</p>
+                      <div className="availability">
+                        <Clock className="availability-icon" />
+                        {contact.available}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="contact-action">
+                    <button 
+                      onClick={() => handleEmergencyCall(contact.number)}
+                      className={`call-btn ${contact.type}`}
+                    >
+                      <Phone className="call-icon" />
+                      <span className="call-number">{contact.number}</span>
+                      <span className="call-text">立即拨打</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="section-title">
+              <h2>👥 个人紧急联系</h2>
+              <p className="muted">家人、学校和领事馆联系方式</p>
+            </div>
+            
+            <div className="contacts-grid personal-contacts">
+              {personalContacts.map((contact) => (
+                <div key={contact.id} className={`contact-card ${contact.type} animate-fade-in`}>
+                  <div className="contact-header">
+                    <div className="contact-icon">{contact.icon}</div>
+                    <div className="contact-info">
+                      <h3>{contact.title}</h3>
+                      <p>{contact.description}</p>
+                      {contact.available && (
+                        <div className="availability">
+                          <Clock className="availability-icon" />
+                          {contact.available}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="contact-action">
+                    <button 
+                      onClick={() => handleEmergencyCall(contact.number)}
+                      className={`call-btn ${contact.type}`}
+                    >
+                      <Phone className="call-icon" />
+                      {contact.number ? (
+                        <>
+                          <span className="call-number">{contact.number}</span>
+                          <span className="call-text">拨打</span>
+                        </>
+                      ) : (
+                        <span className="call-text">联系</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 支持服务 */}
+        {activeTab === 'support' && (
+          <div className="support-grid">
+            {supportServices.map((service) => (
+              <div key={service.id} className="support-card animate-fade-in">
+                <div className="support-header">
+                  <div className="support-icon">{service.icon}</div>
+                  <div className="support-info">
+                    <h3>{service.title}</h3>
+                  </div>
+                </div>
+                
+                <div className="support-services">
+                  {service.services.map((item, index) => (
+                    <div key={index} className="service-item">
+                      <div className="service-info">
+                        <span className="service-name">{item.name}</span>
+                      </div>
+                      <button 
+                        onClick={() => handleEmergencyCall(item.number)}
+                        className="service-call-btn"
+                      >
+                        <Phone className="service-call-icon" />
+                        {item.number}
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="text-left">
-                <p className="text-lg font-semibold text-gray-900 mb-1">UCL学生服务</p>
-                <p className="text-base text-gray-600">24小时热线</p>
+            ))}
+          </div>
+        )}
+
+        {/* 快速操作 */}
+        {activeTab === 'quick' && (
+          <div className="quick-actions-grid">
+            {quickActions.map((action) => (
+              <div key={action.id} className="quick-action-card animate-fade-in">
+                <div className="quick-action-icon">{action.icon}</div>
+                <h3>{action.title}</h3>
+                <p>{action.description}</p>
+                <button 
+                  onClick={() => handleQuickAction(action.id)}
+                  className="quick-action-btn"
+                >
+                  执行操作
+                </button>
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* 底部重要提示 */}
+        <div className="emergency-footer animate-fade-in">
+          <div className="footer-content">
+            <div className="footer-icon">
+              <Shield className="shield-icon" />
             </div>
-            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <span className="text-blue-600 text-lg font-bold transform group-hover:translate-x-1 transition-transform">→</span>
+            <div className="footer-info">
+              <h3>重要提示</h3>
+              <ul>
+                <li>🚨 遇到生命危险立即拨打 <strong>999</strong></li>
+                <li>🏥 非紧急医疗问题拨打 <strong>111</strong></li>
+                <li>📱 保持手机电量充足，确保能够联系</li>
+                <li>📍 记住您的准确位置信息</li>
+                <li>🆔 随身携带身份证件和医疗信息</li>
+              </ul>
             </div>
-          </button>
-        </div>
-        
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-green-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
-          <button className="relative w-full flex items-center justify-between p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl shadow-emerald-500/5 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500 to-green-400 rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                <div className="relative w-14 h-14 bg-gradient-to-tr from-emerald-500 to-green-400 rounded-xl flex items-center justify-center">
-                  <Phone className="w-7 h-7 text-white transform group-hover:rotate-12 transition-transform" />
-                </div>
-              </div>
-              <div className="text-left">
-                <p className="text-lg font-semibold text-gray-900 mb-1">中国领事馆</p>
-                <p className="text-base text-gray-600">紧急求助</p>
-              </div>
-            </div>
-            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
-              <span className="text-emerald-600 text-lg font-bold transform group-hover:translate-x-1 transition-transform">→</span>
-            </div>
-          </button>
+          </div>
         </div>
       </div>
     </div>
