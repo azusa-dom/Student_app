@@ -67,7 +67,57 @@ const SmartCard = ({ event }) => {
 
         <div className="flex flex-wrap gap-3">
           <button 
-            onClick={() => setIsAddedToCalendar(!isAddedToCalendar)} 
+            onClick={() => {
+              if (!isAddedToCalendar) {
+                // 创建日历事件
+                const startDate = event.start_at ? new Date(event.start_at) : new Date();
+                const endDate = event.due_at ? new Date(event.due_at) : new Date(startDate.getTime() + 60 * 60 * 1000); // 默认1小时
+                
+                // 格式化为 ICS 格式的日期时间
+                const formatDate = (date) => {
+                  return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                };
+                
+                // 构建 ICS 文件内容
+                const icsContent = [
+                  'BEGIN:VCALENDAR',
+                  'VERSION:2.0',
+                  'PRODID:-//Student App//Calendar Event//EN',
+                  'BEGIN:VEVENT',
+                  `DTSTART:${formatDate(startDate)}`,
+                  `DTEND:${formatDate(endDate)}`,
+                  `SUMMARY:${event.title}`,
+                  `DESCRIPTION:${event.course ? `课程: ${event.course}\\n` : ''}${event.teacher ? `教师: ${event.teacher}\\n` : ''}${event.location ? `地点: ${event.location}` : ''}`,
+                  `LOCATION:${event.location || ''}`,
+                  `UID:${event.id || Date.now()}@studentapp.com`,
+                  'END:VEVENT',
+                  'END:VCALENDAR'
+                ].join('\r\n');
+                
+                // 创建并下载 ICS 文件
+                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = `${(event.title || 'event').replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.ics`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(link.href);
+                
+                setIsAddedToCalendar(true);
+                
+                // 显示成功提示
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-pulse';
+                notification.textContent = '日历事件已下载，请导入到您的日历应用';
+                document.body.appendChild(notification);
+                setTimeout(() => {
+                  document.body.removeChild(notification);
+                }, 3000);
+              } else {
+                setIsAddedToCalendar(false);
+              }
+            }}
             className={`
               flex items-center space-x-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300
               ${isAddedToCalendar 

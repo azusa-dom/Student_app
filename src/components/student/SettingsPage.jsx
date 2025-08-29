@@ -39,6 +39,12 @@ const SettingsPage = () => {
     calendar: true
   });
 
+  // 处理头像更改
+  const handleAvatarChange = (newAvatar) => {
+    setProfileData(prev => ({ ...prev, avatar: newAvatar }));
+    updateUserData({ avatar: newAvatar });
+  };
+
   const [privacySettings, setPrivacySettings] = useState({
     parentAccess: {
       courses: true,
@@ -60,6 +66,30 @@ const SettingsPage = () => {
     timezone: 'Europe/London',
     autoSync: 'daily'
   });
+
+  // 保存应用设置
+  const handleAppSettingsSave = () => {
+    localStorage.setItem('appSettings', JSON.stringify(appSettings));
+    
+    // 显示保存成功提示
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    notification.textContent = '设置已保存';
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, 3000);
+  };
+
+  // 从本地存储加载设置
+  React.useEffect(() => {
+    const savedSettings = localStorage.getItem('appSettings');
+    if (savedSettings) {
+      setAppSettings(JSON.parse(savedSettings));
+    }
+  }, []);
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
@@ -165,7 +195,10 @@ const SettingsPage = () => {
       <SettingSection id="profile" title="个人资料" icon={User}>
         <div className="space-y-6">
           {/* 头像上传 */}
-          <AvatarUploader />
+          <AvatarUploader 
+            currentAvatar={profileData.avatar}
+            onAvatarChange={handleAvatarChange}
+          />
 
           {/* 基本信息 */}
           <div className="space-y-4">
@@ -326,15 +359,26 @@ const SettingsPage = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">时区设置</label>
-            <select 
-              value={appSettings.timezone}
-              onChange={(e) => setAppSettings(prev => ({ ...prev, timezone: e.target.value }))}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="Europe/London">伦敦 (GMT+0)</option>
-              <option value="Asia/Shanghai">北京 (GMT+8)</option>
-              <option value="America/New_York">纽约 (GMT-5)</option>
-            </select>
+            <div className="space-y-3">
+              <select 
+                value={appSettings.timezone}
+                onChange={(e) => setAppSettings(prev => ({ ...prev, timezone: e.target.value }))}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="Europe/London">伦敦 (GMT+0)</option>
+                <option value="Asia/Shanghai">北京 (GMT+8)</option>
+                <option value="America/New_York">纽约 (GMT-5)</option>
+                <option value="Europe/Paris">巴黎 (GMT+1)</option>
+                <option value="Asia/Tokyo">东京 (GMT+9)</option>
+                <option value="Australia/Sydney">悉尼 (GMT+10)</option>
+              </select>
+              <button
+                onClick={handleAppSettingsSave}
+                className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                保存时区设置
+              </button>
+            </div>
           </div>
 
           <div>
