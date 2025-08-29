@@ -1,25 +1,24 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "./LoginPage.css";
+import React, { useState } from 'react'
+import './LoginPage.css'
 
-const LoginPage = () => {
-  const [selectedRole, setSelectedRole] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+export default function LoginPage() {
+  const [selectedRole, setSelectedRole] = useState(null)
+  const [loading, setLoading] = useState(false)
 
-  const handleSelect = (role) => {
-    setSelectedRole(role);
-  };
+  const handleSelect = role => {
+    setSelectedRole(role)
+  }
 
   const handleStart = () => {
-    if (!selectedRole) return;
-    setLoading(true);
+    if (!selectedRole) return
+    setLoading(true)
 
     setTimeout(() => {
-      // 真正的路由跳转
-      navigate(selectedRole === "student" ? "/student" : "/parent");
-    }, 2000);
-  };
+      alert(`登录成功！欢迎使用${selectedRole === 'student' ? '学生' : '家长'}端功能`)
+      // 🚀 跳转到对应的主界面
+      // window.location.href = selectedRole === 'student' ? '/student/dashboard' : '/parent/dashboard'
+    }, 2000)
+  }
 
   return (
     <div className="login-page">
@@ -54,10 +53,8 @@ const LoginPage = () => {
             <h2 className="selection-title">请选择您的身份</h2>
             <div className="role-options">
               <div
-                className={`role-card ${
-                  selectedRole === "student" ? "selected" : ""
-                }`}
-                onClick={() => handleSelect("student")}
+                className={`role-card ${selectedRole === 'student' ? 'selected' : ''}`}
+                onClick={() => handleSelect('student')}
               >
                 <div className="role-content">
                   <div className="role-icon student-icon">🎓</div>
@@ -71,10 +68,8 @@ const LoginPage = () => {
               </div>
 
               <div
-                className={`role-card ${
-                  selectedRole === "parent" ? "selected" : ""
-                }`}
-                onClick={() => handleSelect("parent")}
+                className={`role-card ${selectedRole === 'parent' ? 'selected' : ''}`}
+                onClick={() => handleSelect('parent')}
               >
                 <div className="role-content">
                   <div className="role-icon parent-icon">👥</div>
@@ -92,24 +87,20 @@ const LoginPage = () => {
           {/* 开始按钮 */}
           <button
             className="start-button"
-            onClick={handleStart}
             disabled={!selectedRole || loading}
+            onClick={handleStart}
           >
             {loading ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <div className="spinner"></div>
-                <span>
-                  正在进入{selectedRole === "student" ? "学生" : "家长"}端...
-                </span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <div className="loading-spinner"></div>
+                <span>正在进入{selectedRole === 'student' ? '学生' : '家长'}端...</span>
               </div>
             ) : (
-              "开始使用"
+              '开始使用'
             )}
           </button>
         </div>
       </div>
     </div>
-  );
-};
-
-export default LoginPage;
+  )
+}
