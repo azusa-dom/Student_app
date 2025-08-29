@@ -6,6 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useUser } from '../../contexts/UserContext';
 import ActivityPreview from './ActivityPreview';
+import HomePage from './HomePage';
 
 const StudentDashboard = ({ children }) => {
   const { grades } = useAppContext();
@@ -106,9 +107,9 @@ const StudentDashboard = ({ children }) => {
         </div>
       )}
 
-      {/* Main Content - 渲染子路由 */}
+      {/* Main Content - 渲染子路由或默认主页 */}
       <main className="max-w-4xl mx-auto px-6 py-2">
-        {children}
+        {children || (currentTab === 'home' ? <HomePage /> : null)}
       </main>
 
       {/* Bottom Navigation */}
