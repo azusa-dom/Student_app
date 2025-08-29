@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Calendar, BookOpen, Briefcase, Mail, Building2 } from 'lucide-react';
+import { Clock, Calendar, BookOpen, Briefcase, Mail, Building2, GraduationCap } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useData } from '../../contexts/DataContext';

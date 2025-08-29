@@ -17,7 +17,7 @@ const StudentRoutes = () => {
     <StudentDashboard>
       <Routes>
         <Route path="/" element={<Navigate to="home" replace />} />
-        <Route path="/home" element={<TestHomePage />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/mail" element={<MailPage />} />
         <Route path="/grades" element={<GradesPage />} />
         <Route path="/jobs" element={<JobsPage />} />
