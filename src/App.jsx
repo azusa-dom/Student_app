@@ -18,6 +18,7 @@ function App() {
                 <Route path="/" element={<LoginPage />} />
                 <Route path="/parent/dashboard" element={<ParentDashboard />} />
                 <Route path="/student/dashboard" element={<StudentDashboard />} />
+                <Route path="/student/home" element={<StudentDashboard />} />
               </Routes>
             </UserProvider>
           </AppProvider>
