@@ -1,89 +1,108 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { getMockData } from '../api/mockData';
+// src/contexts/AppContext.jsx
+import React, { createContext, useContext, useState } from 'react';
 
 const AppContext = createContext();
 
+export const useAppContext = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useAppContext must be used within an AppProvider');
+  }
+  return context;
+};
+
 export const AppProvider = ({ children }) => {
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [userType, setUserType] = useState('student');
-  const [loading, setLoading] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState(null);
-  
-  const [events, setEvents] = useState([]);
-  const [grades, setGrades] = useState([]);
-  const [jobFairs, setJobFairs] = useState([]);
-  const [clubs, setClubs] = useState([]);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [studentTab, setStudentTab] = useState('home');
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const loadData = async () => {
-    const data = await getMockData();
-    setEvents(data.events);
-    setGrades(data.grades);
-    setJobFairs(data.jobFairs);
-    setClubs(data.clubs);
-  };
-
-  // 事件操作
-  const addEvent = (newEvent) => {
-    const id = Math.max(0, ...events.map(e => e.id || 0)) + 1;
-    setEvents(prev => [...prev, { id, ...newEvent }]);
-  };
-
-  // 成绩操作
-  const addGrade = (newGrade) => {
-    setGrades(prev => [newGrade, ...prev]);
-  };
-
-  const handleEmailAuth = async (provider) => {
-    try {
-      setSelectedProvider(provider);
-      setLoading(true);
-
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          loadData()
-            .then(() => {
-              setIsAuthorized(true);
-              resolve();
-            })
-            .catch(reject);
-        }, 2000);
-      });
-    } catch (error) {
-      console.error('Authentication failed:', error);
-      alert('认证失败，请重试！');
-    } finally {
-      setLoading(false);
+  // 成绩数据
+  const [grades] = useState([
+    { 
+      course: 'COMP3001', 
+      assignment: '算法设计作业', 
+      grade: '88', 
+      date: '2024-03-15' 
+    },
+    { 
+      course: 'MATH2001', 
+      assignment: '线性代数期中', 
+      grade: '85', 
+      date: '2024-03-10' 
+    },
+    { 
+      course: 'PHYS1001', 
+      assignment: '物理实验报告', 
+      grade: '92', 
+      date: '2024-03-08' 
     }
+  ]);
+
+  // 事件数据
+  const [events] = useState([
+    {
+      id: 1,
+      title: '高级数学讲座',
+      type: 'class_event',
+      start_at: '2024-03-20T09:00:00Z',
+      location: '教学楼A101',
+      teacher: 'Prof. Smith',
+      course: 'MATH3001'
+    },
+    {
+      id: 2,
+      title: '机器学习作业',
+      type: 'assignment_due',
+      due_at: '2024-03-22T23:59:59Z',
+      course: 'CS7012'
+    },
+    {
+      id: 3,
+      title: '期中考试',
+      type: 'exam',
+      start_at: '2024-03-25T14:00:00Z',
+      location: '考试中心',
+      course: 'STAT7001'
+    }
+  ]);
+
+  // 招聘会数据
+  const [jobFairs] = useState([
+    {
+      id: 1,
+      title: '春季科技招聘会',
+      date: '2024-04-15',
+      location: 'UCL主校区',
+      companies: ['Google', 'Microsoft', 'Amazon', 'Meta']
+    },
+    {
+      id: 2,
+      title: '金融行业专场',
+      date: '2024-04-20',
+      location: '伦敦金融城',
+      companies: ['Goldman Sachs', 'JPMorgan', 'Morgan Stanley']
+    }
+  ]);
+
+  // 添加成绩
+  const addGrade = (newGrade) => {
+    console.log('Adding grade:', newGrade);
+  };
+
+  // 添加事件
+  const addEvent = (newEvent) => {
+    console.log('Adding event:', newEvent);
   };
 
   const value = {
-    isAuthorized,
-    userType,
-    setUserType,
-    loading,
-    handleEmailAuth,
-    selectedProvider,
-    events,
-    addEvent,
     grades,
-    addGrade,
+    events,
     jobFairs,
-    clubs,
-    currentTime,
-    studentTab,
-    setStudentTab,
+    addGrade,
+    addEvent
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+    </AppContext.Provider>
+  );
 };
 
-export const useAppContext = () => {
-  return useContext(AppContext);
-};
+export default AppContext;
