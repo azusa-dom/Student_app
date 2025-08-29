@@ -14,6 +14,7 @@ const OnboardingScreen = lazy(() => import('./components/NewOnboardingScreen'));
 const LoginPage = lazy(() => import('./auth/LoginPage'));
 const StudentRoutes = lazy(() => import('./components/StudentRoutes'));
 const ParentRoutes = lazy(() => import('./components/ParentRoutes'));
+const ParentDashboard = lazy(() => import('./components/parent/ParentDashboard'));
 const TestPage = lazy(() => import('./components/TestPage'));
 
 function App() {
@@ -51,6 +52,11 @@ function App() {
                         <Route path="/parent/*" element={
                           <Suspense fallback={<LoadingSpinner />}>
                             <ParentRoutes />
+                          </Suspense>
+                        } />
+                        <Route path="/parent/dashboard" element={
+                          <Suspense fallback={<LoadingSpinner />}>
+                            <ParentDashboard />
                           </Suspense>
                         } />
                         <Route path="*" element={<Navigate to="/" replace />} />
