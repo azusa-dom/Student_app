@@ -1,0 +1,1 @@
+import{j as e,i as s,k as t,N as a}from"./index-D_oB6iAT.js";import r from"./ParentDashboard-CUNcpXGi.js";const p=()=>e.jsxs(s,{children:[e.jsx(t,{path:"/",element:e.jsx(a,{to:"/parent/dashboard",replace:!0})}),e.jsx(t,{path:"/dashboard",element:e.jsx(r,{})}),e.jsx(t,{path:"/*",element:e.jsx(a,{to:"/parent/dashboard",replace:!0})})]});export{p as default};
