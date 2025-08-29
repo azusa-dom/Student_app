@@ -195,7 +195,7 @@ const JobsPage = () => {
         {/* 核心服务 */}
         {activeTab === 'services' && (
           <div className="services-grid">
-            {services.map((service) => (
+            {(services || []).map((service) => (
               <div key={service.id} className="service-card animate-fade-in">
                 <div className="service-header">
                   <div className="service-icon">{service.icon}</div>
@@ -237,7 +237,7 @@ const JobsPage = () => {
         {/* 活动博览 */}
         {activeTab === 'events' && (
           <div className="events-grid">
-            {events.map((event) => (
+            {(events || []).map((event) => (
               <div key={event.id} className="event-card animate-fade-in">
                 <div className="event-header">
                   <div className="event-icon">{event.icon}</div>
@@ -273,7 +273,7 @@ const JobsPage = () => {
         {/* 学习资源 */}
         {activeTab === 'resources' && (
           <div className="services-grid">
-            {resources.map((resource) => (
+            {(resources || []).map((resource) => (
               <div key={resource.id} className="service-card animate-fade-in">
                 <div className="service-header">
                   <div className="service-icon">{resource.icon}</div>

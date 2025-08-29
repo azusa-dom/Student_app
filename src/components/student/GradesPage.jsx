@@ -86,8 +86,8 @@ const GradesPage = () => {
       averageGrade: (weightedGradeSum / totalCredits).toFixed(1),
       gpa: gpa.toFixed(2),
       totalCredits,
-      highestGrade: Math.max(...gradesData.map(c => c.currentGrade)),
-      lowestGrade: Math.min(...gradesData.map(c => c.currentGrade))
+      highestGrade: gradesData.length > 0 ? Math.max(...gradesData.map(c => c.currentGrade)) : 0,
+      lowestGrade: gradesData.length > 0 ? Math.min(...gradesData.map(c => c.currentGrade)) : 0
     };
   };
 
@@ -234,7 +234,7 @@ const GradesPage = () => {
       {/* 课程列表 */}
       {activeView === 'overview' && (
         <div className="grid gap-6">
-          {filteredCourses.map((course) => (
+          {(filteredCourses || []).map((course) => (
             <div key={course.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
               {/* 课程头部 */}
               <div className="flex items-center justify-between mb-6">
@@ -272,7 +272,7 @@ const GradesPage = () => {
               {/* 作业列表 */}
               <div className="space-y-3">
                 <h4 className="font-medium text-gray-700 mb-3">作业与考试</h4>
-                {course.assignments.map((assignment, index) => (
+                {(course.assignments || []).map((assignment, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">

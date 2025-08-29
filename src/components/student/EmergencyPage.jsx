@@ -165,7 +165,7 @@ const EmergencyPage = () => {
             </div>
             
             <div className="contacts-grid critical-contacts">
-              {emergencyContacts.map((contact) => (
+              {(emergencyContacts || []).map((contact) => (
                 <div key={contact.id} className={`contact-card ${contact.type} animate-fade-in`}>
                   <div className="contact-header">
                     <div className="contact-icon">{contact.icon}</div>
@@ -199,7 +199,7 @@ const EmergencyPage = () => {
             </div>
             
             <div className="contacts-grid personal-contacts">
-              {personalContacts.map((contact) => (
+              {(personalContacts || []).map((contact) => (
                 <div key={contact.id} className={`contact-card ${contact.type} animate-fade-in`}>
                   <div className="contact-header">
                     <div className="contact-icon">{contact.icon}</div>
@@ -240,7 +240,7 @@ const EmergencyPage = () => {
         {/* 支持服务 */}
         {activeTab === 'support' && (
           <div className="support-grid">
-            {supportServices.map((service) => (
+            {(supportServices || []).map((service) => (
               <div key={service.id} className="support-card animate-fade-in">
                 <div className="support-header">
                   <div className="support-icon">{service.icon}</div>
@@ -273,7 +273,7 @@ const EmergencyPage = () => {
         {/* 快速操作 */}
         {activeTab === 'quick' && (
           <div className="quick-actions-grid">
-            {quickActions.map((action) => (
+            {(quickActions || []).map((action) => (
               <div key={action.id} className="quick-action-card animate-fade-in">
                 <div className="quick-action-icon">{action.icon}</div>
                 <h3>{action.title}</h3>

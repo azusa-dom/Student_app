@@ -4,6 +4,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AppProvider } from './contexts/AppContext';
 import { UserProvider } from './contexts/UserContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import LoginPage from './auth/LoginPage';
 import ParentDashboard from './components/parent/ParentDashboard';
 import StudentDashboard from './components/student/StudentDashboard';
@@ -19,11 +20,12 @@ import AIChat from './components/AIChat';
 
 function App() {
   return (
-    <Router basename="/Student_app">
-      <LanguageProvider>
-        <ThemeProvider>
-          <UserProvider>
-            <AppProvider>
+    <ErrorBoundary>
+      <Router basename="/Student_app">
+        <LanguageProvider>
+          <ThemeProvider>
+            <UserProvider>
+              <AppProvider>
               <Routes>
                 {/* 登录页面 */}
                 <Route path="/" element={<LoginPage />} />
@@ -62,6 +64,7 @@ function App() {
         </ThemeProvider>
       </LanguageProvider>
     </Router>
+    </ErrorBoundary>
   );
 }
 
