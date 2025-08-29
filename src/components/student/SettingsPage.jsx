@@ -25,6 +25,7 @@ const SettingsPage = () => {
   });
   
   const [editingProfile, setEditingProfile] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [profileData, setProfileData] = useState({
     name: t('user.name'),
     university: t('user.university'),
@@ -75,8 +76,14 @@ const SettingsPage = () => {
 
   const handleProfileSave = () => {
     setEditingProfile(false);
+    setSaveSuccess(true);
     // 这里可以添加保存到后端的逻辑
     console.log('Profile saved:', profileData);
+    
+    // 显示保存成功提示，3秒后消失
+    setTimeout(() => {
+      setSaveSuccess(false);
+    }, 3000);
   };
 
   const SettingSection = ({ id, title, icon: Icon, children, badge = null }) => {
@@ -140,6 +147,17 @@ const SettingsPage = () => {
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
+      {/* 保存成功提示 */}
+      {saveSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center space-x-3">
+          <Check className="w-5 h-5 text-green-600" />
+          <div>
+            <h3 className="font-medium text-green-800">保存成功！</h3>
+            <p className="text-sm text-green-600">您的个人信息已更新</p>
+          </div>
+        </div>
+      )}
+
       {/* 页面标题 */}
       <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('settings.title')}</h1>
@@ -165,13 +183,36 @@ const SettingsPage = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-gray-900">基本信息</h3>
-              <button
-                onClick={() => editingProfile ? handleProfileSave() : setEditingProfile(true)}
-                className="flex items-center space-x-1 text-blue-600 text-sm font-medium"
-              >
-                {editingProfile ? <Save className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-                <span>{editingProfile ? '保存' : '编辑'}</span>
-              </button>
+              <div className="flex items-center space-x-2">
+                {editingProfile && (
+                  <button
+                    onClick={() => {
+                      setEditingProfile(false);
+                      // 重置数据到原始状态
+                      setProfileData({
+                        name: t('user.name'),
+                        university: t('user.university'),
+                        studentId: 'ZCAB1234',
+                        email: 'zhang.wei.23@ucl.ac.uk',
+                        phone: '+44 7700 123456',
+                        year: '2023/24',
+                        programme: 'MSc Computer Science'
+                      });
+                    }}
+                    className="flex items-center space-x-1 text-gray-600 text-sm font-medium hover:text-gray-800"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>取消</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => editingProfile ? handleProfileSave() : setEditingProfile(true)}
+                  className="flex items-center space-x-1 text-blue-600 text-sm font-medium hover:text-blue-700"
+                >
+                  {editingProfile ? <Save className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
+                  <span>{editingProfile ? '保存' : '编辑'}</span>
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
