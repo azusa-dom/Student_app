@@ -1,1 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.next/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env
+.env
+.env.local
+backend/.env
+
+# Editor
+.DS_Store
+.idea/
+.vscode/
+
+# Misc
+*.local
+*.swp
+*.swo
 node_modules

@@ -19,6 +19,9 @@ app.use(cors({
 app.use(express.json());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
+// 静态资源与无图标情况的处理（避免控制台 404）
+app.get('/favicon.ico', (_req, res) => res.status(204).end());
+
 // Redis缓存客户端（可选）
 let redisClient = null;
 try {
