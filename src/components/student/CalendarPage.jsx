@@ -18,7 +18,8 @@ const CalendarPage = () => {
     class_event: true,
     assignment_due: true,
     exam: true,
-    club_activity: true
+    club_activity: true,
+    registered_activity: true
   });
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 

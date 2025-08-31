@@ -42,6 +42,7 @@ const StudentDashboard = () => {
     { id: 'grades', icon: GraduationCap, label: t('nav.grades'), badge: grades.length > 0, path: '/student/grades' },
     { id: 'campus', icon: Building2, label: t('nav.campus'), path: '/student/campus' },
     { id: 'jobs', icon: Briefcase, label: t('nav.jobs'), path: '/student/jobs' },
+    { id: 'activities', icon: Users, label: '活动', path: '/student/activities' },
     { id: 'ai', icon: Bot, label: t('ai.title'), path: '/student/ai' },
     { id: 'settings', icon: Settings, label: t('nav.settings'), path: '/student/settings' }
   ], [grades.length, t]);
