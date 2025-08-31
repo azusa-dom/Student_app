@@ -136,8 +136,9 @@ const JobsPage = () => {
     }
   ];
 
-  // 设置CSS变量来控制主题
-  const cardBg = themeConfig.card.includes('bg-white') ? 'rgba(255, 255, 255, 0.8)' : 'rgba(31, 41, 55, 0.8)';
+  // 设置CSS变量来控制主题：深色模式卡片为半透明白而非灰
+  const prefersDark = themeConfig.text.includes('dark:text-white') || themeConfig.text.includes('text-white');
+  const cardBg = prefersDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.80)';
   
   return (
     <div 
