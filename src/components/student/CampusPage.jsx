@@ -379,7 +379,7 @@ const CampusPage = () => {
           </div>
           
           <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-            <div className={`${themeConfig.card} backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-sm hover:shadow-md transition-all`}>
+            <div className={`bg-white/80 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/50 shadow-sm hover:shadow-md transition-all`}>
               <div className="flex items-center space-x-3 mb-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
                   <Phone className="w-5 h-5 text-blue-600" />
@@ -394,7 +394,7 @@ const CampusPage = () => {
               </a>
             </div>
             
-            <div className={`${themeConfig.card} backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-sm hover:shadow-md transition-all`}>
+            <div className={`bg-white/80 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/50 shadow-sm hover:shadow-md transition-all`}>
               <div className="flex items-center space-x-3 mb-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
                   <Mail className="w-5 h-5 text-purple-600" />
