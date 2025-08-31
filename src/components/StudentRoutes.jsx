@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import StudentDashboard from './student/StudentDashboard';
 import HomePage from './student/HomePage';
-import TestHomePage from './student/TestHomePage';
+
 import GradesPage from './student/GradesPage';
 import JobsPage from './student/JobsPage';
 import CampusPage from './student/CampusPage';
