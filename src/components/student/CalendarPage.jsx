@@ -241,7 +241,7 @@ const CalendarPage = () => {
       <div className="space-y-4">
         {/* 日期标题 */}
         <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-3xl font-extrabold text-gray-900">
             {selectedDate.toLocaleDateString('zh-CN', { 
               year: 'numeric', 
               month: 'long', 
@@ -264,7 +264,7 @@ const CalendarPage = () => {
               <div key={index} className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{event.title}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">{event.title}</h3>
                     {event.course && (
                       <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getEventColor(event.type)}`}>
                         {event.course}
@@ -350,7 +350,7 @@ const CalendarPage = () => {
       <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-gray-900">{t('calendar.title')}</h1>
+            <h1 className="text-4xl font-extrabold text-gray-900">{t('calendar.title')}</h1>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => navigateDate(-1)}
@@ -371,7 +371,7 @@ const CalendarPage = () => {
                 <ChevronRight className="w-5 h-5 text-gray-600" />
               </button>
             </div>
-            <h2 className="text-lg font-semibold text-gray-700">{getDisplayTitle()}</h2>
+            <h2 className="text-xl font-bold text-gray-700">{getDisplayTitle()}</h2>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -438,7 +438,7 @@ const CalendarPage = () => {
         {/* 筛选器 */}
         {showFilters && (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">{t('calendar.showEventTypes')}</h3>
+            <h3 className="text-base font-bold text-gray-900 mb-3">{t('calendar.showEventTypes')}</h3>
             <div className="grid grid-cols-4 gap-4">
               {Object.entries(selectedFilters).map(([type, enabled]) => (
                 <label key={type} className="flex items-center space-x-2">

@@ -176,7 +176,7 @@ const MailPage = () => {
               张
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">智能邮件中心</h1>
+              <h1 className="text-4xl font-extrabold text-gray-900">智能邮件中心</h1>
               <div className="flex items-center space-x-2 text-sm text-gray-500">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span>02:53 已同步</span>
@@ -206,7 +206,7 @@ const MailPage = () => {
               🤖
             </div>
             <div>
-              <h2 className="text-xl font-semibold">今日邮件摘要</h2>
+              <h2 className="text-2xl font-bold">今日邮件摘要</h2>
               <p className="text-purple-100">AI为您智能分析和归类邮件内容</p>
             </div>
           </div>
@@ -218,7 +218,7 @@ const MailPage = () => {
               { label: '分类准确率', value: `${mailStats.accuracy}%` }
             ].map((stat, index) => (
               <div key={index} className="text-center bg-white bg-opacity-10 rounded-xl p-3 backdrop-blur-sm">
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-3xl font-extrabold">{stat.value}</div>
                 <div className="text-sm text-purple-100">{stat.label}</div>
               </div>
             ))}

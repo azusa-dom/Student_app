@@ -141,7 +141,7 @@ const GradesPage = () => {
         <div className="relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold mb-2">学术表现中心</h1>
+              <h1 className="text-4xl font-extrabold mb-2">学术表现中心</h1>
               <p className="text-purple-200 text-lg">
                 本学期 {stats.totalCourses} 门课程 · {stats.completedCourses} 门已完成
               </p>
@@ -163,27 +163,27 @@ const GradesPage = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-              <div className="text-2xl font-bold mb-1">{stats.gpa}</div>
+              <div className="text-3xl font-extrabold mb-1">{stats.gpa}</div>
               <div className="text-sm text-purple-200">GPA</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-              <div className="text-2xl font-bold mb-1">{stats.averageGrade}</div>
+              <div className="text-3xl font-extrabold mb-1">{stats.averageGrade}</div>
               <div className="text-sm text-purple-200">平均分</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-              <div className="text-2xl font-bold mb-1">{stats.totalCredits}</div>
+              <div className="text-3xl font-extrabold mb-1">{stats.totalCredits}</div>
               <div className="text-sm text-purple-200">总学分</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-              <div className="text-2xl font-bold mb-1">{stats.highestGrade}</div>
+              <div className="text-3xl font-extrabold mb-1">{stats.highestGrade}</div>
               <div className="text-sm text-purple-200">最高分</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-              <div className="text-2xl font-bold mb-1">{stats.inProgressCourses}</div>
+              <div className="text-3xl font-extrabold mb-1">{stats.inProgressCourses}</div>
               <div className="text-sm text-purple-200">进行中</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-              <div className="text-2xl font-bold mb-1">{stats.completedCourses}</div>
+              <div className="text-3xl font-extrabold mb-1">{stats.completedCourses}</div>
               <div className="text-sm text-purple-200">已完成</div>
             </div>
           </div>
