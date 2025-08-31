@@ -7,10 +7,6 @@ const ThemeSettings = () => {
     setTheme,
     backgroundStyle,
     setBackgroundStyle,
-    blurIntensity,
-    setBlurIntensity,
-    transparency,
-    setTransparency,
     backgrounds,
     themes,
     getThemeConfig
@@ -51,38 +47,6 @@ const ThemeSettings = () => {
               {bg === 'gradient' ? '渐变' : bg === 'solid' ? '纯色' : '图案'}
             </button>
           ))}
-        </div>
-      </div>
-
-      <div className={`rounded-xl p-4 border ${themeConfig.card}`}>
-        <h3 className={`text-lg font-medium mb-3 ${themeConfig.text}`}>效果</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">模糊强度</label>
-            <input
-              type="range"
-              min={0}
-              max={5}
-              step={1}
-              value={blurIntensity}
-              onChange={(e) => setBlurIntensity(Number(e.target.value))}
-              className="w-full"
-            />
-            <div className="text-sm text-gray-500 mt-1">{blurIntensity}级</div>
-          </div>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">透明度 (%)</label>
-            <input
-              type="range"
-              min={0}
-              max={50}
-              step={5}
-              value={transparency}
-              onChange={(e) => setTransparency(Number(e.target.value))}
-              className="w-full"
-            />
-            <div className="text-sm text-gray-500 mt-1">{transparency}%</div>
-          </div>
         </div>
       </div>
     </div>
