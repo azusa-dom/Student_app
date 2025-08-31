@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
+import { trackLogin } from '../utils/analytics';
+import VisitorCounter from '../components/VisitorCounter';
 import './LoginPage.css';
 
 function LoginPage() {
@@ -20,6 +22,9 @@ function LoginPage() {
       // 模拟登录验证过程
       setTimeout(() => {
         setIsLoading(false);
+        
+        // 跟踪用户登录
+        trackLogin(selectedRole);
         
         // 根据选择的角色进行路由跳转
         if (selectedRole === 'student') {
@@ -145,6 +150,11 @@ function LoginPage() {
               currentTexts.getStarted
             )}
           </button>
+          
+          {/* 访问统计 */}
+          <div className="mt-8 flex justify-center">
+            <VisitorCounter />
+          </div>
         </div>
       </div>
     </div>

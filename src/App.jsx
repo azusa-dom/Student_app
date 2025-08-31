@@ -1,5 +1,6 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AppProvider } from './contexts/AppContext';
@@ -18,8 +19,14 @@ import EmergencyPage from './components/student/EmergencyPage';
 import SettingsPage from './components/student/SettingsPage';
 import AIChat from './components/AIChat';
 import { UserActivityManagement } from './components/student/UserActivityManagement';
+import { pageview } from './utils/analytics';
 
 function App() {
+  useEffect(() => {
+    // 记录页面访问
+    pageview(window.location.pathname);
+  }, []);
+
   return (
     <ErrorBoundary>
       <Router basename="/Student_app">
