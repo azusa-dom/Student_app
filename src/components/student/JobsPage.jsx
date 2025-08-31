@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
 import './JobsPage.css';
 
 const JobsPage = () => {
+  const { getThemeConfig } = useTheme();
+  const themeConfig = getThemeConfig();
   const [activeTab, setActiveTab] = useState('services');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -133,8 +136,18 @@ const JobsPage = () => {
     }
   ];
 
+  // 设置CSS变量来控制主题
+  const cardBg = themeConfig.card.includes('bg-white') ? 'rgba(255, 255, 255, 0.8)' : 'rgba(31, 41, 55, 0.8)';
+  
   return (
-    <div className="career">
+    <div 
+      className="career" 
+      style={{
+        '--card-bg': cardBg,
+        '--text-color': themeConfig.text.includes('text-white') ? '#ffffff' : '#1f2937',
+        '--text-secondary': themeConfig.textSecondary.includes('text-gray-300') ? '#d1d5db' : '#6b7280'
+      }}
+    >
       <div className="container">
         {/* 头部区域 */}
         <div className="header animate-fade-in">

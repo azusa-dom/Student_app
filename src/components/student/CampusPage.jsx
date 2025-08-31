@@ -16,9 +16,12 @@ import {
   Star,
   Navigation
 } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
 import './CampusPage.css';
 
 const CampusPage = () => {
+  const { getThemeConfig } = useTheme();
+  const themeConfig = getThemeConfig();
   const [activeTab, setActiveTab] = useState('services');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -376,14 +379,14 @@ const CampusPage = () => {
           </div>
           
           <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-sm hover:shadow-md transition-all">
+            <div className={`${themeConfig.card} backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-sm hover:shadow-md transition-all`}>
               <div className="flex items-center space-x-3 mb-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
                   <Phone className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900">IT服务台</h4>
-                  <p className="text-sm text-gray-500">技术支持热线</p>
+                  <h4 className={`text-lg font-bold ${themeConfig.text}`}>IT服务台</h4>
+                  <p className={`text-sm ${themeConfig.textSecondary}`}>技术支持热线</p>
                 </div>
               </div>
               <a href="tel:+442076795000" className="text-blue-600 font-semibold hover:text-blue-700 transition-colors">
@@ -391,14 +394,14 @@ const CampusPage = () => {
               </a>
             </div>
             
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-sm hover:shadow-md transition-all">
+            <div className={`${themeConfig.card} backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-sm hover:shadow-md transition-all`}>
               <div className="flex items-center space-x-3 mb-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
                   <Mail className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900">学生服务</h4>
-                  <p className="text-sm text-gray-500">邮件咨询服务</p>
+                  <h4 className={`text-lg font-bold ${themeConfig.text}`}>学生服务</h4>
+                  <p className={`text-sm ${themeConfig.textSecondary}`}>邮件咨询服务</p>
                 </div>
               </div>
               <a href="mailto:student.services@ucl.ac.uk" className="text-purple-600 font-semibold hover:text-purple-700 transition-colors break-all">
