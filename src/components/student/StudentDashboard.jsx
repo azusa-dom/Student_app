@@ -43,8 +43,7 @@ const StudentDashboard = () => {
     { id: 'campus', icon: Building2, label: t('nav.campus'), path: '/student/campus' },
     { id: 'jobs', icon: Briefcase, label: t('nav.jobs'), path: '/student/jobs' },
     { id: 'activities', icon: Users, label: '活动', path: '/student/activities' },
-    { id: 'ai', icon: Bot, label: t('ai.title'), path: '/student/ai' },
-    { id: 'settings', icon: Settings, label: t('nav.settings'), path: '/student/settings' }
+    { id: 'ai', icon: Bot, label: t('ai.title'), path: '/student/ai' }
   ], [grades.length, t]);
 
   const handleTabClick = (tab) => {
@@ -92,6 +91,14 @@ const StudentDashboard = () => {
               </button>
               <button className={`p-2 ${themeConfig.card} rounded-lg border border-white/20 ${themeConfig.cardHover} transition-all duration-200`}>
                 <Bell className={`w-5 h-5 ${themeConfig.text}`} />
+              </button>
+              {/* 设置入口移到右上角 */}
+              <button 
+                onClick={() => navigate('/student/settings')}
+                className={`p-2 ${themeConfig.card} rounded-lg border border-white/20 ${themeConfig.cardHover} transition-all duration-200`}
+                title={t('nav.settings')}
+              >
+                <Settings className={`w-5 h-5 ${themeConfig.text}`} />
               </button>
             </div>
           </div>
