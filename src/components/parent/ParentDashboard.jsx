@@ -1,394 +1,580 @@
-import React, { useEffect, useRef } from 'react'
-import './ParentDashboard.css'
+import React, { useState, useEffect } from 'react';
+import { 
+  Phone, Mail, MapPin, Calendar, TrendingUp, TrendingDown, 
+  AlertTriangle, CheckCircle, Clock, Book, GraduationCap, 
+  Settings, Bell, RefreshCw, Eye, EyeOff, MessageCircle,
+  FileText, Download, Share2, Heart, Star, Award,
+  BarChart3, PieChart, Activity, Users, Home, Shield
+} from 'lucide-react';
 
-export default function ParentDashboard() {
-  const rootRef = useRef(null)
+const EnhancedParentDashboard = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeTab, setActiveTab] = useState('overview');
+  const [showDetailedGrades, setShowDetailedGrades] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [childData, setChildData] = useState({
+    name: "张小明",
+    university: "University College London", 
+    programme: "Computer Science - Year 2",
+    avatar: "🎓",
+    status: "online",
+    lastSeen: "2分钟前"
+  });
 
+  // 成绩数据
+  const [gradesData, setGradesData] = useState([
+    {
+      course: 'COMP3001',
+      courseName: '算法与数据结构',
+      grade: 88,
+      assignment: '期中考试',
+      date: '2024-03-15',
+      trend: 'up',
+      weight: 40,
+      feedback: '表现优秀，算法理解深入'
+    },
+    {
+      course: 'MATH2001', 
+      courseName: '线性代数',
+      grade: 85,
+      assignment: '课程作业2',
+      date: '2024-03-12',
+      trend: 'stable',
+      weight: 25,
+      feedback: '计算准确，需加强证明逻辑'
+    },
+    {
+      course: 'PHYS1001',
+      courseName: '大学物理',
+      grade: 92,
+      assignment: '实验报告',
+      date: '2024-03-10',
+      trend: 'up',
+      weight: 30,
+      feedback: '实验设计优秀，分析透彻'
+    }
+  ]);
+
+  // 近期活动
+  const [recentActivities, setRecentActivities] = useState([
+    {
+      type: 'attendance',
+      title: '出席算法课程',
+      time: '2小时前',
+      status: 'success',
+      details: 'COMP3001 - 准时出席'
+    },
+    {
+      type: 'assignment',
+      title: '提交线性代数作业',
+      time: '1天前', 
+      status: 'success',
+      details: '按时提交，等待评分'
+    },
+    {
+      type: 'grade',
+      title: '收到物理实验成绩',
+      time: '2天前',
+      status: 'excellent',
+      details: '92分 - 超出预期表现'
+    },
+    {
+      type: 'social',
+      title: '参加中国学生会活动',
+      time: '3天前',
+      status: 'info',
+      details: '文化交流活动 - 积极参与'
+    }
+  ]);
+
+  // 更新时间
   useEffect(() => {
-    const root = rootRef.current
-    if (!root) return
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
-    // 进入动画延迟
-    root.querySelectorAll('.animate-fade-in').forEach((el, i) => {
-      el.style.animationDelay = `${i * 0.1}s`
-    })
+  // 模拟数据刷新
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // 模拟API调用
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // 更新最后查看时间
+    setChildData(prev => ({
+      ...prev,
+      lastSeen: "刚刚"
+    }));
+    
+    setRefreshing(false);
+    
+    // 显示成功提示
+    const notification = {
+      id: Date.now(),
+      type: 'success',
+      message: '数据已更新',
+      time: new Date()
+    };
+    setNotifications(prev => [notification, ...prev.slice(0, 4)]);
+  };
 
-    // 进度环
-    const ring = root.querySelector('.progress-ring')
-    if (ring) {
-      const percentage = 85
-      const degrees = (percentage / 100) * 360
-      ring.style.background = `conic-gradient(#9333ea 0deg ${degrees}deg, #e5e7eb ${degrees}deg 360deg)`
+  // 联系功能
+  const handleContact = (method, target) => {
+    switch (method) {
+      case 'call-student':
+        window.location.href = 'tel:+447700123456';
+        break;
+      case 'message-student':
+        alert('正在打开微信/WhatsApp...');
+        break;
+      case 'email-student': 
+        window.location.href = 'mailto:zhang.ming.23@ucl.ac.uk';
+        break;
+      case 'call-school':
+        window.location.href = 'tel:+442076792000';
+        break;
+      case 'email-school':
+        window.location.href = 'mailto:student.services@ucl.ac.uk';
+        break;
+      default:
+        alert(`联系方式: ${method} - ${target}`);
     }
+  };
 
-    // 学科进度条动画
-    const bars = Array.from(root.querySelectorAll('.progress-fill'))
-    bars.forEach((bar, i) => {
-      const target = bar.style.width || '0%'
-      bar.style.width = '0%'
-      // 强制重排
-      // eslint-disable-next-line no-unused-expressions
-      bar.offsetWidth
-      setTimeout(() => {
-        bar.style.width = target
-      }, i * 200)
-    })
+  // 下载报告
+  const handleDownloadReport = (type) => {
+    // 模拟报告下载
+    const reportTypes = {
+      weekly: '周度学习报告',
+      monthly: '月度综合报告', 
+      grades: '成绩单详情',
+      attendance: '出勤记录'
+    };
+    
+    alert(`正在下载 ${reportTypes[type]}...`);
+    
+    // 实际实现中会调用下载API
+    const link = document.createElement('a');
+    link.href = '#';
+    link.download = `${reportTypes[type]}_${new Date().toISOString().split('T')[0]}.pdf`;
+    link.click();
+  };
 
-    // AI 分析卡片：可折叠
-    const sections = Array.from(root.querySelectorAll('.ai-analysis-card .ai-section'))
-    const cleanups = []
-    sections.forEach(section => {
-      const title = section.querySelector('.ai-section-title')
-      if (!title) return
-      if (title.textContent.trim() === '总体表现') return
-      const content = title.parentElement.children[1]
-      title.style.cursor = 'pointer'
-      const onClick = () => {
-        if (!content) return
-        const hidden = content.style.display === 'none'
-        content.style.display = hidden ? 'block' : 'none'
-        title.style.opacity = hidden ? '1' : '0.6'
-      }
-      title.addEventListener('click', onClick)
-      cleanups.push(() => title.removeEventListener('click', onClick))
-    })
+  // 计算整体成绩
+  const calculateOverallGrade = () => {
+    const totalWeightedGrade = gradesData.reduce((sum, item) => sum + (item.grade * item.weight), 0);
+    const totalWeight = gradesData.reduce((sum, item) => sum + item.weight, 0);
+    return Math.round(totalWeightedGrade / totalWeight);
+  };
 
-    return () => cleanups.forEach(fn => fn())
-  }, [])
-
-  const bounceClick = e => {
-    const el = e.currentTarget
-    el.style.transform = 'scale(0.98)'
-    setTimeout(() => {
-      el.style.transform = ''
-    }, 100)
-  }
-
-  const handleContact = who => {
-    if (who === 'student') {
-      alert('正在拨打张小明的电话...')
-    } else {
-      alert('正在连接UCL学生服务热线...')
+  // 获取趋势图标
+  const getTrendIcon = (trend) => {
+    switch (trend) {
+      case 'up': return <TrendingUp className="w-4 h-4 text-green-500" />;
+      case 'down': return <TrendingDown className="w-4 h-4 text-red-500" />;
+      default: return <div className="w-4 h-4 bg-gray-400 rounded-full" />;
     }
-  }
+  };
 
-  const handleReport = () => {
-    alert('跳转到详细周报页面...')
-  }
+  // 获取状态颜色
+  const getStatusColor = (status) => {
+    const colors = {
+      success: 'text-green-600 bg-green-50 border-green-200',
+      excellent: 'text-blue-600 bg-blue-50 border-blue-200', 
+      warning: 'text-yellow-600 bg-yellow-50 border-yellow-200',
+      info: 'text-purple-600 bg-purple-50 border-purple-200'
+    };
+    return colors[status] || 'text-gray-600 bg-gray-50 border-gray-200';
+  };
+
+  // 获取活动图标
+  const getActivityIcon = (type) => {
+    const icons = {
+      attendance: <CheckCircle className="w-5 h-5" />,
+      assignment: <FileText className="w-5 h-5" />,
+      grade: <Award className="w-5 h-5" />,
+      social: <Users className="w-5 h-5" />
+    };
+    return icons[type] || <Activity className="w-5 h-5" />;
+  };
+
+  const overallGrade = calculateOverallGrade();
 
   return (
-    <div className="parent-dashboard" ref={rootRef}>
-      <div className="header">
-        <div className="container">
-          <div className="header-content">
-            <div className="user-info">
-              <div className="avatar">李</div>
-              <div className="user-details">
-                <h2>家长端</h2>
-                <div className="user-status">
-                  <div className="status-dot" />
-                  <span>14:25 (孩子当地时间)</span>
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* 顶部导航栏 */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                家
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">家长监护中心</h1>
+                <p className="text-gray-600 text-sm">实时关注孩子的学习生活</p>
               </div>
             </div>
-            <div className="header-actions">
-              <button className="header-btn" title="通知设置">🔔</button>
-              <button className="header-btn" title="设置">⚙️</button>
+            
+            <div className="flex items-center space-x-3">
+              <div className="text-right text-sm text-gray-600">
+                <div>当地时间: {currentTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</div>
+                <div>最后同步: {childData.lastSeen}</div>
+              </div>
+              
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <span>刷新</span>
+              </button>
+
+              <button
+                onClick={() => alert('设置页面')}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container">
-        <div className="main-content">
-          {/* 孩子信息卡片 */}
-          <div className="student-card animate-fade-in">
-            <div className="student-info">
-              <div className="student-avatar">🎓</div>
-              <div className="student-details">
-                <h3>张小明</h3>
-                <p>University College London</p>
-                <p>Computer Science - Year 2</p>
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* 孩子信息卡片 */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white mb-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32"></div>
+          <div className="relative z-10">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center space-x-6 mb-6 lg:mb-0">
+                <div className="w-20 h-20 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center text-4xl backdrop-blur-sm">
+                  {childData.avatar}
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold mb-2">{childData.name}</h2>
+                  <p className="text-blue-100 text-lg mb-1">{childData.university}</p>
+                  <p className="text-blue-200">{childData.programme}</p>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <span className="text-blue-100 text-sm">在线活跃</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold">{overallGrade}%</div>
+                  <div className="text-blue-200 text-sm">综合成绩</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold">94%</div>
+                  <div className="text-blue-200 text-sm">出勤率</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold">12</div>
+                  <div className="text-blue-200 text-sm">本周课程</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold">3</div>
+                  <div className="text-blue-200 text-sm">待交作业</div>
+                </div>
               </div>
             </div>
-            <div className="student-stats">
-              <div className="stat-item">
-                <span className="stat-number">12</span>
-                <span className="stat-label">本周课程</span>
+          </div>
+        </div>
+
+        {/* 通知栏 */}
+        {notifications.length > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <span className="text-green-800 font-medium">{notifications[0].message}</span>
+              <span className="text-green-600 text-sm">({notifications[0].time.toLocaleTimeString()})</span>
+            </div>
+          </div>
+        )}
+
+        {/* 主要内容区域 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* 左侧：成绩和学习情况 */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* 最新成绩 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                    <GraduationCap className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">最新成绩</h3>
+                    <p className="text-gray-600 text-sm">学业表现追踪</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setShowDetailedGrades(!showDetailedGrades)}
+                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    {showDetailedGrades ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    <span>{showDetailedGrades ? '简化视图' : '详细视图'}</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleDownloadReport('grades')}
+                    className="flex items-center space-x-1 text-gray-600 hover:text-gray-700 text-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>下载</span>
+                  </button>
+                </div>
               </div>
-              <div className="stat-item">
-                <span className="stat-number">3</span>
-                <span className="stat-label">待交作业</span>
+
+              <div className="space-y-4">
+                {gradesData.map((item, index) => (
+                  <div key={index} className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3">
+                          <h4 className="font-bold text-gray-900">{item.courseName}</h4>
+                          {getTrendIcon(item.trend)}
+                        </div>
+                        <p className="text-gray-600 text-sm">{item.course} • {item.assignment}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-2xl font-bold ${
+                          item.grade >= 90 ? 'text-green-600' : 
+                          item.grade >= 80 ? 'text-blue-600' : 
+                          item.grade >= 70 ? 'text-yellow-600' : 'text-red-600'
+                        }`}>
+                          {item.grade}%
+                        </div>
+                        <p className="text-gray-500 text-xs">{item.date}</p>
+                      </div>
+                    </div>
+                    
+                    {showDetailedGrades && (
+                      <div className="pt-3 border-t border-gray-200">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-gray-600">权重占比</span>
+                          <span className="text-sm font-medium">{item.weight}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                          <div 
+                            className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${(item.grade / 100) * 100}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-sm text-gray-700 bg-white p-3 rounded-lg border">
+                          <span className="font-medium">教师反馈：</span>{item.feedback}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div className="stat-item">
-                <span className="stat-number">85%</span>
-                <span className="stat-label">平均成绩</span>
+            </div>
+
+            {/* AI 分析报告 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">AI 学习分析</h3>
+                  <p className="text-gray-600 text-sm">智能学习建议</p>
+                </div>
               </div>
-              <div className="stat-item">
-                <span className="stat-number">94%</span>
-                <span className="stat-label">出勤率</span>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 优势分析 */}
+                <div className="bg-green-50 rounded-xl p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Star className="w-5 h-5 text-green-600" />
+                    <h4 className="font-bold text-green-800">学习优势</h4>
+                  </div>
+                  <ul className="space-y-2 text-sm text-green-700">
+                    <li>• 物理实验能力突出 (92分)</li>
+                    <li>• 算法理解能力强</li>
+                    <li>• 出勤率保持优秀</li>
+                  </ul>
+                </div>
+
+                {/* 改进建议 */}
+                <div className="bg-yellow-50 rounded-xl p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                    <h4 className="font-bold text-yellow-800">改进建议</h4>
+                  </div>
+                  <ul className="space-y-2 text-sm text-yellow-700">
+                    <li>• 加强数学证明逻辑训练</li>
+                    <li>• 提前准备期末考试</li>
+                    <li>• 参与更多学术讨论</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-4 p-4 bg-blue-50 rounded-xl">
+                <h4 className="font-bold text-blue-800 mb-2">本月学习趋势</h4>
+                <p className="text-blue-700 text-sm">
+                  整体表现稳中有升，建议保持当前学习节奏。物理和算法课程表现优异，
+                  数学课程需要额外关注。预计期末成绩可达到85-90分区间。
+                </p>
               </div>
             </div>
           </div>
 
-          {/* 隐私设置通知 */}
-          <div className="privacy-notice animate-fade-in">
-            <div className="privacy-icon">🔒</div>
-            <div className="privacy-content">
-              <h4>隐私设置 - 部分可见</h4>
-              <p>张小明已将可见级别设置为部分可见。您可以查看课程安排、作业截止时间和部分成绩信息，但无法查看详细的邮件内容和Moodle链接。</p>
-            </div>
-          </div>
-
-          <div className="content-grid">
-            {/* 近期安排 */}
-            <div className="card animate-fade-in">
-              <div className="card-header">
-                <div className="card-icon schedule-icon">📅</div>
-                <div className="card-title">近期安排</div>
-              </div>
-
-              <div className="schedule-item" onClick={bounceClick}>
-                <div className="schedule-type type-class">📚</div>
-                <div className="schedule-details">
-                  <h4>高等数学</h4>
-                  <div className="schedule-meta">
-                    <span>明天 09:00 - 11:00</span>
-                    <span>数学系大楼 A101</span>
-                  </div>
+          {/* 右侧：活动和联系 */}
+          <div className="space-y-6">
+            
+            {/* 最近活动 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">最近活动</h3>
+                  <p className="text-gray-600 text-sm">实时动态追踪</p>
                 </div>
               </div>
 
-              <div className="schedule-item" onClick={bounceClick}>
-                <div className="schedule-type type-assignment">📝</div>
-                <div className="schedule-details">
-                  <h4>机器学习作业</h4>
-                  <div className="schedule-meta">
-                    <span className="urgent">截止: 后天 23:59</span>
-                    <span>CS7012 课程作业</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="schedule-item" onClick={bounceClick}>
-                <div className="schedule-type type-exam">🎯</div>
-                <div className="schedule-details">
-                  <h4>期中考试</h4>
-                  <div className="schedule-meta">
-                    <span>下周五 14:00 - 17:00</span>
-                    <span>统计学 STAT7001</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 成绩概览 */}
-            <div className="card animate-fade-in">
-              <div className="card-header">
-                <div className="card-icon grades-icon">📊</div>
-                <div className="card-title">成绩概览</div>
-              </div>
-
-              <div className="grade-item" onClick={bounceClick}>
-                <div className="grade-info">
-                  <h4>STAT7001</h4>
-                  <p>期中考试</p>
-                </div>
-                <div className="grade-score">85%</div>
-              </div>
-
-              <div className="grade-item" onClick={bounceClick}>
-                <div className="grade-info">
-                  <h4>CS7012</h4>
-                  <p>项目作业1</p>
-                </div>
-                <div className="grade-score">92%</div>
-              </div>
-
-              <div className="grade-item" onClick={bounceClick}>
-                <div className="grade-info">
-                  <h4>MATH7003</h4>
-                  <p>课堂测验</p>
-                </div>
-                <div className="grade-score">78%</div>
-              </div>
-            </div>
-
-            {/* AI 成绩分析 */}
-            <div className="card ai-analysis-card animate-fade-in">
-              <div className="card-header">
-                <div className="card-icon ai-icon">🤖</div>
-                <div className="card-title">AI成绩分析</div>
-              </div>
-
-              {/* 总体表现 */}
-              <div className="ai-section">
-                <h4 className="ai-section-title">总体表现</h4>
-                <div className="performance-chart">
-                  <div className="chart-container">
-                    <div className="progress-ring">
-                      <div className="progress-value">85%</div>
-                      <div className="progress-label">综合成绩</div>
+              <div className="space-y-4">
+                {recentActivities.map((activity, index) => (
+                  <div key={index} className={`flex items-start space-x-3 p-3 rounded-lg border ${getStatusColor(activity.status)}`}>
+                    <div className={`flex-shrink-0 ${activity.status === 'success' ? 'text-green-600' : activity.status === 'excellent' ? 'text-blue-600' : activity.status === 'warning' ? 'text-yellow-600' : 'text-purple-600'}`}>
+                      {getActivityIcon(activity.type)}
                     </div>
-                    <div className="trend-indicator trending-up">
-                      <span className="trend-arrow">↗</span>
-                      <span className="trend-text">较上月提升3%</span>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{activity.title}</h4>
+                      <p className="text-xs text-gray-600 mt-1">{activity.details}</p>
+                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
 
-              {/* AI 洞察 */}
-              <div className="ai-section">
-                <h4 className="ai-section-title">智能洞察</h4>
-                <div className="insight-list">
-                  <div className="insight-item insight-positive">
-                    <div className="insight-icon">✅</div>
-                    <div className="insight-content">
-                      <strong>优势科目：</strong>计算机科学表现优异，项目作业得分92%，建议继续保持编程实践
-                    </div>
-                  </div>
-                  <div className="insight-item insight-warning">
-                    <div className="insight-icon">⚠️</div>
-                    <div className="insight-content">
-                      <strong>需要关注：</strong>数学基础课程成绩偏低(78%)，建议增加练习时间
-                    </div>
-                  </div>
-                  <div className="insight-item insight-info">
-                    <div className="insight-icon">💡</div>
-                    <div className="insight-content">
-                      <strong>学习建议：</strong>统计学成绩稳定，可尝试更高难度的数据分析项目
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 学科对比 */}
-              <div className="ai-section">
-                <h4 className="ai-section-title">学科表现对比</h4>
-                <div className="subject-comparison">
-                  <div className="subject-bar">
-                    <div className="subject-info">
-                      <span className="subject-name">计算机科学</span>
-                      <span className="subject-score">92%</span>
-                    </div>
-                    <div className="progress-bar">
-                      <div className="progress-fill excellent" style={{ width: '92%' }} />
-                    </div>
-                    <div className="subject-rank">专业排名: 前15%</div>
-                  </div>
-
-                  <div className="subject-bar">
-                    <div className="subject-info">
-                      <span className="subject-name">统计学</span>
-                      <span className="subject-score">85%</span>
-                    </div>
-                    <div className="progress-bar">
-                      <div className="progress-fill good" style={{ width: '85%' }} />
-                    </div>
-                    <div className="subject-rank">专业排名: 前30%</div>
-                  </div>
-
-                  <div className="subject-bar">
-                    <div className="subject-info">
-                      <span className="subject-name">数学基础</span>
-                      <span className="subject-score">78%</span>
-                    </div>
-                    <div className="progress-bar">
-                      <div className="progress-fill fair" style={{ width: '78%' }} />
-                    </div>
-                    <div className="subject-rank">专业排名: 前50%</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 改进建议 */}
-              <div className="ai-section">
-                <h4 className="ai-section-title">个性化建议</h4>
-                <div className="recommendations">
-                  <div className="recommendation-item">
-                    <div className="rec-priority high">高优先级</div>
-                    <div className="rec-content">
-                      <h5>加强数学基础</h5>
-                      <p>建议每周额外安排2-3小时数学练习，重点关注微积分和线性代数</p>
-                    </div>
-                  </div>
-                  <div className="recommendation-item">
-                    <div className="rec-priority medium">中优先级</div>
-                    <div className="rec-content">
-                      <h5>拓展计算机项目</h5>
-                      <p>考虑参与开源项目或实习，将理论知识应用到实际项目中</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <button 
+                onClick={() => alert('查看完整活动历史')}
+                className="w-full mt-4 text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                查看更多活动 →
+              </button>
             </div>
 
             {/* 紧急联系 */}
-            <div className="card animate-fade-in">
-              <div className="card-header">
-                <div className="card-icon emergency-icon">📞</div>
-                <div className="card-title">紧急联系</div>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                  <Phone className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">联系方式</h3>
+                  <p className="text-gray-600 text-sm">一键联系</p>
+                </div>
               </div>
 
-              <button
-                className="contact-btn contact-student"
-                onClick={() => handleContact('student')}
-              >
-                <div className="contact-info">
-                  <div className="contact-icon">📱</div>
-                  <div className="contact-details">
-                    <h4>呼叫张小明</h4>
-                    <p>+44 7XXX XXX XXX</p>
+              <div className="space-y-3">
+                {/* 联系孩子 */}
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <h4 className="font-medium text-blue-800 mb-3">联系 {childData.name}</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => handleContact('call-student')}
+                      className="flex flex-col items-center space-y-1 p-3 bg-white rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      <Phone className="w-5 h-5 text-blue-600" />
+                      <span className="text-xs text-blue-800">电话</span>
+                    </button>
+                    <button
+                      onClick={() => handleContact('message-student')}
+                      className="flex flex-col items-center space-y-1 p-3 bg-white rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      <MessageCircle className="w-5 h-5 text-blue-600" />
+                      <span className="text-xs text-blue-800">消息</span>
+                    </button>
+                    <button
+                      onClick={() => handleContact('email-student')}
+                      className="flex flex-col items-center space-y-1 p-3 bg-white rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      <Mail className="w-5 h-5 text-blue-600" />
+                      <span className="text-xs text-blue-800">邮件</span>
+                    </button>
                   </div>
                 </div>
-                <div className="contact-arrow">→</div>
-              </button>
 
-              <button
-                className="contact-btn contact-school"
-                onClick={() => handleContact('school')}
-              >
-                <div className="contact-info">
-                  <div className="contact-icon">🏫</div>
-                  <div className="contact-details">
-                    <h4>UCL学生服务</h4>
-                    <p>学校紧急热线</p>
+                {/* 联系学校 */}
+                <div className="bg-green-50 rounded-xl p-4">
+                  <h4 className="font-medium text-green-800 mb-3">联系 UCL</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => handleContact('call-school')}
+                      className="flex flex-col items-center space-y-1 p-3 bg-white rounded-lg hover:bg-green-100 transition-colors"
+                    >
+                      <Phone className="w-5 h-5 text-green-600" />
+                      <span className="text-xs text-green-800">学校热线</span>
+                    </button>
+                    <button
+                      onClick={() => handleContact('email-school')}
+                      className="flex flex-col items-center space-y-1 p-3 bg-white rounded-lg hover:bg-green-100 transition-colors"
+                    >
+                      <Mail className="w-5 h-5 text-green-600" />
+                      <span className="text-xs text-green-800">学生服务</span>
+                    </button>
                   </div>
                 </div>
-                <div className="contact-arrow">→</div>
-              </button>
-            </div>
-
-            {/* 本周摘要 */}
-            <div className="card animate-fade-in">
-              <div className="card-header">
-                <div className="card-icon summary-icon">📋</div>
-                <div className="card-title">本周摘要</div>
-              </div>
-              <div className="summary-item summary-success">
-                <div className="summary-indicator">✓</div>
-                <div className="summary-text">本周按时完成2项作业</div>
-              </div>
-              <div className="summary-item summary-warning">
-                <div className="summary-indicator">!</div>
-                <div className="summary-text">1项作业即将到期</div>
-              </div>
-              <div className="summary-item summary-info">
-                <div className="summary-indicator">i</div>
-                <div className="summary-text">下周有重要考试</div>
               </div>
             </div>
-          </div>
 
-          {/* 底部操作 */}
-          <div className="bottom-actions">
-            <button className="primary-btn" onClick={handleReport}>
-              查看详细周报
-            </button>
+            {/* 快速操作 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">快速操作</h3>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => handleDownloadReport('weekly')}
+                  className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <FileText className="w-5 h-5 text-gray-600" />
+                    <span className="font-medium">下载周报</span>
+                  </div>
+                  <Download className="w-4 h-4 text-gray-400" />
+                </button>
+                
+                <button
+                  onClick={() => handleDownloadReport('monthly')}
+                  className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <BarChart3 className="w-5 h-5 text-gray-600" />
+                    <span className="font-medium">月度报告</span>
+                  </div>
+                  <Download className="w-4 h-4 text-gray-400" />
+                </button>
+                
+                <button
+                  onClick={() => alert('分享功能')}
+                  className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Share2 className="w-5 h-5 text-gray-600" />
+                    <span className="font-medium">分享进度</span>
+                  </div>
+                  <div className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default EnhancedParentDashboard;
