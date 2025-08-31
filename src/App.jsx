@@ -17,6 +17,7 @@ import CampusPage from './components/student/CampusPage';
 import EmergencyPage from './components/student/EmergencyPage';
 import SettingsPage from './components/student/SettingsPage';
 import AIChat from './components/AIChat';
+import { UserActivityManagement } from './components/student/UserActivityManagement';
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
                   <Route path="calendar" element={<CalendarPage />} />
                   <Route path="campus" element={<CampusPage />} />
                   <Route path="emergency" element={<EmergencyPage />} />
+                  <Route path="activities" element={<UserActivityManagement />} />
                   <Route path="ai" element={<AIChat />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route index element={<HomePage />} />
