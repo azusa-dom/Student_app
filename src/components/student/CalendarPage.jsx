@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAppContext } from '../../contexts/AppContext';
+import { QuickAddEventModal } from './QuickAddEventModal';
 
 const CalendarPage = () => {
   const { t } = useLanguage();
@@ -19,6 +20,7 @@ const CalendarPage = () => {
     exam: true,
     club_activity: true
   });
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   // 获取当前月份的所有日期
   const getCurrentMonthDates = () => {
@@ -417,16 +419,7 @@ const CalendarPage = () => {
 
             {/* 添加事件按钮 */}
             <button
-              onClick={() => {
-                const title = prompt('事件标题');
-                if (!title) return;
-                const time = prompt('开始时间（例如 14:00）');
-                const [hh, mm] = (time || '09:00').split(':');
-                const start = new Date(selectedDate);
-                start.setHours(Number(hh) || 9, Number(mm) || 0, 0, 0);
-                addEvent({ title, type: 'class_event', start_at: start.toISOString() });
-                alert('已添加到日历');
-              }}
+              onClick={() => setIsQuickAddOpen(true)}
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
@@ -464,6 +457,15 @@ const CalendarPage = () => {
       {viewMode === 'month' && <MonthView />}
       {viewMode === 'week' && <WeekView />}
       {viewMode === 'day' && <DayView />}
+
+      {/* 快速添加事件弹窗 */}
+      <QuickAddEventModal
+        isOpen={isQuickAddOpen}
+        onClose={() => setIsQuickAddOpen(false)}
+        onAddEvent={(evt) => {
+          addEvent(evt);
+        }}
+      />
     </div>
   );
 };
