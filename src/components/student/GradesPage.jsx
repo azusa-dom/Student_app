@@ -14,6 +14,15 @@ const GradesPage = () => {
   const [selectedSemester, setSelectedSemester] = useState('current');
   const [searchTerm, setSearchTerm] = useState('');
   const [showPredictions, setShowPredictions] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newGrade, setNewGrade] = useState({
+    course: '',
+    courseName: '',
+    assignment: '',
+    grade: '',
+    weight: '',
+    type: 'assignment'
+  });
 
   // 扩展的成绩数据
   const [gradesData] = useState([
@@ -93,6 +102,36 @@ const GradesPage = () => {
 
   const stats = calculateStats();
 
+  // 处理添加成绩
+  const handleAddGrade = () => {
+    if (newGrade.course && newGrade.courseName && newGrade.assignment && newGrade.grade) {
+      const gradeData = {
+        ...newGrade,
+        grade: parseFloat(newGrade.grade),
+        weight: parseFloat(newGrade.weight) || 100,
+        date: new Date().toISOString().split('T')[0]
+      };
+      
+      addGrade(gradeData);
+      
+      // 重置表单
+      setNewGrade({
+        course: '',
+        courseName: '',
+        assignment: '',
+        grade: '',
+        weight: '',
+        type: 'assignment'
+      });
+      setShowAddForm(false);
+      
+      // 显示成功提示
+      alert('成绩添加成功！');
+    } else {
+      alert('请填写所有必填字段');
+    }
+  };
+
   // 过滤课程
   const filteredCourses = gradesData.filter(course =>
     course.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -154,7 +193,10 @@ const GradesPage = () => {
                 {showPredictions ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 <span className="text-sm">预测成绩</span>
               </button>
-              <button className="flex items-center space-x-2 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl backdrop-blur-sm transition-colors">
+              <button 
+                onClick={() => setShowAddForm(true)}
+                className="flex items-center space-x-2 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl backdrop-blur-sm transition-colors"
+              >
                 <Plus className="w-5 h-5" />
                 <span>手动添加</span>
               </button>
@@ -230,6 +272,116 @@ const GradesPage = () => {
           </div>
         </div>
       </div>
+
+      {/* 手动添加成绩表单 */}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">添加新成绩</h3>
+              <button 
+                onClick={() => setShowAddForm(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">课程代码</label>
+                <input
+                  type="text"
+                  value={newGrade.course}
+                  onChange={(e) => setNewGrade({...newGrade, course: e.target.value})}
+                  placeholder="例如: COMP3001"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">课程名称</label>
+                <input
+                  type="text"
+                  value={newGrade.courseName}
+                  onChange={(e) => setNewGrade({...newGrade, courseName: e.target.value})}
+                  placeholder="例如: 算法与数据结构"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">作业/考试名称</label>
+                <input
+                  type="text"
+                  value={newGrade.assignment}
+                  onChange={(e) => setNewGrade({...newGrade, assignment: e.target.value})}
+                  placeholder="例如: 期中考试"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">成绩</label>
+                  <input
+                    type="number"
+                    value={newGrade.grade}
+                    onChange={(e) => setNewGrade({...newGrade, grade: e.target.value})}
+                    placeholder="0-100"
+                    min="0"
+                    max="100"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">权重(%)</label>
+                  <input
+                    type="number"
+                    value={newGrade.weight}
+                    onChange={(e) => setNewGrade({...newGrade, weight: e.target.value})}
+                    placeholder="例如: 30"
+                    min="0"
+                    max="100"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">类型</label>
+                <select
+                  value={newGrade.type}
+                  onChange={(e) => setNewGrade({...newGrade, type: e.target.value})}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="assignment">作业</option>
+                  <option value="exam">考试</option>
+                  <option value="quiz">测验</option>
+                  <option value="project">项目</option>
+                  <option value="lab">实验</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={() => setShowAddForm(false)}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleAddGrade}
+                className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                添加成绩
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 课程列表 */}
       {activeView === 'overview' && (
