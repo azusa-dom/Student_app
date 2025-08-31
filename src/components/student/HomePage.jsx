@@ -129,8 +129,8 @@ const HomePage = () => {
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold">{greeting}, 张伟!</h1>
-              <p className="text-blue-100 mt-1">今天也要加油学习哦</p>
+              <h1 className="text-4xl font-extrabold">{greeting}, 张伟!</h1>
+              <p className="text-lg text-blue-100 mt-1">今天也要加油学习哦</p>
             </div>
             <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
               <span className="text-2xl">👋</span>
@@ -157,7 +157,7 @@ const HomePage = () => {
 
       {/* 今日亮点 */}
       <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">今日概览</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">今日概览</h2>
         <div className="grid grid-cols-1 gap-4">
           {(todayHighlights || []).map((highlight) => (
             <div key={highlight.id} className="flex items-center space-x-4 p-3 rounded-lg bg-gray-50">
@@ -179,7 +179,7 @@ const HomePage = () => {
 
       {/* 快速操作 */}
       <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">快速操作</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">快速操作</h2>
         <div className="grid grid-cols-2 gap-4">
           {(quickActions || []).map((action) => (
             <button
@@ -194,7 +194,7 @@ const HomePage = () => {
                   <action.icon className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium text-gray-900 group-hover:text-purple-600">
+                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-purple-600">
                     {action.title}
                   </h3>
                   <p className="text-sm text-gray-500">{action.subtitle}</p>
@@ -209,7 +209,7 @@ const HomePage = () => {
       {/* 最近通知 */}
       <div className="bg-white rounded-xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">最近通知</h2>
+          <h2 className="text-xl font-bold text-gray-900">最近通知</h2>
           <button className="text-purple-600 text-sm hover:text-purple-700">
             查看全部
           </button>
@@ -225,7 +225,7 @@ const HomePage = () => {
                 }`} />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-gray-900 text-sm">{notification.title}</h3>
+                <h3 className="text-base font-bold text-gray-900">{notification.title}</h3>
                 <p className="text-sm text-gray-600 mt-1">{notification.content}</p>
                 <div className="flex items-center space-x-3 mt-2">
                   <span className="text-xs text-gray-500">{notification.time}</span>
@@ -243,7 +243,7 @@ const HomePage = () => {
 
       {/* 学习进度卡片 */}
       <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">本周学习进度</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">本周学习进度</h2>
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between text-sm mb-2">
@@ -284,7 +284,7 @@ const HomePage = () => {
             <Star className="w-6 h-6 text-purple-600" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 mb-1">发现新功能</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">发现新功能</h3>
             <p className="text-sm text-gray-600 mb-3">
               试试我们的AI学习助手，它可以帮你制定个性化学习计划！
             </p>

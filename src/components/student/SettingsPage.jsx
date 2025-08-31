@@ -126,7 +126,7 @@ const SettingsPage = () => {
             <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
               <Icon className="w-4 h-4 text-blue-600" />
             </div>
-            <span className="font-semibold text-gray-900">{title}</span>
+            <span className="text-lg font-bold text-gray-900">{title}</span>
             {badge && (
               <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
                 {badge}
@@ -152,7 +152,7 @@ const SettingsPage = () => {
   const SwitchToggle = ({ enabled, onChange, label, description }) => (
     <div className="flex items-center justify-between py-2">
       <div className="flex-1">
-        <div className="font-medium text-gray-900 text-sm">{label}</div>
+        <div className="text-base font-bold text-gray-900">{label}</div>
         {description && (
           <div className="text-xs text-gray-500 mt-1">{description}</div>
         )}
@@ -187,7 +187,7 @@ const SettingsPage = () => {
 
       {/* 页面标题 */}
       <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">设置</h1>
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-2">设置</h1>
         <p className="text-gray-600">管理您的个人资料、通知偏好和应用设置</p>
       </div>
 
