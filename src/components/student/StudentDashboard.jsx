@@ -5,7 +5,7 @@ import { useAppContext } from '../../contexts/AppContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useUser } from '../../contexts/UserContext';
-import ActivityPreview from './ActivityPreview';
+
 
 const StudentDashboard = () => {
   const { grades } = useAppContext();
@@ -50,7 +50,7 @@ const StudentDashboard = () => {
     navigate(tab.path);
   };
 
-  const showActivityPreview = currentTab === 'home';
+
 
   return (
     <div className={`min-h-screen ${backgroundClass} pb-20`}>
@@ -98,13 +98,7 @@ const StudentDashboard = () => {
       </header>
 
       {/* Activity Preview Section - 只在首页显示 */}
-      {showActivityPreview && (
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className={`${themeConfig.card} rounded-2xl p-4 border border-white/20`}>
-            <ActivityPreview onNavigate={navigate} />
-          </div>
-        </div>
-      )}
+
 
       {/* Main Content - 使用 Outlet 渲染子路由 */}
       <main className="max-w-4xl mx-auto px-6 py-2">

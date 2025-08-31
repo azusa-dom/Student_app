@@ -169,19 +169,11 @@ const MailPage = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
       {/* 顶部导航 */}
-      <div className="bg-white border-b border-gray-200 -mx-4 px-4 py-4 sticky top-0 z-50">
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/50 mb-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold">
-              张
-            </div>
-            <div>
-              <h1 className="text-4xl font-extrabold text-gray-900">智能邮件中心</h1>
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>02:53 已同步</span>
-              </div>
-            </div>
+          <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span>02:53 已同步</span>
           </div>
           <div className="flex items-center space-x-2">
             <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
@@ -198,16 +190,16 @@ const MailPage = () => {
       </div>
 
       {/* AI智能摘要 */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-6 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-white opacity-10 rounded-full -mr-24 -mt-24"></div>
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100 opacity-20 rounded-full -mr-16 -mt-16"></div>
         <div className="relative z-10">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center text-xl backdrop-blur-sm">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-xl shadow-lg">
               🤖
             </div>
             <div>
-              <h2 className="text-2xl font-bold">今日邮件摘要</h2>
-              <p className="text-purple-100">AI为您智能分析和归类邮件内容</p>
+              <h2 className="text-2xl font-bold text-gray-900">今日邮件摘要</h2>
+              <p className="text-gray-600">AI为您智能分析和归类邮件内容</p>
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -217,9 +209,9 @@ const MailPage = () => {
               { label: '作业相关', value: mailStats.assignments },
               { label: '分类准确率', value: `${mailStats.accuracy}%` }
             ].map((stat, index) => (
-              <div key={index} className="text-center bg-white bg-opacity-10 rounded-xl p-3 backdrop-blur-sm">
-                <div className="text-3xl font-extrabold">{stat.value}</div>
-                <div className="text-sm text-purple-100">{stat.label}</div>
+              <div key={index} className="bg-gray-50 rounded-2xl p-4 text-center border border-gray-100 hover:shadow-md transition-all">
+                <div className="text-3xl font-extrabold text-gray-900">{stat.value}</div>
+                <div className="text-sm text-gray-600 mt-1">{stat.label}</div>
               </div>
             ))}
           </div>
