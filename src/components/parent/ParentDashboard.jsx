@@ -234,10 +234,10 @@ const EnhancedParentDashboard = () => {
               </button>
 
               <button
-                onClick={() => setShowAI(true)}
-                className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                onClick={() => alert('设置页面')}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                AI 对话
+                <Settings className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -428,6 +428,40 @@ const EnhancedParentDashboard = () => {
                   数学课程需要额外关注。预计期末成绩可达到85-90分区间。
                 </p>
               </div>
+            </div>
+
+            {/* AI 智能对话 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">AI 智能助手</h3>
+                  <p className="text-gray-600 text-sm">个性化学习建议与问答</p>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 mb-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">AI</span>
+                  </div>
+                  <span className="font-medium text-gray-900">智能助手</span>
+                </div>
+                <p className="text-gray-700 text-sm">
+                  您好！我可以帮您分析孩子的学习情况，回答关于成绩、出勤、作业的问题，
+                  并提供个性化的学习建议。
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowAI(true)}
+                className="w-full flex items-center justify-center space-x-2 p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span className="font-medium">开始 AI 对话</span>
+              </button>
             </div>
           </div>
 
