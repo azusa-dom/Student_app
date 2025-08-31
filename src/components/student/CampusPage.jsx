@@ -364,24 +364,46 @@ const CampusPage = () => {
         )}
 
         {/* 底部帮助卡片 */}
-        <div className="campus-footer animate-fade-in">
-          <div className="footer-content">
-            <div className="footer-icon">
-              <Phone className="help-icon" />
+        <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-3xl p-8 border border-blue-100 shadow-lg animate-fade-in">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Phone className="w-8 h-8 text-white" />
             </div>
-            <div className="footer-info">
-              <h3>需要帮助？</h3>
-              <p>如果您在使用校园服务时遇到任何问题，请随时联系我们</p>
-              <div className="help-contacts">
-                <div className="contact-item">
-                  <Phone className="contact-icon" />
-                  <span>IT服务台：+44 20 7679 5000</span>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">需要帮助？</h3>
+            <p className="text-gray-600 max-w-md mx-auto">
+              如果您在使用校园服务时遇到任何问题，请随时联系我们的专业团队
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Phone className="w-5 h-5 text-blue-600" />
                 </div>
-                <div className="contact-item">
-                  <Mail className="contact-icon" />
-                  <span>学生服务：student.services@ucl.ac.uk</span>
+                <div>
+                  <h4 className="text-lg font-bold text-gray-900">IT服务台</h4>
+                  <p className="text-sm text-gray-500">技术支持热线</p>
                 </div>
               </div>
+              <a href="tel:+442076795000" className="text-blue-600 font-semibold hover:text-blue-700 transition-colors">
+                +44 20 7679 5000
+              </a>
+            </div>
+            
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-gray-900">学生服务</h4>
+                  <p className="text-sm text-gray-500">邮件咨询服务</p>
+                </div>
+              </div>
+              <a href="mailto:student.services@ucl.ac.uk" className="text-purple-600 font-semibold hover:text-purple-700 transition-colors break-all">
+                student.services@ucl.ac.uk
+              </a>
             </div>
           </div>
         </div>
