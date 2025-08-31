@@ -70,7 +70,8 @@ const MailPage = () => {
     urgent: emails.filter(email => email.isUrgent).length,
     pending: emails.filter(email => !email.isRead).length,
     assignments: emails.filter(email => email.type === 'assignment').length,
-    accuracy: 95
+    accuracy: 95,
+    total: emails.length
   };
 
   // 筛选标签
@@ -171,9 +172,20 @@ const MailPage = () => {
       {/* 顶部导航 */}
       <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/50 mb-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>02:53 已同步</span>
+          <div className="flex flex-col space-y-1">
+            <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span>同步时间: {new Date().toLocaleString('zh-CN', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })}</span>
+            </div>
+            <div className="text-xs text-gray-400">
+              已同步 {mailStats.total} 条邮件
+            </div>
           </div>
           <div className="flex items-center space-x-2">
             <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
