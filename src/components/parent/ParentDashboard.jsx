@@ -6,6 +6,7 @@ import {
   FileText, Download, Share2, Heart, Star, Award,
   BarChart3, PieChart, Activity, Users, Home, Shield
 } from 'lucide-react';
+import ParentAIChat from './ParentAIChat';
 
 const EnhancedParentDashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -13,6 +14,7 @@ const EnhancedParentDashboard = () => {
   const [showDetailedGrades, setShowDetailedGrades] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [showAI, setShowAI] = useState(false);
   const [childData, setChildData] = useState({
     name: "张小明",
     university: "University College London", 
@@ -232,10 +234,10 @@ const EnhancedParentDashboard = () => {
               </button>
 
               <button
-                onClick={() => alert('设置页面')}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                onClick={() => setShowAI(true)}
+                className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
-                <Settings className="w-5 h-5" />
+                AI 对话
               </button>
             </div>
           </div>
@@ -573,6 +575,8 @@ const EnhancedParentDashboard = () => {
           </div>
         </div>
       </div>
+
+      {showAI && <ParentAIChat onClose={() => setShowAI(false)} />}
     </div>
   );
 };
