@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Calendar, Clock, MapPin, Users, Heart, Check, X, 
-  ExternalLink, RefreshCw, Trash2, Download, BarChart3
+  ExternalLink, RefreshCw, Trash2, Download, BarChart3,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { activityService } from '../../services/ActivityService';
 
@@ -14,6 +15,8 @@ export const UserActivityManagement = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('registered');
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [showCalendar, setShowCalendar] = useState(true);
 
   useEffect(() => {
     loadUserActivities();
@@ -99,6 +102,135 @@ export const UserActivityManagement = () => {
     } catch (error) {
       showNotification('导出失败', 'error');
     }
+  };
+
+  // 日历相关函数
+  const getCurrentMonthDates = () => {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const firstDayOfWeek = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
+    
+    const dates = [];
+    
+    // 添加上个月的日期填充
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      const date = new Date(year, month, -i);
+      dates.push({ date, isCurrentMonth: false });
+    }
+    
+    // 添加当前月的日期
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      dates.push({ date, isCurrentMonth: true });
+    }
+    
+    // 添加下个月的日期填充
+    const remainingDays = 42 - dates.length;
+    for (let day = 1; day <= remainingDays; day++) {
+      const date = new Date(year, month + 1, day);
+      dates.push({ date, isCurrentMonth: false });
+    }
+    
+    return dates;
+  };
+
+  const getActivitiesForDate = (date) => {
+    const allActivities = [...userActivities.registered.activities, ...userActivities.interested.activities];
+    return allActivities.filter(activity => {
+      const activityDate = new Date(activity.date);
+      return activityDate.toDateString() === date.toDateString();
+    });
+  };
+
+  const navigateMonth = (direction) => {
+    const newDate = new Date(calendarDate);
+    newDate.setMonth(calendarDate.getMonth() + direction);
+    setCalendarDate(newDate);
+  };
+
+  // 日历组件
+  const ActivityCalendar = () => {
+    const monthDates = getCurrentMonthDates();
+    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+
+    return (
+      <div className="bg-white rounded-xl p-4 border border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">活动日历</h3>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => navigateMonth(-1)}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-sm font-medium min-w-[100px] text-center">
+              {calendarDate.getFullYear()}年{calendarDate.getMonth() + 1}月
+            </span>
+            <button
+              onClick={() => navigateMonth(1)}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setShowCalendar(!showCalendar)}
+              className="ml-2 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
+            >
+              {showCalendar ? '隐藏' : '显示'}
+            </button>
+          </div>
+        </div>
+
+        {showCalendar && (
+          <div className="grid grid-cols-7 gap-1">
+            {/* 星期标题 */}
+            {weekDays.map(day => (
+              <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
+                {day}
+              </div>
+            ))}
+            
+            {/* 日期格子 */}
+            {monthDates.map(({ date, isCurrentMonth }, index) => {
+              const dayActivities = getActivitiesForDate(date);
+              const isToday = date.toDateString() === new Date().toDateString();
+              
+              return (
+                <div
+                  key={index}
+                  className={`relative h-8 flex items-center justify-center text-xs cursor-pointer hover:bg-gray-50 rounded ${
+                    isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                  } ${isToday ? 'bg-blue-100 text-blue-600 font-bold' : ''}`}
+                >
+                  <span>{date.getDate()}</span>
+                  {dayActivities.length > 0 && (
+                    <div className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 图例 */}
+        {showCalendar && (
+          <div className="mt-3 flex items-center justify-center space-x-4 text-xs text-gray-600">
+            <div className="flex items-center space-x-1">
+              <div className="w-2 h-2 bg-blue-100 rounded"></div>
+              <span>今天</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span>有活动</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const ActivityCard = ({ activity, type, onAction }) => (
@@ -208,6 +340,9 @@ export const UserActivityManagement = () => {
           </div>
         </div>
       )}
+
+      {/* 活动日历 */}
+      <ActivityCalendar />
 
       {/* 操作按钮 */}
       <div className="flex items-center justify-between">
