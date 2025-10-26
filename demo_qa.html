@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UCL AI 问答系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* 顶部标题 */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        /* 主卡片 */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            margin-bottom: 20px;
+            animation: slideUp 0.5s ease;
+        }
+
+        /* 建议问题 */
+        .suggestions {
+            margin-bottom: 25px;
+        }
+
+        .suggestions h3 {
+            color: #667eea;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .suggestion-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .suggestion-btn {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* 搜索框 */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        #query-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #query-input:focus {
+            border-color: #667eea;
+        }
+
+        #ask-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #ask-button:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        #ask-button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
+        /* 结果区域 */
+        .result-card {
+            animation: fadeIn 0.4s ease;
+        }
+
+        .intent-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .answer-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .answer-box a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .answer-box a:hover {
+            text-decoration: underline;
+        }
+
+        /* 统计信息 */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        /* 引用来源 */
+        .citations {
+            border-top: 2px solid #e0e0e0;
+            padding-top: 20px;
+        }
+
+        .citations h4 {
+            color: #667eea;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .citation-list {
+            list-style: none;
+        }
+
+        .citation-item {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .citation-item:hover {
+            background: #e9ecef;
+            border-left-color: #667eea;
+            transform: translateX(3px);
+        }
+
+        .citation-item strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .citation-item a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        .citation-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* 加载和错误 */
+        .loading, .error-msg {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading::before {
+            content: "";
+            display: block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .error-msg {
+            color: #dc3545;
+        }
+
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            .card { padding: 20px; }
+            .search-box { flex-direction: column; }
+            #ask-button { width: 100%; }
+            .stats { grid-template-columns: 1fr; }
+            .suggestion-btns { flex-direction: column; }
+            .suggestion-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 标题 -->
+        <div class="header">
+            <h1>🎓 UCL AI 问答系统</h1>
+            <p>智能检索 · 意图识别 · 精准回答</p>
+        </div>
+
+        <!-- 主卡片 -->
+        <div class="card">
+            <!-- 建议问题 -->
+            <div class="suggestions">
+                <h3>💡 试试这些问题</h3>
+                <div class="suggestion-btns">
+                    <button class="suggestion-btn" onclick="setQuery('计算机科学硕士的语言要求')">计算机科学硕士的语言要求</button>
+                    <button class="suggestion-btn" onclick="setQuery('如何预约心理咨询')">如何预约心理咨询</button>
+                    <button class="suggestion-btn" onclick="setQuery('商科硕士入学要求')">商科硕士入学要求</button>
+                    <button class="suggestion-btn" onclick="setQuery('简历和求职准备')">简历和求职准备</button>
+                </div>
+            </div>
+
+            <!-- 搜索框 -->
+            <div class="search-box">
+                <input type="text" id="query-input" placeholder="请输入您的问题..." 
+                       onkeyup="if(event.keyCode===13) askQuestion()">
+                <button id="ask-button" onclick="askQuestion()">提问</button>
+            </div>
+
+            <!-- 结果容器 -->
+            <div id="result-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const queryInput = document.getElementById('query-input');
+        const askButton = document.getElementById('ask-button');
+        const resultContainer = document.getElementById('result-container');
+
+        const INTENT_MAP = {
+            "admission_requirements": "📚 入学要求",
+            "careers_resume": "💼 职业发展",
+            "wellbeing_support": "❤️ 健康支持",
+            "booking": "📅 预约服务",
+            "other": "📄 其他信息",
+            "error": "❌ 系统错误"
+        };
+
+        let startTime = null;
+
+        function setQuery(text) {
+            queryInput.value = text;
+            queryInput.focus();
+        }
+
+        async function askQuestion() {
+            const query = queryInput.value.trim();
+            if (!query) return;
+
+            startTime = Date.now();
+            askButton.disabled = true;
+            askButton.innerText = "思考中...";
+            resultContainer.innerHTML = '<div class="loading">正在检索和分析，请稍候...</div>';
+
+            try {
+                const response = await fetch(`/api/qa?query=${encodeURIComponent(query)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                renderResult(data);
+            } catch (error) {
+                console.error('Fetch error:', error);
+                resultContainer.innerHTML = `
+                    <div class="error-msg">
+                        ❌ 系统错误<br>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+            } finally {
+                askButton.disabled = false;
+                askButton.innerText = "提问";
+            }
+        }
+
+        function renderResult(data) {
+            const intentText = INTENT_MAP[data.intent] || data.intent;
+            const responseTime = startTime ? ((Date.now() - startTime) / 1000).toFixed(2) + 's' : '-';
+            const docsCount = data.citations ? data.citations.length : 0;
+            
+            // 构建答案
+            let answerHtml = data.answer || '';
+            if (data.citations && data.citations.length > 0) {
+                const first = data.citations[0];
+                answerHtml += `\n\n来源：<a href="${first.url}" target="_blank">${first.title}</a>`;
+            }
+
+            // 构建引用列表
+            let citationsHtml = '';
+            if (data.citations && data.citations.length > 0) {
+                citationsHtml = `
+                    <div class="citations">
+                        <h4>🔗 参考来源</h4>
+                        <ul class="citation-list">
+                            ${data.citations.map((c, i) => `
+                                <li class="citation-item">
+                                    <strong>${i + 1}. ${c.title}</strong>
+                                    <a href="${c.url}" target="_blank">${c.url}</a>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            resultContainer.innerHTML = `
+                <div class="result-card">
+                    <span class="intent-badge">${intentText}</span>
+                    <div class="answer-box">${answerHtml}</div>
+                    
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-label">检索文档</div>
+                            <div class="stat-value">${docsCount}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">查询改写</div>
+                            <div class="stat-value">6</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">响应时间</div>
+                            <div class="stat-value">${responseTime}</div>
+                        </div>
+                    </div>
+                    
+                    ${citationsHtml}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

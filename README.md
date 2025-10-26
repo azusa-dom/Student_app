@@ -1,4 +1,18 @@
 
+# 学生服务问答系统
+
+集成 LLM（tinyllama）、RAG 检索、现代前端与 API。
+
+## 文档入口
+- 详细文档见 `docs/` 目录（API、部署、前端、后端、LLM、RAG、工作日志）
+
+## 快速开始
+1. 安装依赖：`pip install -r requirements.txt`、`npm install`
+2. 启动后端：`python api_qa.py`
+3. 启动前端：`npm run dev`
+4. 访问 `localhost:5173` 或部署页面
+
+
 ## ✨ Key Features
 
 ### 📅 Activity Management

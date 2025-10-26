@@ -17,6 +17,33 @@ pnpm-debug.log*
 .env.local
 backend/.env
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+data/qa_index.pkl
+
+# Node
+node_modules/
+dist/
+
+# Logs
+logs/
+data/logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Others
+.env
+
 # Editor
 .DS_Store
 .idea/

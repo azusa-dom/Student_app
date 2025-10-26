@@ -1,145 +1,88 @@
-# scripts/qa_local.py
-import pickle
+# ========== 兼容性导入和 reranker（替换原有 import CrossEncoder / rerank_passages） ==========
+# 放在文件顶部与其他 import 一起
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from pathlib import Path
-import json
-from datetime import datetime
 
-# ===============================================
-# 1. 修复：定义文件路径 (请确保 'data' 文件夹存在)
-# ===============================================
-INDEX_PATH = Path('data/qa_index.pkl')
-LOG_PATH = Path('data/qa_log.txt')
-# ===============================================
-
-# 关键词映射：中文到英文
-KEYWORD_MAPPING = {
-    '计算机': 'computer science',
-    '电脑': 'computer',
-    '简历': 'CV resume',
-    '心理咨询': 'counselling mental health',
-    '预约': 'appointment booking',
-    '商科': 'business economics finance',
-    '硕士': 'masters MSc',
-    '成绩': 'grades requirements',
-    '入学要求': 'entry requirements admission',
-    '怎么': 'how to',
-    '改': 'improve edit',
-    'GPA': 'GPA grades',
-    '算': 'calculate'
-}
-
-def translate_query(question):
-    """简单地将中文关键词替换为英文"""
-    translated = question.lower()
-    for cn, en in KEYWORD_MAPPING.items():
-        translated = translated.replace(cn, en)
-    return translated
-
-# 加载索引
-def load_index():
-    with open(INDEX_PATH, 'rb') as f:
-        data = pickle.load(f)
-    return data['vectorizer'], data['tfidf_matrix'], data['metadata']
-
-# 日志记录
-def log_query(question, answer_text):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    # 确保日志文件路径存在
-    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(LOG_PATH, 'a', encoding='utf-8') as f:
-        f.write(f"[{timestamp}] Q: {question}\nA: {answer_text}\n---\n")
-
-# 主函数
-def answer(question, top_k=5, min_score=0.01):
-    results = []
+# 尝试导入 CrossEncoder（优先 cross-encoder 包，其次 sentence-transformers 的实现）
+CrossEncoderClass = None
+try:
+    # 如果你安装了 cross-encoder 包（某些环境有）
+    from cross_encoder import CrossEncoder as CE  # type: ignore
+    CrossEncoderClass = CE
+except Exception:
     try:
-        vectorizer, tfidf_matrix, metadata = load_index()
-        
-        # 翻译中文查询为英文
-        translated_question = translate_query(question)
-        
-        query_vec = vectorizer.transform([translated_question])
-        similarities = cosine_similarity(query_vec, tfidf_matrix).flatten()
-        
-        # 取 top_k
-        top_indices = np.argsort(similarities)[-top_k:][::-1]
-        
-        for idx in top_indices:
-            score = similarities[idx]
-            if score < min_score:
-                continue
-            doc = metadata[idx]
-            results.append({
-                'title': doc['title'],
-                'type': doc['type'],
-                'url': doc['url'],
-                'score': round(float(score), 3),
-                'source': doc['source']
-            })
+        # sentence-transformers 在某些版本中也提供 CrossEncoder
+        from sentence_transformers import CrossEncoder as CE  # type: ignore
+        CrossEncoderClass = CE
+    except Exception:
+        CrossEncoderClass = None
 
-        # 生成回答
-        if not results:
-            response = "抱歉，我暂时无法找到相关信息。"
-            sources = []
-        else:
-            response = "我找到了以下信息：\n"
-            # 收集所有 URL 作为简易来源列表 (兼容旧的解析器/日志)
-            sources = [r['url'] for r in results if r.get('url')]
-            
-            # 为回答文本添加结果列表
-            for r in results:
-                type_label = "专业" if r['type'] == 'program' else "服务"
-                # 现在在回答中包含得分，以便用户可以手动评估
-                response += f"• [{type_label}] {r['title']} (得分: {r['score']:.3f})\n" 
+def rerank_passages(query, passages, embedder=None, reranker_model="cross-encoder/ms-marco-MiniLM-L-6-v2", top_k=5):
+    """
+    优先使用 CrossEncoder（若可用）；若不可用，则回落到基于 embedding 的 cosine 相似度重排。
+    - query: 原始查询字符串
+    - passages: list of dicts, each must have 'text' 字段
+    - embedder: SentenceTransformer 实例（若使用 cosine fallback，需要传入）
+    """
+    if not passages:
+        return []
 
-        log_query(question, response.strip())
-        return {
-            'text': response.strip(),
-            'sources': sources,
-            'results': results
-        }
-
-    except Exception as e:
-        error_msg = f"系统错误: {str(e)}"
-        log_query(question, error_msg)
-        return {
-            'text': '抱歉，系统出错，请稍后重试。',
-            'sources': [],
-            'error': error_msg,
-            'results': []
-        }
-
-# 命令行交互
-if __name__ == '__main__':
-    print("UCL AI QA (静态版) 已启动！输入 'exit' 退出。")
-    while True:
+    # 1) 若有 CrossEncoderClass（来自 cross-encoder 或 sentence-transformers），使用它（更精准）
+    if CrossEncoderClass is not None:
         try:
-            q = input("\n您的问题: ").strip()
-        except EOFError:
-            # 兼容管道输入
-            break
-            
-        if q.lower() in ['exit', 'quit', 'q']:
-            break
-        if not q:
-            continue
-        
-        resp = answer(q)
-        
-        # 打印回答文本 (已包含标题和子弹点)
-        print(f"\n{resp['text']}")
-        
-        # 打印更详细的来源列表 (友好格式)
-        if resp.get('results'):
-            print("\n详细来源列表:")
-            for i, r in enumerate(resp['results'], 1):
-                type_label = "专业" if r['type'] == 'program' else "服务"
-                # 使用 Markdown 格式方便复制链接
-                link_text = f"[{r['title']}]({r['url']})" if r.get('url') else f"[{r['title']}]"
-                print(f"  {i}. [{type_label}] {link_text} (得分: {r['score']:.3f})")
-        
-        # 保留原有的简洁来源列表 (兼容旧解析器)
-        if resp.get('sources'):
-             print(f"\n来源: {', '.join(resp['sources'])}")
+            reranker = CrossEncoderClass(reranker_model)
+            pairs = [(query, p['text']) for p in passages]
+            scores = reranker.predict(pairs)
+            for p, s in zip(passages, scores):
+                p['rerank_score'] = float(s)
+            passages.sort(key=lambda x: x.get('rerank_score', 0.0), reverse=True)
+            return passages[:top_k]
+        except Exception as e:
+            # 如果 CrossEncoder 调用失败，降级到 cosine fallback（但先打印错误）
+            print("Warning: CrossEncoder failed, fallback to cosine rerank. Error:", e)
+
+    # 2) Cosine-similarity fallback：需要 embedder（若没有则抛错提示）
+    if embedder is None:
+        raise RuntimeError("No CrossEncoder available and embedder is None — cannot rerank. Please pass embedder to rerank_passages or install cross-encoder / sentence-transformers with CrossEncoder.")
+
+    # 准备 embeddings（对 passages 做批量编码）
+    texts = [p['text'] for p in passages]
+    try:
+        p_embs = embedder.encode(texts, convert_to_numpy=True, show_progress_bar=False)
+    except TypeError:
+        # 兼容不同版本的 sentence-transformers
+        p_embs = np.array([embedder.encode(t) for t in texts])
+
+    q_emb = embedder.encode([query], convert_to_numpy=True)
+    # 归一化
+    def normalize(x):
+        x = np.array(x, dtype=np.float32)
+        norms = np.linalg.norm(x, axis=1, keepdims=True)
+        norms[norms == 0] = 1.0
+        return x / norms
+    p_embs_n = normalize(p_embs)
+    q_emb_n = normalize(q_emb)[0]
+    sims = (p_embs_n @ q_emb_n).tolist()  # cosine similarity
+    for p, s in zip(passages, sims):
+        p['rerank_score'] = float(s)
+    passages.sort(key=lambda x: x.get('rerank_score', 0.0), reverse=True)
+    return passages[:top_k]
+# ================================================================================================
+# ----------------- quick-fix: translate_query stub -----------------
+def translate_query(query):
+    if not isinstance(query, str):
+        query = str(query or "")
+    q = query.strip()
+    zh_chars = any('\u4e00' <= ch <= '\u9fff' for ch in q)
+    lang = "zh" if zh_chars else "en"
+    rewrites = [q]
+    if lang == "zh":
+        rewrites.append(q + " English language requirements")
+    else:
+        rewrites.append(q + " site:ucl.ac.uk")
+    return {
+        "original_query": q,
+        "query": q,
+        "lang": lang,
+        "rewrites": rewrites
+    }
+# ----------------- end translate_query stub -----------------

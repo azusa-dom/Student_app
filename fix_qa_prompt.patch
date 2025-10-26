@@ -1,0 +1,26 @@
+--- a/scripts/qa_enhanced.py
++++ b/scripts/qa_enhanced.py
+@@ -1,4 +1,4 @@
+-                temperature=0.2,
++                temperature=0.1,  # 更稳定，减少“奇奇怪怪”输出
+@@ -1,4 +1,4 @@
+-        system_prompt = (
+-            "你是信息核查助手。请严格依据提供的证据句作答，"
+-            "使用中文写出 3-5 句陈述，禁止列举项目符号。若证据不足请直言缺失。"
+-        )
++        system_prompt = (
++            "你是一个 UCL 学生助手，用自然、简洁、像真人一样的方式回答问题。\n"
++            "请用 1-3 句口语化中文总结答案，语气亲切，像在帮同学答疑。\n"
++            "必须 100% 基于下方证据，不要编造。证据不足就说‘我查了资料，没找到明确答案’。\n"
++            "不要列举、不要编号、不要说‘根据...’，直接给答案。"
++        )
+@@ -1,4 +1,4 @@
+-        user_prompt = "查询：" + query + "\n\n可用证据：\n" + "\n".join(
+-            f"[{i+1}] {sent}" for i, sent in enumerate(evidence)
+-        ) + "\n\n请基于证据撰写总结。"
++        user_prompt = (
++            f"问题：{query}\n\n"
++            "相关资料：\n" +
++            "\n".join(f"• {sent.strip()}" for sent in evidence[:5]) +
++            "\n\n请用 1-3 句自然口语回答，像在帮同学一样。"
++        )

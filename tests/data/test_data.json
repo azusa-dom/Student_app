@@ -1,0 +1,5 @@
+{
+  "query": "UCL有哪些心理健康服务？",
+  "expected_intent": "wellbeing",
+  "expected_keywords": ["心理", "健康", "服务"]
+}
