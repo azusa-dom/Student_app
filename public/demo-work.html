@@ -148,14 +148,75 @@
 
         <div class="section">
             <h2>✨ 今天的工作</h2>
-            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 24px; border-radius: 12px; border-left: 4px solid #667eea;">
-                <p style="line-height: 1.9; color: #333;">
-                    今天基于昨天爬取的UCL课程与服务静态数据，AI QA系统完成全链路深度打磨与稳定增强：检索核心采用<strong>TF-IDF+规则混合策略</strong>，精准召回top3最相关文档，新增中英文分词支持（正则提取2-4字中文高频词，英文关键词保留完整），标题匹配权重提升至<strong>×3</strong>，文本匹配×1，彻底修复无结果时返回空列表导致崩溃的bug；前端Programs与Services页面数据加载流畅无闪跳，AI QA面板已实现实时调用FastAPI后端服务（部署于5051端口，配置CORS跨域、健康检查/health接口），成功返回结构化答案并高亮可追溯来源文档；本地LLM接入Ollama运行的tinyllama模型（仅637MB，启动于11434端口），在llm_client.py中新增<code>is_configured()</code>可用性检测，捕获404状态码抛出LLMUnavailable异常并附带<code>ollama run tinyllama</code>安装提示，模型未下载时直接快速失败避免无效重试；容错降级机制在qa_enhanced_wrapper.py中新增<code>_generate_local_summary()</code>函数，当LLM超时（已从60s提升至120s）或不可用时，自动截取top3文档前200字符，结构化输出"标题 + 摘要 + 友情提示：建议查看原文"，确保用户永不空等；Prompt工程全面精简：每篇输入文档限制500字符、仅传入top3高相关项、显式要求"答案控制在200字以内，语言简洁自然"，大幅降低token消耗与生成延迟；此外，保留并验证了此前优化：意图识别（课程/服务/通用）、查询自动改写（如"申请"扩展为application/admission/apply）、语义重排（硕士项目权重上调）、强制证据提取（LLM必须引用来源）、后端结构化日志（记录意图、检索结果、LLM状态、耗时）、Vite开发代理（/api无缝转发至后端），全流程本地<code>npm run dev</code>零报错。
+            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 28px; border-radius: 12px; border-left: 4px solid #667eea;">
+                <p style="line-height: 2; color: #333; margin-bottom: 20px;">
+                    今天基于昨天爬取的 UCL 课程与服务静态数据，<strong>AI QA 系统完成全链路深度打磨与稳定增强</strong>：
                 </p>
-                <div style="background: rgba(255,255,255,0.7); padding: 16px; border-radius: 8px; margin-top: 20px; border-left: 3px solid #f59e0b;">
-                    <h4 style="color: #f59e0b; margin-top: 0; font-size: 16px;">⚠️ 实测反馈</h4>
-                    <p style="line-height: 1.8; color: #555; margin-bottom: 0;">
-                        tinyllama模型智能水平仍较低，平均响应8-15秒，语义泛化能力弱，用户换个同义表达（如"怎么报名"→"入学流程"）易召回失败或生成模板化回答，离生产可用仍有差距。明天计划：优先替换为更强本地模型（如phi3:mini或gemma2:2b），若性能仍不足，将评估接入远程API（如Grok/Claude）实现"本地优先、云端兜底"的混合架构，继续提速、提智、提稳。代码已全量提交，demo持续可用。
+                
+                <h4 style="color: #667eea; margin: 20px 0 12px 0; font-size: 16px; font-weight: 700;">🔍 检索优化</h4>
+                <ul style="line-height: 1.9; color: #444; margin: 0 0 20px 24px;">
+                    <li>检索核心采用 <strong>TF-IDF + 规则混合策略</strong>，精准召回 top3 最相关文档</li>
+                    <li>新增中英文分词支持（正则提取 2-4 字中文高频词，英文关键词保留完整）</li>
+                    <li>标题匹配权重提升至 <strong>×3</strong>，文本匹配 ×1</li>
+                    <li>彻底修复无结果时返回空列表导致崩溃的 bug</li>
+                </ul>
+
+                <h4 style="color: #667eea; margin: 20px 0 12px 0; font-size: 16px; font-weight: 700;">🎨 前端集成</h4>
+                <ul style="line-height: 1.9; color: #444; margin: 0 0 20px 24px;">
+                    <li>Programs 与 Services 页面数据加载流畅无闪跳</li>
+                    <li>AI QA 面板实时调用 FastAPI 后端服务（部署于 5051 端口）</li>
+                    <li>配置 CORS 跨域、健康检查 <code>/health</code> 接口</li>
+                    <li>成功返回结构化答案并高亮可追溯来源文档</li>
+                </ul>
+
+                <h4 style="color: #667eea; margin: 20px 0 12px 0; font-size: 16px; font-weight: 700;">🤖 LLM 集成</h4>
+                <ul style="line-height: 1.9; color: #444; margin: 0 0 20px 24px;">
+                    <li>本地 LLM 接入 Ollama 运行的 <strong>tinyllama</strong> 模型（仅 637MB，启动于 11434 端口）</li>
+                    <li>在 <code>llm_client.py</code> 中新增 <code>is_configured()</code> 可用性检测</li>
+                    <li>捕获 404 状态码抛出 LLMUnavailable 异常并附带 <code>ollama run tinyllama</code> 安装提示</li>
+                    <li>模型未下载时直接快速失败，避免无效重试</li>
+                </ul>
+
+                <h4 style="color: #667eea; margin: 20px 0 12px 0; font-size: 16px; font-weight: 700;">🛡️ 容错降级</h4>
+                <ul style="line-height: 1.9; color: #444; margin: 0 0 20px 24px;">
+                    <li>在 <code>qa_enhanced_wrapper.py</code> 中新增 <code>_generate_local_summary()</code> 函数</li>
+                    <li>LLM 超时（已从 60s 提升至 120s）或不可用时，自动截取 top3 文档前 200 字符</li>
+                    <li>结构化输出"标题 + 摘要 + 友情提示：建议查看原文"，确保用户永不空等</li>
+                </ul>
+
+                <h4 style="color: #667eea; margin: 20px 0 12px 0; font-size: 16px; font-weight: 700;">⚡ Prompt 工程</h4>
+                <ul style="line-height: 1.9; color: #444; margin: 0 0 20px 24px;">
+                    <li>每篇输入文档限制 500 字符</li>
+                    <li>仅传入 top3 高相关项</li>
+                    <li>显式要求"答案控制在 200 字以内，语言简洁自然"</li>
+                    <li>大幅降低 token 消耗与生成延迟</li>
+                </ul>
+
+                <h4 style="color: #667eea; margin: 20px 0 12px 0; font-size: 16px; font-weight: 700;">✅ 其他优化</h4>
+                <ul style="line-height: 1.9; color: #444; margin: 0 0 0 24px;">
+                    <li>意图识别（课程/服务/通用）</li>
+                    <li>查询自动改写（如"申请"扩展为 application/admission/apply）</li>
+                    <li>语义重排（硕士项目权重上调）</li>
+                    <li>强制证据提取（LLM 必须引用来源）</li>
+                    <li>后端结构化日志（记录意图、检索结果、LLM 状态、耗时）</li>
+                    <li>Vite 开发代理（/api 无缝转发至后端）</li>
+                    <li>全流程本地 <code>npm run dev</code> <strong>零报错</strong></li>
+                </ul>
+
+                <div style="background: rgba(255,255,255,0.8); padding: 20px; border-radius: 8px; margin-top: 28px; border-left: 4px solid #f59e0b;">
+                    <h4 style="color: #f59e0b; margin: 0 0 12px 0; font-size: 16px; font-weight: 700;">⚠️ 实测反馈</h4>
+                    <p style="line-height: 1.9; color: #555; margin-bottom: 16px;">
+                        <strong>tinyllama 模型智能水平仍较低</strong>，平均响应 8-15 秒，语义泛化能力弱，用户换个同义表达（如"怎么报名" → "入学流程"）易召回失败或生成模板化回答，离生产可用仍有差距。
+                    </p>
+                    <h4 style="color: #667eea; margin: 16px 0 12px 0; font-size: 16px; font-weight: 700;">🚀 明日计划</h4>
+                    <ul style="line-height: 1.9; color: #555; margin: 0 0 0 24px;">
+                        <li>优先替换为更强本地模型（如 <code>phi3:mini</code> 或 <code>gemma2:2b</code>）</li>
+                        <li>若性能仍不足，将评估接入远程 API（如 Grok/Claude）</li>
+                        <li>实现"<strong>本地优先、云端兜底</strong>"的混合架构</li>
+                        <li>继续提速、提智、提稳</li>
+                    </ul>
+                    <p style="line-height: 1.9; color: #555; margin: 16px 0 0 0; font-weight: 600;">
+                        ✅ 代码已全量提交，demo 持续可用
                     </p>
                 </div>
             </div>
