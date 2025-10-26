@@ -1,24 +1,49 @@
+// vite.config.js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  base: '/Student_app/',  // 项目在 GitHub Pages 的子路径下，资源应以仓库名为前缀
-  build: {
-    sourcemap: false,  // 禁用sourcemap避免CSP问题
-    // 使用默认的esbuild压缩，更快且兼容性更好
-  },
-  esbuild: {
-    drop: ['console', 'debugger'],
-  },
-  // 开发服务器配置
-  server: {
-    port: 5173,
-    host: true,
-    // 添加CSP兼容的开发配置
-    hmr: {
-      port: 5173
-    }
+export default defineConfig(({ command }) => {
+  const isDev = command === 'serve'
+  const inCodespaces = !!process.env.CODESPACES
+
+  return {
+    plugins: [react()],
+
+    // ✅ 开发：不加子路径；打包：使用仓库名子路径
+    base: isDev ? '/' : '/Student_app/',
+
+    build: {
+      sourcemap: false,
+    },
+
+    esbuild: {
+      drop: ['console', 'debugger'],
+    },
+
+    server: {
+      host: true,
+      port: 5173,
+      strictPort: true,
+
+      // ✅ 把 /api 代理到 FastAPI(5051)
+      proxy: {
+        '/api': {
+          target: 'http://127.0.0.1:5051',
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+
+      // ✅ Codespaces 的 HMR 要走 443 + wss
+      hmr: inCodespaces
+        ? {
+            clientPort: 443,
+            protocol: 'wss',
+          }
+        : {
+            // 本地开发默认即可；保留以兼容
+            port: 5173,
+          },
+    },
   }
 })

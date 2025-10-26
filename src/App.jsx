@@ -23,56 +23,47 @@ import { pageview } from './utils/analytics';
 
 function App() {
   useEffect(() => {
-    // 记录页面访问
     pageview(window.location.pathname);
   }, []);
 
   return (
     <ErrorBoundary>
-      <Router basename="/Student_app">
+      {/* ✅ 自动使用 Vite base，开发/生产一致 */}
+      <Router basename={import.meta.env.BASE_URL}>
         <LanguageProvider>
           <ThemeProvider>
             <UserProvider>
               <AppProvider>
-              <Routes>
-                {/* 登录页面 */}
-                <Route path="/" element={<LoginPage />} />
-                
-                {/* 家长端路由 */}
-                <Route path="/parent/dashboard" element={<ParentDashboard />} />
-                
-                {/* 学生端路由 */}
-                <Route path="/student" element={<StudentDashboard />}>
-                  <Route path="home" element={<HomePage />} />
-                  <Route path="mail" element={<MailPage />} />
-                  <Route path="grades" element={<GradesPage />} />
-                  <Route path="jobs" element={<JobsPage />} />
-                  <Route path="calendar" element={<CalendarPage />} />
-                  <Route path="campus" element={<CampusPage />} />
-                  <Route path="emergency" element={<EmergencyPage />} />
-                  <Route path="activities" element={<UserActivityManagement />} />
-                  <Route path="ai" element={<AIChat />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                  <Route index element={<HomePage />} />
-                </Route>
-                
-                {/* 兼容旧路由 */}
-                <Route path="/student/home" element={
-                  <StudentDashboard>
-                    <HomePage />
-                  </StudentDashboard>
-                } />
-                <Route path="/student/dashboard" element={
-                  <StudentDashboard>
-                    <HomePage />
-                  </StudentDashboard>
-                } />
-              </Routes>
-            </AppProvider>
-          </UserProvider>
-        </ThemeProvider>
-      </LanguageProvider>
-    </Router>
+                <Routes>
+                  <Route path="/" element={<LoginPage />} />
+                  <Route path="/parent/dashboard" element={<ParentDashboard />} />
+                  <Route path="/student" element={<StudentDashboard />}>
+                    <Route path="home" element={<HomePage />} />
+                    <Route path="mail" element={<MailPage />} />
+                    <Route path="grades" element={<GradesPage />} />
+                    <Route path="jobs" element={<JobsPage />} />
+                    <Route path="calendar" element={<CalendarPage />} />
+                    <Route path="campus" element={<CampusPage />} />
+                    <Route path="emergency" element={<EmergencyPage />} />
+                    <Route path="activities" element={<UserActivityManagement />} />
+                    <Route path="ai" element={<AIChat />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                    <Route index element={<HomePage />} />
+                  </Route>
+
+                  {/* 兼容旧路由 */}
+                  <Route path="/student/home" element={
+                    <StudentDashboard><HomePage /></StudentDashboard>
+                  } />
+                  <Route path="/student/dashboard" element={
+                    <StudentDashboard><HomePage /></StudentDashboard>
+                  } />
+                </Routes>
+              </AppProvider>
+            </UserProvider>
+          </ThemeProvider>
+        </LanguageProvider>
+      </Router>
     </ErrorBoundary>
   );
 }
