@@ -347,16 +347,17 @@ $ npm run dev
         </div>
 
         <div class="section">
-            <h2>🔑 关键成果</h2>
-            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 24px; border-radius: 12px; border-left: 4px solid #38ef7d;">
-                <h3 style="color: #38ef7d; margin-top: 0;">✨ 今天的工作价值</h3>
-                <ul style="margin-left: 20px; line-height: 2;">
-                    <li><strong>技术创新：</strong>成功集成本地 LLM 模型，实现零成本智能问答</li>
-                    <li><strong>用户体验：</strong>提供 24/7 智能自助查询，减少人工客服压力 60%+</li>
-                    <li><strong>数据安全：</strong>本地部署保护隐私，无需上传敏感数据到第三方</li>
-                    <li><strong>可扩展性：</strong>RAG 架构易于扩展，可接入更多数据源</li>
-                    <li><strong>代码质量：</strong>完整错误处理、日志系统、降级策略</li>
-                </ul>
+            <h2>✨ 今天的工作</h2>
+            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 24px; border-radius: 12px; border-left: 4px solid #667eea;">
+                <p style="line-height: 1.9; color: #333;">
+                    今天基于昨天爬取的UCL课程与服务静态数据，AI QA系统完成全链路深度打磨与稳定增强：检索核心采用<strong>TF-IDF+规则混合策略</strong>，精准召回top3最相关文档，新增中英文分词支持（正则提取2-4字中文高频词，英文关键词保留完整），标题匹配权重提升至<strong>×3</strong>，文本匹配×1，彻底修复无结果时返回空列表导致崩溃的bug；前端Programs与Services页面数据加载流畅无闪跳，AI QA面板已实现实时调用FastAPI后端服务（部署于5051端口，配置CORS跨域、健康检查/health接口），成功返回结构化答案并高亮可追溯来源文档；本地LLM接入Ollama运行的tinyllama模型（仅637MB，启动于11434端口），在llm_client.py中新增<code>is_configured()</code>可用性检测，捕获404状态码抛出LLMUnavailable异常并附带<code>ollama run tinyllama</code>安装提示，模型未下载时直接快速失败避免无效重试；容错降级机制在qa_enhanced_wrapper.py中新增<code>_generate_local_summary()</code>函数，当LLM超时（已从60s提升至120s）或不可用时，自动截取top3文档前200字符，结构化输出"标题 + 摘要 + 友情提示：建议查看原文"，确保用户永不空等；Prompt工程全面精简：每篇输入文档限制500字符、仅传入top3高相关项、显式要求"答案控制在200字以内，语言简洁自然"，大幅降低token消耗与生成延迟；此外，保留并验证了此前优化：意图识别（课程/服务/通用）、查询自动改写（如"申请"扩展为application/admission/apply）、语义重排（硕士项目权重上调）、强制证据提取（LLM必须引用来源）、后端结构化日志（记录意图、检索结果、LLM状态、耗时）、Vite开发代理（/api无缝转发至后端），全流程本地<code>npm run dev</code>零报错。
+                </p>
+                <div style="background: rgba(255,255,255,0.7); padding: 16px; border-radius: 8px; margin-top: 20px; border-left: 3px solid #f59e0b;">
+                    <h4 style="color: #f59e0b; margin-top: 0; font-size: 16px;">⚠️ 实测反馈</h4>
+                    <p style="line-height: 1.8; color: #555; margin-bottom: 0;">
+                        tinyllama模型智能水平仍较低，平均响应8-15秒，语义泛化能力弱，用户换个同义表达（如"怎么报名"→"入学流程"）易召回失败或生成模板化回答，离生产可用仍有差距。明天计划：优先替换为更强本地模型（如phi3:mini或gemma2:2b），若性能仍不足，将评估接入远程API（如Grok/Claude）实现"本地优先、云端兜底"的混合架构，继续提速、提智、提稳。代码已全量提交，demo持续可用。
+                    </p>
+                </div>
             </div>
         </div>
 
