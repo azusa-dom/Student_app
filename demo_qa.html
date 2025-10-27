@@ -176,9 +176,10 @@
   </div>
 
   <script>
-    // 🔥 关键修改：使用相对路径或window.location
-    const API_BASE = window.location.origin || '';
-    console.log('[API_BASE]', API_BASE);
+    // 🔥 改为相对路径（自动适配部署环境）
+    const API_BASE = window.location.origin;  // 使用当前域名
+    // 或者使用空字符串（推荐）
+    // const API_BASE = '';
     
     const translations = {
       zh: {

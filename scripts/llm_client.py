@@ -1,58 +1,53 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+llm_client.py - Groq 客户端
+导出：chat_with_groq, is_configured
+"""
+
 import os
 import time
-import requests
-from typing import List, Dict, Optional
+import logging
+from groq import Groq
 
-class LLMUnavailable(Exception):
-    pass
+logger = logging.getLogger("llm_client")
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
-OLLAMA_MODEL    = os.getenv("OLLAMA_MODEL", "tinyllama")
+# 🔥 改进：添加防御性检查
+_api_key = os.getenv("GROQ_API_KEY")
+if _api_key:
+    client = Groq(api_key=_api_key)
+else:
+    client = None  # 延迟初始化
+    logger.warning("GROQ_API_KEY not set, client will be None")
 
 def is_configured() -> bool:
-    """检查 Ollama 服务是否可用"""
-    try:
-        resp = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=3)
-        return resp.status_code == 200
-    except:
-        return False
+    return bool(os.getenv("GROQ_API_KEY"))
 
-def chat_completion(messages: List[Dict[str, str]],
-                    model: Optional[str] = None,
-                    temperature: float = 0.4,
-                    timeout: int = 60,
-                    max_retries: int = 1) -> str:
-    url = f"{OLLAMA_BASE_URL}/api/chat"
-    payload = {
-        "model": model or OLLAMA_MODEL,
-        "messages": messages,
-        "options": {"temperature": temperature},
-        "stream": False
-    }
-
-    last_err = None
-    for _ in range(max_retries + 1):
+def chat_with_groq(messages, temperature=0.1, max_retries=2, model="llama-3.1-70b-versatile"):
+    if not is_configured():
+        raise Exception("GROQ_API_KEY not set")
+    
+    # 🔥 改进：懒加载客户端
+    global client
+    if client is None:
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    
+    for attempt in range(max_retries):
         try:
-            resp = requests.post(url, json=payload, timeout=timeout)
-            if resp.status_code == 200:
-                data = resp.json()
-                msg = data.get("message", {}).get("content")
-                if msg:
-                    return msg
-                # 某些版本返回 messages 列表
-                if "messages" in data:
-                    return "\n".join(m.get("content", "") for m in data["messages"])
-                return ""
-            elif resp.status_code == 404:
-                # 模型不存在
-                error_detail = resp.text[:200]
-                raise LLMUnavailable(f"模型 '{payload['model']}' 未安装。请运行: ollama pull {payload['model']}")
-            else:
-                last_err = RuntimeError(f"Ollama HTTP {resp.status_code}: {resp.text[:300]}")
-        except LLMUnavailable:
-            raise  # 直接抛出，不重试
+            logger.info(f"Calling Groq model={model}, attempt={attempt+1}/{max_retries}")
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=1024,
+                top_p=0.95,
+            )
+            content = response.choices[0].message.content
+            logger.info(f"Groq response: {len(content)} chars")
+            return content
         except Exception as e:
-            last_err = e
-        time.sleep(0.3)
-    raise last_err if last_err else RuntimeError("Ollama chat failed.")
+            logger.warning(f"Groq attempt {attempt+1} failed: {e}")
+            if attempt == max_retries - 1:
+                raise Exception(f"Groq call failed after {max_retries} attempts: {e}")
+            time.sleep(1 * (2 ** attempt))
+    return None
