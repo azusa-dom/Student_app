@@ -54,3 +54,7 @@ Thumbs.db
 *.swp
 *.swo
 node_modules
+
+# Workspace files
+Student_app.code-workspace
+_replacements.txt
