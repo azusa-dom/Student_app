@@ -14,7 +14,8 @@ from flask import Flask, request, jsonify
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
-GROQ_API_KEY = "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"
+# Groq API Key - 从环境变量读取
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 # ==================== 加载数据 ====================
 def load_all_data():
