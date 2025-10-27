@@ -3,401 +3,536 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🎓 AI Assistant</title>
+  <title>🎓 UCL AI Assistant - Redesigned</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
     
     :root {
-      --purple-primary: #8B7BE8;
-      --purple-light: #A89AED;
-      --purple-dark: #6B5BC7;
-      --bg-start: #667eea;
-      --bg-end: #764ba2;
-      --glass-bg: rgba(255, 255, 255, 0.85);
-      --glass-border: rgba(255, 255, 255, 0.3);
-      --text-primary: #2d3748;
-      --text-secondary: #718096;
-      --shadow-color: rgba(107, 91, 199, 0.4);
+      --primary: #8B7BE8;
+      --primary-dark: #6B5BC7;
+      --primary-light: #A896F0;
+      --secondary: #48bb78;
+      --bg-gradient-1: #667eea;
+      --bg-gradient-2: #764ba2;
+      --text-dark: #2d3748;
+      --text-light: #718096;
+      --white: #ffffff;
+      --error: #e53e3e;
+      --success: #48bb78;
     }
     
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, var(--bg-gradient-1), var(--bg-gradient-2));
       min-height: 100vh;
-      color: var(--text-primary);
-      position: relative;
-      overflow-x: hidden;
+      color: var(--text-dark);
+      padding: 20px;
+      transition: all 0.3s ease;
     }
     
-    /* 背景动画装饰 */
-    body::before {
-      content: '';
-      position: fixed;
-      top: -50%;
-      right: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-      background-size: 50px 50px;
-      animation: moveBackground 20s linear infinite;
-      pointer-events: none;
-    }
-    
-    @keyframes moveBackground {
-      0% { transform: translate(0, 0); }
-      100% { transform: translate(50px, 50px); }
-    }
-    
-    .container {
-      max-width: 980px;
+    .container { 
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 48px 24px;
-      position: relative;
-      z-index: 1;
     }
     
-    /* 标题区域 */
-    header {
+    /* Header Styles */
+    header { 
       text-align: center;
-      margin-bottom: 40px;
-      animation: fadeInDown 0.6s ease-out;
+      margin-bottom: 48px;
+      color: var(--white);
+      animation: fadeInDown 0.6s ease;
     }
     
-    header h1 {
-      color: #fff;
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .logo {
+      font-size: 56px;
+      animation: bounce 2s infinite;
+    }
+    
+    h1 { 
       font-size: 48px;
-      font-weight: 700;
-      margin-bottom: 12px;
-      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
-      letter-spacing: -0.5px;
+      font-weight: 800;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      line-height: 1.2;
     }
     
-    header p {
-      color: rgba(255, 255, 255, 0.95);
+    .subtitle { 
       font-size: 18px;
+      opacity: 0.95;
+      margin-top: 12px;
       font-weight: 400;
     }
     
-    /* 毛玻璃卡片 */
-    .glass-card {
-      background: var(--glass-bg);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border-radius: 24px;
-      padding: 36px;
-      box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.1),
-        0 2px 8px rgba(0, 0, 0, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5);
-      border: 1px solid var(--glass-border);
-      animation: fadeInUp 0.6s ease-out 0.2s backwards;
+    /* Language Toggle */
+    .lang-toggle {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 30px;
+      padding: 8px;
+      display: flex;
+      gap: 4px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      z-index: 100;
     }
     
-    /* 建议问题标签 */
-    .suggestion-label {
-      color: var(--text-secondary);
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: var(--white);
+      padding: 10px 20px;
+      border-radius: 24px;
       font-size: 14px;
-      font-weight: 500;
-      margin-bottom: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .lang-btn.active {
+      background: var(--white);
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    .lang-btn:hover:not(.active) {
+      background: rgba(255,255,255,0.15);
+    }
+    
+    /* Status Badge */
+    .status { 
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      padding: 12px 24px;
+      border-radius: 24px;
+      margin-top: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    
+    /* Main Card */
+    .card { 
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 32px;
+      padding: 48px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: fadeInUp 0.6s ease;
+    }
+    
+    /* Quick Questions Section */
+    .quick-questions-section {
+      margin-bottom: 40px;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
     
-    .pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 32px;
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 2px;
     }
     
-    .pill {
-      background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
-      color: #fff;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 24px;
-      font-size: 14px;
-      font-weight: 500;
+    .questions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    
+    .question-card {
+      background: linear-gradient(135deg, rgba(139, 123, 232, 0.08), rgba(107, 91, 199, 0.05));
+      border: 2px solid rgba(139, 123, 232, 0.15);
+      border-radius: 16px;
+      padding: 20px;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 12px var(--shadow-color);
+      transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
     }
     
-    .pill::before {
+    .question-card::before {
       content: '';
       position: absolute;
       top: 0;
-      left: -100%;
+      left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      transition: left 0.5s;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
     
-    .pill:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px var(--shadow-color);
+    .question-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(139, 123, 232, 0.25);
+      border-color: var(--primary);
     }
     
-    .pill:hover::before {
-      left: 100%;
+    .question-card:hover::before {
+      opacity: 1;
     }
     
-    .pill:active {
-      transform: translateY(0);
+    .question-card:hover .question-content {
+      color: var(--white);
     }
     
-    /* 搜索框 */
-    .search-container {
+    .question-content {
       position: relative;
+      z-index: 1;
+    }
+    
+    .question-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    
+    .question-text {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.5;
+      color: var(--text-dark);
+      transition: color 0.3s ease;
+    }
+    
+    .question-category {
+      font-size: 12px;
+      color: var(--text-light);
+      margin-top: 8px;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+    
+    .question-card:hover .question-category {
+      color: rgba(255,255,255,0.8);
+    }
+    
+    /* Search Box */
+    .search-section {
       margin-bottom: 32px;
     }
     
-    #q {
-      width: 100%;
-      padding: 18px 24px;
-      padding-right: 140px;
-      border: 2px solid rgba(139, 123, 232, 0.2);
-      border-radius: 16px;
-      font-size: 16px;
-      background: rgba(255, 255, 255, 0.9);
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    .search-box { 
+      position: relative;
+      margin-bottom: 16px;
     }
     
-    #q:focus {
-      outline: none;
-      border-color: var(--purple-primary);
-      box-shadow: 0 0 0 4px rgba(139, 123, 232, 0.1), 0 4px 16px rgba(0, 0, 0, 0.1);
-      background: #fff;
+    #q { 
+      width: 100%;
+      padding: 20px 140px 20px 56px;
+      border: 2px solid rgba(139, 123, 232, 0.2);
+      border-radius: 20px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      background: var(--white);
+      font-family: inherit;
     }
     
     #q::placeholder {
-      color: var(--text-secondary);
+      color: var(--text-light);
     }
     
-    #ask {
+    #q:focus { 
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 6px rgba(139, 123, 232, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 24px;
+      color: var(--text-light);
+      pointer-events: none;
+    }
+    
+    #ask { 
       position: absolute;
       right: 8px;
       top: 50%;
       transform: translateY(-50%);
-      background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
-      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: var(--white);
       border: none;
-      padding: 12px 28px;
-      border-radius: 12px;
+      padding: 14px 32px;
+      border-radius: 14px;
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 12px var(--shadow-color);
+      box-shadow: 0 4px 12px rgba(139, 123, 232, 0.3);
     }
     
-    #ask:hover:not(:disabled) {
+    #ask:hover:not(:disabled) { 
       transform: translateY(-50%) scale(1.05);
-      box-shadow: 0 6px 20px var(--shadow-color);
+      box-shadow: 0 6px 20px rgba(139, 123, 232, 0.4);
     }
     
-    #ask:disabled {
-      background: linear-gradient(135deg, #ccc, #999);
+    #ask:disabled { 
+      background: #cbd5e0;
       cursor: not-allowed;
       box-shadow: none;
     }
     
-    /* 加载和错误状态 */
-    .loading, .error {
+    .search-hint {
+      font-size: 13px;
+      color: var(--text-light);
       text-align: center;
-      padding: 48px;
-      animation: fadeIn 0.3s ease;
+      padding: 0 20px;
     }
     
-    .spinner {
-      width: 48px;
-      height: 48px;
+    /* Loading State */
+    .loading { 
+      text-align: center;
+      padding: 60px 20px;
+    }
+    
+    .spinner { 
+      width: 56px;
+      height: 56px;
       border: 4px solid rgba(139, 123, 232, 0.2);
-      border-top-color: var(--purple-primary);
+      border-top-color: var(--primary);
       border-radius: 50%;
-      margin: 0 auto 20px;
+      margin: 0 auto 24px;
       animation: spin 0.8s linear infinite;
     }
     
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    .error {
-      color: #e53e3e;
-      background: rgba(254, 215, 215, 0.5);
-      border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-    }
-    
-    /* 结果卡片 */
-    .result-card {
-      animation: fadeInScale 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    @keyframes fadeInScale {
-      from {
-        opacity: 0;
-        transform: scale(0.95);
-      }
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-    
-    .intent-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
-      border-radius: 20px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #fff;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-    
-    .answer-box {
-      background: linear-gradient(135deg, rgba(247, 250, 252, 0.9), rgba(237, 242, 247, 0.9));
-      backdrop-filter: blur(10px);
-      border-left: 4px solid var(--purple-primary);
-      border-radius: 12px;
-      padding: 24px;
-      line-height: 1.8;
-      margin-bottom: 28px;
+    .loading-text {
       font-size: 16px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    }
-    
-    .answer-box a {
-      color: var(--purple-primary);
-      text-decoration: none;
-      font-weight: 500;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.2s;
-    }
-    
-    .answer-box a:hover {
-      border-bottom-color: var(--purple-primary);
-    }
-    
-    /* 统计卡片 */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-    
-    .stat-card {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(247, 250, 252, 0.9));
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      transition: transform 0.2s ease;
-    }
-    
-    .stat-card:hover {
-      transform: translateY(-2px);
-    }
-    
-    .stat-label {
-      font-size: 13px;
-      color: var(--text-secondary);
-      font-weight: 500;
+      color: var(--text-dark);
+      font-weight: 600;
       margin-bottom: 8px;
     }
     
-    .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .loading-subtext {
+      font-size: 14px;
+      color: var(--text-light);
     }
     
-    /* 来源列表 */
-    .sources {
-      border-top: 2px solid rgba(139, 123, 232, 0.2);
-      padding-top: 24px;
+    /* Answer Box */
+    .answer-container {
+      animation: fadeIn 0.5s ease;
     }
     
-    .sources h4 {
-      font-size: 15px;
-      color: var(--text-secondary);
+    .intent-badge { 
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--secondary), #38a169);
+      color: var(--white);
+      padding: 10px 20px;
+      border-radius: 24px;
+      font-size: 13px;
       font-weight: 600;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+    }
+    
+    .answer-box { 
+      background: linear-gradient(135deg, rgba(247, 250, 252, 0.95), rgba(237, 242, 247, 0.95));
+      border-left: 5px solid var(--primary);
+      border-radius: 16px;
+      padding: 32px;
+      line-height: 1.8;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      font-size: 16px;
+    }
+    
+    .answer-box strong {
+      color: var(--primary);
+      font-weight: 700;
+    }
+    
+    /* Stats Grid */
+    .stats { 
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    
+    .stat { 
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(139, 123, 232, 0.1);
+    }
+    
+    .stat:hover { 
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      border-color: var(--primary);
+    }
+    
+    .stat-label { 
+      font-size: 13px;
+      color: var(--text-light);
+      margin-bottom: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .stat-value { 
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    
+    /* Sources Section */
+    .sources { 
+      border-top: 2px solid rgba(139, 123, 232, 0.15);
+      padding-top: 28px;
+      margin-top: 28px;
+    }
+    
+    .sources h4 { 
+      font-size: 16px;
+      color: var(--text-dark);
+      margin-bottom: 20px;
+      font-weight: 700;
       display: flex;
       align-items: center;
       gap: 8px;
     }
     
-    .sources ul {
-      list-style: none;
-      display: grid;
-      gap: 12px;
-    }
-    
-    .source-item {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(10px);
-      padding: 16px 20px;
-      border-radius: 12px;
-      border-left: 3px solid var(--purple-primary);
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-    
-    .source-item:hover {
+    .source-item { 
       background: rgba(255, 255, 255, 0.9);
-      transform: translateX(4px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 18px 24px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--primary);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
     
-    .source-item a {
-      color: var(--purple-primary);
+    .source-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+      transition: width 0.3s ease;
+    }
+    
+    .source-item:hover::before {
+      width: 100%;
+      opacity: 0.05;
+    }
+    
+    .source-item:hover { 
+      background: rgba(255, 255, 255, 1);
+      transform: translateX(6px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+    
+    .source-item a { 
+      color: var(--primary);
       text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .source-number {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: var(--white);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    
+    .source-content {
+      flex: 1;
+    }
+    
+    .source-title {
+      font-size: 15px;
+      line-height: 1.5;
+      margin-bottom: 4px;
+    }
+    
+    .source-score {
+      font-size: 12px;
+      color: var(--text-light);
       font-weight: 500;
-      display: block;
     }
     
-    .source-item a:hover {
-      color: var(--purple-dark);
+    /* Error State */
+    .error { 
+      background: linear-gradient(135deg, #fed7d7, #fcb8b8);
+      border-left: 5px solid var(--error);
+      padding: 24px;
+      border-radius: 16px;
+      color: #742a2a;
+      animation: shake 0.5s ease;
     }
     
-    /* 动画 */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    .error-title {
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     
-    @keyframes fadeInDown {
-      from {
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    /* Animations */
+    @keyframes spin { 
+      to { transform: rotate(360deg); } 
     }
     
     @keyframes fadeInUp {
       from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(30px);
       }
       to {
         opacity: 1;
@@ -405,35 +540,86 @@
       }
     }
     
-    /* 响应式 */
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+    
+    /* Responsive Design */
     @media (max-width: 768px) {
-      .container {
-        padding: 32px 16px;
+      body { padding: 16px; }
+      
+      .card { 
+        padding: 28px 20px;
+        border-radius: 24px;
       }
       
-      header h1 {
-        font-size: 36px;
+      h1 { font-size: 36px; }
+      
+      .subtitle { font-size: 16px; }
+      
+      .lang-toggle {
+        top: 16px;
+        right: 16px;
       }
       
-      .glass-card {
-        padding: 24px;
-        border-radius: 20px;
+      .questions-grid {
+        grid-template-columns: 1fr;
       }
       
-      #q {
-        padding-right: 24px;
-        margin-bottom: 12px;
+      #q { 
+        padding: 18px 120px 18px 48px;
+        font-size: 15px;
+      }
+      
+      .search-icon {
+        left: 16px;
+        font-size: 20px;
       }
       
       #ask {
-        position: static;
-        transform: none;
-        width: 100%;
+        padding: 12px 24px;
+        font-size: 14px;
       }
       
-      #ask:hover:not(:disabled) {
-        transform: scale(1.02);
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
       }
+      
+      .stat-value {
+        font-size: 28px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .header-content {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      h1 { font-size: 28px; }
       
       .stats {
         grid-template-columns: 1fr;
@@ -442,182 +628,395 @@
   </style>
 </head>
 <body>
+  <!-- Language Toggle -->
+  <div class="lang-toggle">
+    <button class="lang-btn active" data-lang="zh" onclick="switchLanguage('zh')">中文</button>
+    <button class="lang-btn" data-lang="en" onclick="switchLanguage('en')">English</button>
+  </div>
+
   <div class="container">
+    <!-- Header -->
     <header>
-      <h1>🎓 UCL AI Assistant</h1>
-      <p>智能检索 · 精准回答 · 即时响应</p>
+      <div class="header-content">
+        <span class="logo">🎓</span>
+        <h1 data-i18n="title">UCL AI Assistant</h1>
+      </div>
+      <p class="subtitle" data-i18n="subtitle">增强版检索 · 智能检索 · 精准回答</p>
+      <div class="status" id="status">🔄 <span data-i18n="status-connecting">正在连接...</span></div>
     </header>
 
-    <div class="glass-card">
-      <div class="suggestion-label">
-        💡 <span>试试这些问题</span>
-      </div>
-      
-      <div class="pills">
-        <button class="pill" onclick="setQ('计算机科学硕士的语言要求')">💻 计算机硕士语言要求</button>
-        <button class="pill" onclick="setQ('如何预约心理咨询')">🧠 心理咨询预约</button>
-        <button class="pill" onclick="setQ('商科硕士入学要求')">📊 商科硕士要求</button>
-        <button class="pill" onclick="setQ('简历和求职准备')">📝 简历求职指导</button>
-      </div>
-
-      <div class="search-container">
-        <input 
-          id="q" 
-          type="text" 
-          placeholder="输入你的问题..." 
-          autocomplete="off"
-        />
-        <button id="ask" onclick="ask()">提问</button>
+    <!-- Main Card -->
+    <div class="card">
+      <!-- Quick Questions Section -->
+      <div class="quick-questions-section">
+        <h3 class="section-title">
+          <span data-i18n="quick-questions">💡 快速问题</span>
+        </h3>
+        <div class="questions-grid" id="questionsGrid">
+          <!-- Questions will be dynamically generated -->
+        </div>
       </div>
 
+      <!-- Search Section -->
+      <div class="search-section">
+        <h3 class="section-title">
+          <span data-i18n="custom-query">🔍 自定义查询</span>
+        </h3>
+        <div class="search-box">
+          <span class="search-icon">🔎</span>
+          <input 
+            id="q" 
+            data-i18n-placeholder="search-placeholder"
+            placeholder="请输入您的问题，例如：Data Science MSc 有哪些课程模块？"
+            onkeypress="if(event.key==='Enter')ask()"
+          />
+          <button id="ask" onclick="ask()">
+            <span data-i18n="ask-btn">提问</span>
+          </button>
+        </div>
+        <p class="search-hint" data-i18n="search-hint">💡 支持中英文提问，可询问专业信息、入学要求、课程模块等</p>
+      </div>
+
+      <!-- Results Stage -->
       <div id="stage"></div>
     </div>
   </div>
 
   <script>
+    // API Configuration
+    const API_BASE = 'http://localhost:5051';
+    
+    // Language Translations
+    const translations = {
+      zh: {
+        title: 'UCL AI 助手',
+        subtitle: '增强版检索 · 智能检索 · 精准回答',
+        'status-connecting': '正在连接...',
+        'status-connected': '后端已连接 (增强版检索)',
+        'status-disconnected': '后端未启动',
+        'quick-questions': '💡 快速问题',
+        'custom-query': '🔍 自定义查询',
+        'search-placeholder': '请输入您的问题，例如：Data Science MSc 有哪些课程模块？',
+        'ask-btn': '提问',
+        'search-hint': '💡 支持中英文提问，可询问专业信息、入学要求、课程模块等',
+        'thinking': '思考中...',
+        'searching': '🔍 智能检索中...',
+        'analyzing': '正在分析相关信息...',
+        'error-title': '❌ 查询出错',
+        'sources-title': '🔗 参考来源',
+        'stat-docs': '检索文档',
+        'stat-time': '响应时间',
+        'stat-intent': '意图识别',
+        questions: [
+          {
+            icon: '📊',
+            text: '请问 Data Science MSc 专业有哪些核心课程模块？',
+            category: '课程信息',
+            query: 'What are the core modules in Data Science MSc?'
+          },
+          {
+            icon: '💻',
+            text: '申请 Computer Science MSc 需要满足什么语言要求？',
+            category: '入学要求',
+            query: 'Computer Science MSc language requirements'
+          },
+          {
+            icon: '🧠',
+            text: '我想了解 UCL 的心理咨询服务，如何预约？',
+            category: '学生服务',
+            query: '如何预约心理咨询'
+          },
+          {
+            icon: '📈',
+            text: 'Business Analytics MSc 的入学要求和申请条件是什么？',
+            category: '申请信息',
+            query: 'Business Analytics MSc entry requirements'
+          },
+          {
+            icon: '💰',
+            text: '国际学生就读工程类硕士的学费是多少？',
+            category: '费用咨询',
+            query: 'Engineering MSc tuition fees for international students'
+          },
+          {
+            icon: '🌍',
+            text: 'UCL 为国际学生提供哪些语言支持和帮助？',
+            category: '学生支持',
+            query: 'Language support for international students at UCL'
+          }
+        ]
+      },
+      en: {
+        title: 'UCL AI Assistant',
+        subtitle: 'Enhanced Search · Intelligent Retrieval · Accurate Answers',
+        'status-connecting': 'Connecting...',
+        'status-connected': 'Backend Connected (Enhanced)',
+        'status-disconnected': 'Backend Not Running',
+        'quick-questions': '💡 Quick Questions',
+        'custom-query': '🔍 Custom Query',
+        'search-placeholder': 'Enter your question, e.g., What modules are in Data Science MSc?',
+        'ask-btn': 'Ask',
+        'search-hint': '💡 Supports both Chinese and English queries about programs, requirements, modules, etc.',
+        'thinking': 'Thinking...',
+        'searching': '🔍 Searching intelligently...',
+        'analyzing': 'Analyzing relevant information...',
+        'error-title': '❌ Query Error',
+        'sources-title': '🔗 Reference Sources',
+        'stat-docs': 'Documents',
+        'stat-time': 'Response Time',
+        'stat-intent': 'Intent Detection',
+        questions: [
+          {
+            icon: '📊',
+            text: 'What are the core modules in the Data Science MSc program?',
+            category: 'Course Info',
+            query: 'What are the core modules in Data Science MSc?'
+          },
+          {
+            icon: '💻',
+            text: 'What are the language requirements for Computer Science MSc?',
+            category: 'Entry Requirements',
+            query: 'Computer Science MSc language requirements'
+          },
+          {
+            icon: '🧠',
+            text: 'How can I book a psychological counseling session at UCL?',
+            category: 'Student Services',
+            query: 'How to book psychological counseling at UCL'
+          },
+          {
+            icon: '📈',
+            text: 'What are the entry requirements for Business Analytics MSc?',
+            category: 'Application Info',
+            query: 'Business Analytics MSc entry requirements'
+          },
+          {
+            icon: '💰',
+            text: 'What are the tuition fees for Engineering MSc for international students?',
+            category: 'Fees',
+            query: 'Engineering MSc tuition fees for international students'
+          },
+          {
+            icon: '🌍',
+            text: 'What language support does UCL offer to international students?',
+            category: 'Support Services',
+            query: 'Language support for international students at UCL'
+          }
+        ]
+      }
+    };
+    
+    // Current Language
+    let currentLang = 'zh';
+    
+    // DOM Elements
     const q = document.getElementById('q');
     const askBtn = document.getElementById('ask');
     const stage = document.getElementById('stage');
+    const status = document.getElementById('status');
+    const questionsGrid = document.getElementById('questionsGrid');
     
-    q.addEventListener('keyup', e => { 
-      if (e.key === 'Enter') ask(); 
-    });
-
-    function setQ(text) { 
-      q.value = text; 
-      q.focus();
-      // 自动提问
-      setTimeout(() => ask(), 100);
+    // Initialize
+    function init() {
+      renderQuestions();
+      checkBackend();
+      setInterval(checkBackend, 30000);
+      console.log('[UCL AI] Redesigned v4.0 Initialized');
     }
-
-    function loadingView() {
+    
+    // Switch Language
+    function switchLanguage(lang) {
+      currentLang = lang;
+      
+      // Update active button
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+      
+      // Update all i18n elements
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        el.textContent = translations[lang][key] || key;
+      });
+      
+      // Update placeholder
+      const placeholder = document.querySelector('[data-i18n-placeholder]');
+      if (placeholder) {
+        placeholder.placeholder = translations[lang]['search-placeholder'];
+      }
+      
+      // Re-render questions
+      renderQuestions();
+      
+      // Update status if needed
+      checkBackend();
+    }
+    
+    // Render Quick Questions
+    function renderQuestions() {
+      const questions = translations[currentLang].questions;
+      questionsGrid.innerHTML = questions.map(q => `
+        <div class="question-card" onclick="quickAsk('${escapeHtml(q.query)}')">
+          <div class="question-content">
+            <span class="question-icon">${q.icon}</span>
+            <div class="question-text">${q.text}</div>
+            <div class="question-category">${q.category}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // Check Backend Status
+    async function checkBackend() {
+      try {
+        const response = await fetch(API_BASE + '/api/health');
+        if (response.ok) {
+          status.innerHTML = '✅ ' + translations[currentLang]['status-connected'];
+          status.style.background = 'rgba(72,187,120,0.3)';
+          return true;
+        }
+      } catch (e) {
+        console.warn('Backend check failed:', e);
+      }
+      status.innerHTML = '❌ ' + translations[currentLang]['status-disconnected'];
+      status.style.background = 'rgba(229,62,62,0.3)';
+      return false;
+    }
+    
+    // Quick Ask
+    function quickAsk(text) {
+      q.value = text;
+      setTimeout(ask, 150);
+    }
+    
+    // Main Ask Function
+    async function ask() {
+      const text = (q.value || '').trim();
+      if (!text) {
+        q.focus();
+        return;
+      }
+      
+      askBtn.disabled = true;
+      askBtn.innerHTML = '<span data-i18n="thinking">' + translations[currentLang]['thinking'] + '</span>';
+      
       stage.innerHTML = `
         <div class="loading">
           <div class="spinner"></div>
-          <p>正在智能检索和分析...</p>
-        </div>`;
+          <div class="loading-text">${translations[currentLang]['searching']}</div>
+          <div class="loading-subtext">${translations[currentLang]['analyzing']}</div>
+        </div>
+      `;
+      
+      try {
+        console.log('[Query]', text);
+        const response = await fetch(API_BASE + '/api/qa?query=' + encodeURIComponent(text));
+        console.log('[Status]', response.status);
+        
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        
+        const data = await response.json();
+        console.log('[Data]', data);
+        
+        renderAnswer(data);
+      } catch (error) {
+        console.error('[Error]', error);
+        stage.innerHTML = `
+          <div class="error">
+            <div class="error-title">${translations[currentLang]['error-title']}</div>
+            <div>${escapeHtml(error.message)}</div>
+          </div>
+        `;
+      } finally {
+        askBtn.disabled = false;
+        askBtn.innerHTML = '<span data-i18n="ask-btn">' + translations[currentLang]['ask-btn'] + '</span>';
+      }
     }
-
-    function errorView(msg) {
+    
+    // Render Answer
+    function render Answer(data) {
+      const intent = data.intent || 'general';
+      let answer = data.answer || '未找到相关信息';
+      
+      // Format answer
+      answer = escapeHtml(answer)
+        .replace(/\n/g, '<br/>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/• /g, '&bull; ');
+      
+      const docs = data.num_docs || 0;
+      const responseTime = data.response_time || '-';
+      
+      // Intent labels
+      const intentLabels = {
+        modules: '📚 课程模块',
+        requirements: '✅ 入学要求',
+        career: '💼 职业发展',
+        fees: '💰 学费查询',
+        general: '🔍 通用查询'
+      };
+      
+      // Build sources HTML
+      let sourcesHtml = '';
+      if (data.citations && data.citations.length > 0) {
+        sourcesHtml = `
+          <div class="sources">
+            <h4>${translations[currentLang]['sources-title']}</h4>
+            ${data.citations.map((source, index) => {
+              const scoreText = source.relevance_score 
+                ? `<span class="source-score">相关度: ${source.relevance_score}</span>` 
+                : '';
+              return `
+                <div class="source-item">
+                  <a href="${escapeHtml(source.url)}" target="_blank">
+                    <div class="source-number">${index + 1}</div>
+                    <div class="source-content">
+                      <div class="source-title">${escapeHtml(source.title)}</div>
+                      ${scoreText}
+                    </div>
+                  </a>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+      
+      // Render final result
       stage.innerHTML = `
-        <div class="error">
-          <strong>❌ 系统错误</strong><br>
-          <span>${escapeHtml(msg || '连接失败')}</span>
-        </div>`;
+        <div class="answer-container">
+          <div class="intent-badge">
+            ${intentLabels[intent] || '🔍 ' + intent}
+          </div>
+          <div class="answer-box">${answer}</div>
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">${translations[currentLang]['stat-docs']}</div>
+              <div class="stat-value">${docs}</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">${translations[currentLang]['stat-time']}</div>
+              <div class="stat-value">${responseTime.replace('s', '<small>s</small>')}</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">${translations[currentLang]['stat-intent']}</div>
+              <div class="stat-value">✓</div>
+            </div>
+          </div>
+          ${sourcesHtml}
+        </div>
+      `;
     }
-
+    
+    // Utility: Escape HTML
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
     }
-
-    async function ask() {
-      const text = (q.value || '').trim();
-      if (!text) { 
-        q.focus(); 
-        return; 
-      }
-
-      askBtn.disabled = true; 
-      askBtn.textContent = '思考中...';
-      loadingView();
-
-      try {
-        console.log('[调试] 发送请求:', text);
-        const url = `/api/qa?query=${encodeURIComponent(text)}`;
-        
-        const res = await fetch(url, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        });
-        
-        console.log('[调试] 响应状态:', res.status);
-        
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`HTTP ${res.status}`);
-        }
-        
-        const data = await res.json();
-        console.log('[调试] 响应数据:', data);
-        
-        render(data);
-        
-      } catch (e) {
-        console.error('[错误] 请求失败:', e);
-        errorView(e.message);
-      } finally {
-        askBtn.disabled = false; 
-        askBtn.textContent = '提问';
-      }
-    }
-
-    function render(data) {
-      const intent = data.intent || 'zh';
-      let answer = data.answer || '当前语料无该信息。';
-      
-      // 处理换行
-      answer = escapeHtml(answer).replace(/\n/g, '<br/>');
-
-      const docs = data.num_docs || 0;
-      const rewrites = data.num_queries || 0;
-      const rt = data.response_time || '-';
-
-      stage.innerHTML = `
-        <div class="result-card">
-          <div class="intent-badge">
-            <span>🎯</span>
-            <span>${intent === 'zh' ? '中文查询' : '英文查询'}</span>
-          </div>
-          
-          <div class="answer-box">${answer}</div>
-          
-          <div class="stats">
-            <div class="stat-card">
-              <div class="stat-label">检索文档</div>
-              <div class="stat-value">${docs}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">查询优化</div>
-              <div class="stat-value">${rewrites}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">响应时间</div>
-              <div class="stat-value">${escapeHtml(rt).replace('s', '<small>s</small>')}</div>
-            </div>
-          </div>
-
-          ${renderSources(data.citations || data.sources)}
-        </div>
-      `;
-    }
-
-    function renderSources(sources) {
-      if (!Array.isArray(sources) || sources.length === 0) {
-        return '';
-      }
-      
-      const items = sources.map((s, i) => `
-        <li class="source-item">
-          <a href="${escapeHtml(s.url)}" target="_blank">
-            ${i + 1}. ${escapeHtml(s.title || s.url)}
-          </a>
-        </li>
-      `).join('');
-      
-      return `
-        <div class="sources">
-          <h4>
-            <span>🔗</span>
-            <span>参考来源</span>
-          </h4>
-          <ul>${items}</ul>
-        </div>
-      `;
-    }
-
-    console.log('[UCL AI] 前端已加载 v2.0');
+    
+    // Initialize on load
+    init();
   </script>
 </body>
 </html>
