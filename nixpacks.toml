@@ -1,11 +1,11 @@
 [phases.setup]
-nixPkgs = ['python311', 'bash']
+nixpkgs = ["python311", "bash"]
 
 [phases.install]
 cmds = [
-    'pip install --upgrade pip',
-    'pip install -r requirements.txt'
+  "python3 -m pip install --upgrade pip",
+  "python3 -m pip install -r requirements.txt"
 ]
 
-[start]
-cmd = 'bash start.sh'
+[phases.start]
+cmd = "uvicorn api_qa:app --host 0.0.0.0 --port $PORT"

@@ -13,6 +13,18 @@
 4. 访问 `localhost:5173` 或部署页面
 
 
+## 本地快捷命令（新增）
+
+已提供 Makefile 与 `.env.example`，便于快捷启动和本地配置：
+
+- 复制 `.env.example` 为 `.env`，填入：`GROQ_API_KEY=...`，`MODEL_PROVIDER=groq`（`.env` 已加入 `.gitignore`，不要提交密钥）
+- 一键安装依赖：`make env-setup`
+- 仅后端：`make dev-backend`（http://127.0.0.1:5051）
+- 仅前端：`make dev-frontend`（http://localhost:5173）
+- 同时启动：`make dev`（后端后台 + 前端前台）
+- 停止服务：`make stop`
+
+
 ## ✨ Key Features
 
 ### 📅 Activity Management
