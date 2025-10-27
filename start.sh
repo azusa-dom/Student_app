@@ -17,4 +17,5 @@ if [ ! -d "public/data" ]; then
     mkdir -p public/data
 fi
 
-exec uvicorn api_qa:app --host 0.0.0.0 --port "${PORT:-8000}" --log-level info
+echo "✅ Starting uvicorn via python module..."
+exec python -m uvicorn api_qa:app --host 0.0.0.0 --port "${PORT:-8000}" --log-level info
