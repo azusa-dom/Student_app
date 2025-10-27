@@ -1,439 +1,623 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UCL AI 问答系统</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        /* 顶部标题 */
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.95;
-        }
-
-        /* 主卡片 */
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-            margin-bottom: 20px;
-            animation: slideUp 0.5s ease;
-        }
-
-        /* 建议问题 */
-        .suggestions {
-            margin-bottom: 25px;
-        }
-
-        .suggestions h3 {
-            color: #667eea;
-            font-size: 1rem;
-            margin-bottom: 15px;
-        }
-
-        .suggestion-btns {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .suggestion-btn {
-            background: transparent;
-            border: 2px solid #667eea;
-            color: #667eea;
-            padding: 8px 18px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .suggestion-btn:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        /* 搜索框 */
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-
-        #query-input {
-            flex: 1;
-            padding: 12px 18px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        #query-input:focus {
-            border-color: #667eea;
-        }
-
-        #ask-button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        #ask-button:hover:not(:disabled) {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        #ask-button:disabled {
-            background: #999;
-            cursor: not-allowed;
-        }
-
-        /* 结果区域 */
-        .result-card {
-            animation: fadeIn 0.4s ease;
-        }
-
-        .intent-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 6px 14px;
-            border-radius: 15px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-
-        .answer-box {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            line-height: 1.8;
-            white-space: pre-wrap;
-        }
-
-        .answer-box a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .answer-box a:hover {
-            text-decoration: underline;
-        }
-
-        /* 统计信息 */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .stat-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .stat-label {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: #667eea;
-        }
-
-        /* 引用来源 */
-        .citations {
-            border-top: 2px solid #e0e0e0;
-            padding-top: 20px;
-        }
-
-        .citations h4 {
-            color: #667eea;
-            font-size: 1rem;
-            margin-bottom: 15px;
-        }
-
-        .citation-list {
-            list-style: none;
-        }
-
-        .citation-item {
-            background: #f8f9fa;
-            padding: 12px 15px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border-left: 3px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .citation-item:hover {
-            background: #e9ecef;
-            border-left-color: #667eea;
-            transform: translateX(3px);
-        }
-
-        .citation-item strong {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-        }
-
-        .citation-item a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
-            word-break: break-all;
-        }
-
-        .citation-item a:hover {
-            text-decoration: underline;
-        }
-
-        /* 加载和错误 */
-        .loading, .error-msg {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-
-        .loading::before {
-            content: "";
-            display: block;
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e0e0e0;
-            border-top-color: #667eea;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            animation: spin 0.8s linear infinite;
-        }
-
-        .error-msg {
-            color: #dc3545;
-        }
-
-        /* 动画 */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* 响应式 */
-        @media (max-width: 768px) {
-            .header h1 { font-size: 2rem; }
-            .card { padding: 20px; }
-            .search-box { flex-direction: column; }
-            #ask-button { width: 100%; }
-            .stats { grid-template-columns: 1fr; }
-            .suggestion-btns { flex-direction: column; }
-            .suggestion-btn { width: 100%; }
-        }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎓 AI Assistant</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --purple-primary: #8B7BE8;
+      --purple-light: #A89AED;
+      --purple-dark: #6B5BC7;
+      --bg-start: #667eea;
+      --bg-end: #764ba2;
+      --glass-bg: rgba(255, 255, 255, 0.85);
+      --glass-border: rgba(255, 255, 255, 0.3);
+      --text-primary: #2d3748;
+      --text-secondary: #718096;
+      --shadow-color: rgba(107, 91, 199, 0.4);
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      min-height: 100vh;
+      color: var(--text-primary);
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* 背景动画装饰 */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: moveBackground 20s linear infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes moveBackground {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+    
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 48px 24px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* 标题区域 */
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeInDown 0.6s ease-out;
+    }
+    
+    header h1 {
+      color: #fff;
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+      letter-spacing: -0.5px;
+    }
+    
+    header p {
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 18px;
+      font-weight: 400;
+    }
+    
+    /* 毛玻璃卡片 */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-radius: 24px;
+      padding: 36px;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        0 2px 8px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      border: 1px solid var(--glass-border);
+      animation: fadeInUp 0.6s ease-out 0.2s backwards;
+    }
+    
+    /* 建议问题标签 */
+    .suggestion-label {
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    
+    .pill {
+      background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px var(--shadow-color);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .pill::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s;
+    }
+    
+    .pill:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--shadow-color);
+    }
+    
+    .pill:hover::before {
+      left: 100%;
+    }
+    
+    .pill:active {
+      transform: translateY(0);
+    }
+    
+    /* 搜索框 */
+    .search-container {
+      position: relative;
+      margin-bottom: 32px;
+    }
+    
+    #q {
+      width: 100%;
+      padding: 18px 24px;
+      padding-right: 140px;
+      border: 2px solid rgba(139, 123, 232, 0.2);
+      border-radius: 16px;
+      font-size: 16px;
+      background: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    #q:focus {
+      outline: none;
+      border-color: var(--purple-primary);
+      box-shadow: 0 0 0 4px rgba(139, 123, 232, 0.1), 0 4px 16px rgba(0, 0, 0, 0.1);
+      background: #fff;
+    }
+    
+    #q::placeholder {
+      color: var(--text-secondary);
+    }
+    
+    #ask {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px var(--shadow-color);
+    }
+    
+    #ask:hover:not(:disabled) {
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 6px 20px var(--shadow-color);
+    }
+    
+    #ask:disabled {
+      background: linear-gradient(135deg, #ccc, #999);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    
+    /* 加载和错误状态 */
+    .loading, .error {
+      text-align: center;
+      padding: 48px;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(139, 123, 232, 0.2);
+      border-top-color: var(--purple-primary);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .error {
+      color: #e53e3e;
+      background: rgba(254, 215, 215, 0.5);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+    
+    /* 结果卡片 */
+    .result-card {
+      animation: fadeInScale 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    
+    .intent-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .answer-box {
+      background: linear-gradient(135deg, rgba(247, 250, 252, 0.9), rgba(237, 242, 247, 0.9));
+      backdrop-filter: blur(10px);
+      border-left: 4px solid var(--purple-primary);
+      border-radius: 12px;
+      padding: 24px;
+      line-height: 1.8;
+      margin-bottom: 28px;
+      font-size: 16px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    .answer-box a {
+      color: var(--purple-primary);
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+    
+    .answer-box a:hover {
+      border-bottom-color: var(--purple-primary);
+    }
+    
+    /* 统计卡片 */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(247, 250, 252, 0.9));
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-2px);
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    /* 来源列表 */
+    .sources {
+      border-top: 2px solid rgba(139, 123, 232, 0.2);
+      padding-top: 24px;
+    }
+    
+    .sources h4 {
+      font-size: 15px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .sources ul {
+      list-style: none;
+      display: grid;
+      gap: 12px;
+    }
+    
+    .source-item {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      padding: 16px 20px;
+      border-radius: 12px;
+      border-left: 3px solid var(--purple-primary);
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .source-item:hover {
+      background: rgba(255, 255, 255, 0.9);
+      transform: translateX(4px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .source-item a {
+      color: var(--purple-primary);
+      text-decoration: none;
+      font-weight: 500;
+      display: block;
+    }
+    
+    .source-item a:hover {
+      color: var(--purple-dark);
+    }
+    
+    /* 动画 */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .container {
+        padding: 32px 16px;
+      }
+      
+      header h1 {
+        font-size: 36px;
+      }
+      
+      .glass-card {
+        padding: 24px;
+        border-radius: 20px;
+      }
+      
+      #q {
+        padding-right: 24px;
+        margin-bottom: 12px;
+      }
+      
+      #ask {
+        position: static;
+        transform: none;
+        width: 100%;
+      }
+      
+      #ask:hover:not(:disabled) {
+        transform: scale(1.02);
+      }
+      
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 标题 -->
-        <div class="header">
-            <h1>🎓 UCL AI 问答系统</h1>
-            <p>智能检索 · 意图识别 · 精准回答</p>
-        </div>
+  <div class="container">
+    <header>
+      <h1>🎓 UCL AI Assistant</h1>
+      <p>智能检索 · 精准回答 · 即时响应</p>
+    </header>
 
-        <!-- 主卡片 -->
-        <div class="card">
-            <!-- 建议问题 -->
-            <div class="suggestions">
-                <h3>💡 试试这些问题</h3>
-                <div class="suggestion-btns">
-                    <button class="suggestion-btn" onclick="setQuery('计算机科学硕士的语言要求')">计算机科学硕士的语言要求</button>
-                    <button class="suggestion-btn" onclick="setQuery('如何预约心理咨询')">如何预约心理咨询</button>
-                    <button class="suggestion-btn" onclick="setQuery('商科硕士入学要求')">商科硕士入学要求</button>
-                    <button class="suggestion-btn" onclick="setQuery('简历和求职准备')">简历和求职准备</button>
-                </div>
-            </div>
+    <div class="glass-card">
+      <div class="suggestion-label">
+        💡 <span>试试这些问题</span>
+      </div>
+      
+      <div class="pills">
+        <button class="pill" onclick="setQ('计算机科学硕士的语言要求')">💻 计算机硕士语言要求</button>
+        <button class="pill" onclick="setQ('如何预约心理咨询')">🧠 心理咨询预约</button>
+        <button class="pill" onclick="setQ('商科硕士入学要求')">📊 商科硕士要求</button>
+        <button class="pill" onclick="setQ('简历和求职准备')">📝 简历求职指导</button>
+      </div>
 
-            <!-- 搜索框 -->
-            <div class="search-box">
-                <input type="text" id="query-input" placeholder="请输入您的问题..." 
-                       onkeyup="if(event.keyCode===13) askQuestion()">
-                <button id="ask-button" onclick="askQuestion()">提问</button>
-            </div>
+      <div class="search-container">
+        <input 
+          id="q" 
+          type="text" 
+          placeholder="输入你的问题..." 
+          autocomplete="off"
+        />
+        <button id="ask" onclick="ask()">提问</button>
+      </div>
 
-            <!-- 结果容器 -->
-            <div id="result-container"></div>
-        </div>
+      <div id="stage"></div>
     </div>
+  </div>
 
-    <script>
-        const queryInput = document.getElementById('query-input');
-        const askButton = document.getElementById('ask-button');
-        const resultContainer = document.getElementById('result-container');
+  <script>
+    const q = document.getElementById('q');
+    const askBtn = document.getElementById('ask');
+    const stage = document.getElementById('stage');
+    
+    q.addEventListener('keyup', e => { 
+      if (e.key === 'Enter') ask(); 
+    });
 
-        const INTENT_MAP = {
-            "admission_requirements": "📚 入学要求",
-            "careers_resume": "💼 职业发展",
-            "wellbeing_support": "❤️ 健康支持",
-            "booking": "📅 预约服务",
-            "other": "📄 其他信息",
-            "error": "❌ 系统错误"
-        };
+    function setQ(text) { 
+      q.value = text; 
+      q.focus();
+      // 自动提问
+      setTimeout(() => ask(), 100);
+    }
 
-        let startTime = null;
+    function loadingView() {
+      stage.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>正在智能检索和分析...</p>
+        </div>`;
+    }
 
-        function setQuery(text) {
-            queryInput.value = text;
-            queryInput.focus();
+    function errorView(msg) {
+      stage.innerHTML = `
+        <div class="error">
+          <strong>❌ 系统错误</strong><br>
+          <span>${escapeHtml(msg || '连接失败')}</span>
+        </div>`;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    async function ask() {
+      const text = (q.value || '').trim();
+      if (!text) { 
+        q.focus(); 
+        return; 
+      }
+
+      askBtn.disabled = true; 
+      askBtn.textContent = '思考中...';
+      loadingView();
+
+      try {
+        console.log('[调试] 发送请求:', text);
+        const url = `/api/qa?query=${encodeURIComponent(text)}`;
+        
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        console.log('[调试] 响应状态:', res.status);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`HTTP ${res.status}`);
         }
+        
+        const data = await res.json();
+        console.log('[调试] 响应数据:', data);
+        
+        render(data);
+        
+      } catch (e) {
+        console.error('[错误] 请求失败:', e);
+        errorView(e.message);
+      } finally {
+        askBtn.disabled = false; 
+        askBtn.textContent = '提问';
+      }
+    }
 
-        async function askQuestion() {
-            const query = queryInput.value.trim();
-            if (!query) return;
+    function render(data) {
+      const intent = data.intent || 'zh';
+      let answer = data.answer || '当前语料无该信息。';
+      
+      // 处理换行
+      answer = escapeHtml(answer).replace(/\n/g, '<br/>');
 
-            startTime = Date.now();
-            askButton.disabled = true;
-            askButton.innerText = "思考中...";
-            resultContainer.innerHTML = '<div class="loading">正在检索和分析，请稍候...</div>';
+      const docs = data.num_docs || 0;
+      const rewrites = data.num_queries || 0;
+      const rt = data.response_time || '-';
 
-            try {
-                const response = await fetch(`/api/qa?query=${encodeURIComponent(query)}`);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                const data = await response.json();
-                renderResult(data);
-            } catch (error) {
-                console.error('Fetch error:', error);
-                resultContainer.innerHTML = `
-                    <div class="error-msg">
-                        ❌ 系统错误<br>
-                        <small>${error.message}</small>
-                    </div>
-                `;
-            } finally {
-                askButton.disabled = false;
-                askButton.innerText = "提问";
-            }
-        }
+      stage.innerHTML = `
+        <div class="result-card">
+          <div class="intent-badge">
+            <span>🎯</span>
+            <span>${intent === 'zh' ? '中文查询' : '英文查询'}</span>
+          </div>
+          
+          <div class="answer-box">${answer}</div>
+          
+          <div class="stats">
+            <div class="stat-card">
+              <div class="stat-label">检索文档</div>
+              <div class="stat-value">${docs}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">查询优化</div>
+              <div class="stat-value">${rewrites}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">响应时间</div>
+              <div class="stat-value">${escapeHtml(rt).replace('s', '<small>s</small>')}</div>
+            </div>
+          </div>
 
-        function renderResult(data) {
-            const intentText = INTENT_MAP[data.intent] || data.intent;
-            const responseTime = startTime ? ((Date.now() - startTime) / 1000).toFixed(2) + 's' : '-';
-            const docsCount = data.citations ? data.citations.length : 0;
-            
-            // 构建答案
-            let answerHtml = data.answer || '';
-            if (data.citations && data.citations.length > 0) {
-                const first = data.citations[0];
-                answerHtml += `\n\n来源：<a href="${first.url}" target="_blank">${first.title}</a>`;
-            }
+          ${renderSources(data.citations || data.sources)}
+        </div>
+      `;
+    }
 
-            // 构建引用列表
-            let citationsHtml = '';
-            if (data.citations && data.citations.length > 0) {
-                citationsHtml = `
-                    <div class="citations">
-                        <h4>🔗 参考来源</h4>
-                        <ul class="citation-list">
-                            ${data.citations.map((c, i) => `
-                                <li class="citation-item">
-                                    <strong>${i + 1}. ${c.title}</strong>
-                                    <a href="${c.url}" target="_blank">${c.url}</a>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                `;
-            }
+    function renderSources(sources) {
+      if (!Array.isArray(sources) || sources.length === 0) {
+        return '';
+      }
+      
+      const items = sources.map((s, i) => `
+        <li class="source-item">
+          <a href="${escapeHtml(s.url)}" target="_blank">
+            ${i + 1}. ${escapeHtml(s.title || s.url)}
+          </a>
+        </li>
+      `).join('');
+      
+      return `
+        <div class="sources">
+          <h4>
+            <span>🔗</span>
+            <span>参考来源</span>
+          </h4>
+          <ul>${items}</ul>
+        </div>
+      `;
+    }
 
-            resultContainer.innerHTML = `
-                <div class="result-card">
-                    <span class="intent-badge">${intentText}</span>
-                    <div class="answer-box">${answerHtml}</div>
-                    
-                    <div class="stats">
-                        <div class="stat-item">
-                            <div class="stat-label">检索文档</div>
-                            <div class="stat-value">${docsCount}</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">查询改写</div>
-                            <div class="stat-value">6</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">响应时间</div>
-                            <div class="stat-value">${responseTime}</div>
-                        </div>
-                    </div>
-                    
-                    ${citationsHtml}
-                </div>
-            `;
-        }
-    </script>
+    console.log('[UCL AI] 前端已加载 v2.0');
+  </script>
 </body>
 </html>

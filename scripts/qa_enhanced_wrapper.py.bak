@@ -1,0 +1,384 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+改进版 QA Enhanced Wrapper
+- 修复 LLM 调用逻辑
+- 改进 prompt 设计
+- 优化答案格式
+- 增加详细日志
+"""
+import os
+import json
+import sys
+import traceback
+from pathlib import Path
+from typing import Dict, List, Tuple
+import logging
+
+# 配置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# 动态加入项目根路径
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+# ==================== LLM 客户端配置 ====================
+try:
+    from scripts.llm_client import chat_completion, LLMUnavailable, OLLAMA_MODEL, is_configured
+    HAVE_LLM = True
+    logger.info(f"✅ LLM 客户端加载成功，模型: {OLLAMA_MODEL}")
+    
+    # 检查 LLM 服务是否可用
+    if not is_configured():
+        logger.warning("⚠️  Ollama 服务未运行或不可访问")
+        HAVE_LLM = False
+    else:
+        logger.info("✅ Ollama 服务运行中")
+        
+except Exception as e:
+    logger.error(f"❌ LLM 客户端加载失败: {e}")
+    HAVE_LLM = False
+    
+    class LLMUnavailable(Exception): 
+        pass
+    
+    def chat_completion(*_args, **_kwargs): 
+        raise LLMUnavailable("LLM 未初始化")
+    
+    OLLAMA_MODEL = "unknown"
+
+# ==================== 加载文档数据 ====================
+REAL_DOCS: List[Dict[str, str]] = []
+
+def load_documents_from_file(path: Path) -> List[Dict[str, str]]:
+    """从 JSON 文件加载文档"""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        
+        docs = []
+        for item in data:
+            title = item.get("title", "未知标题")
+            url = item.get("url", "#")
+            sections = item.get("sections", [])
+            
+            # 提取所有 section 的文本
+            text_parts = []
+            for s in sections:
+                if isinstance(s, dict):
+                    heading = s.get("heading", "")
+                    text = s.get("text", "")
+                    if heading:
+                        text_parts.append(f"## {heading}\n{text}")
+                    else:
+                        text_parts.append(text)
+            
+            full_text = "\n\n".join(text_parts).strip()
+            
+            if full_text:
+                docs.append({
+                    "title": title.strip(),
+                    "url": url,
+                    "text": full_text
+                })
+        
+        return docs
+    except Exception as e:
+        logger.error(f"❌ 加载文件失败 {path}: {e}")
+        return []
+
+def load_all_documents():
+    """加载所有文档"""
+    global REAL_DOCS
+    program_path = ROOT / "public/data/ucl_programs.json"
+    service_path = ROOT / "public/data/ucl_services.json"
+    
+    programs = load_documents_from_file(program_path)
+    services = load_documents_from_file(service_path)
+    
+    REAL_DOCS = programs + services
+    logger.info(f"✅ 成功加载文档: {len(programs)} 个课程, {len(services)} 个服务，总计 {len(REAL_DOCS)} 个")
+
+# 初始化加载
+load_all_documents()
+
+# ==================== 查询处理 ====================
+def _detect_language_and_rewrite(query: str) -> Tuple[str, List[str]]:
+    """检测语言并生成查询改写"""
+    q = (query or "").strip()
+    if not q:
+        return "zh", [""]
+    
+    has_zh = any("\u4e00" <= ch <= "\u9fff" for ch in q)
+    lang = "zh" if has_zh else "en"
+    
+    rewrites = [q]
+    
+    # 添加站点限定
+    if lang == "zh":
+        rewrites.append(f"{q} UCL")
+        rewrites.append(f"{q} 伦敦大学学院")
+    else:
+        rewrites.append(f"{q} UCL")
+        rewrites.append(f"{q} University College London")
+    
+    logger.debug(f"查询改写: {rewrites}")
+    return lang, rewrites
+
+# ==================== 文档检索 ====================
+def _retrieve_documents(query: str, top_k: int = 5) -> List[Dict[str, str]]:
+    """改进的文档检索，支持中英文分词和语义匹配"""
+    import re
+    
+    q = query.lower()
+    
+    # 提取关键词
+    keywords = []
+    
+    # 英文关键词（2字符以上）
+    english_words = re.findall(r'[a-zA-Z]{2,}', q)
+    keywords.extend([w.lower() for w in english_words])
+    
+    # 中文关键词（2-4字）
+    chinese_words = re.findall(r'[\u4e00-\u9fff]{2,4}', q)
+    keywords.extend(chinese_words)
+    
+    # 特殊关键词识别
+    special_keywords = {
+        "语言": ["language", "english", "ielts", "toefl"],
+        "要求": ["requirement", "entry", "admission"],
+        "硕士": ["master", "msc", "postgraduate"],
+        "心理": ["psychology", "mental", "wellbeing"],
+        "咨询": ["counselling", "counseling", "support"]
+    }
+    
+    for zh_key, en_keys in special_keywords.items():
+        if zh_key in query:
+            keywords.extend(en_keys)
+    
+    logger.info(f"提取关键词: {keywords}")
+    
+    if not keywords:
+        keywords = q.split()
+    
+    # 计算每个文档的相关性得分
+    scored_docs = []
+    
+    for doc in REAL_DOCS:
+        title = doc.get("title", "").lower()
+        text = doc.get("text", "").lower()
+        
+        # 计算匹配分数
+        title_matches = sum(5 for kw in keywords if kw in title)  # 标题权重更高
+        text_matches = sum(1 for kw in keywords if kw in text)
+        
+        # 精确短语匹配加分
+        if q in title:
+            title_matches += 10
+        if q in text:
+            text_matches += 3
+        
+        total_score = title_matches + text_matches
+        
+        if total_score > 0:
+            scored_docs.append((total_score, doc))
+    
+    # 排序并返回
+    scored_docs.sort(key=lambda x: x[0], reverse=True)
+    
+    result = [doc for score, doc in scored_docs[:top_k]]
+    
+    logger.info(f"检索到 {len(result)} 个相关文档")
+    for i, doc in enumerate(result[:3], 1):
+        logger.debug(f"  {i}. {doc['title']}")
+    
+    return result
+
+# ==================== 答案生成 ====================
+def _generate_local_summary(query: str, docs: List[Dict[str, str]]) -> str:
+    """改进的本地摘要生成（当 LLM 不可用时）"""
+    if not docs:
+        return "抱歉，未找到相关信息。请尝试：\n1. 换个问法\n2. 访问 UCL 官网查询\n3. 联系 UCL 招生办"
+    
+    # 提取最相关的信息
+    summary_parts = [f"根据 UCL 官方资料，关于「{query}」：\n"]
+    
+    for idx, doc in enumerate(docs[:3], start=1):
+        title = doc.get('title', '未知来源')
+        text = doc.get('text', '')
+        
+        # 智能截取相关段落
+        lines = text.split('\n')
+        relevant_lines = []
+        
+        # 查找包含关键词的段落
+        query_lower = query.lower()
+        for line in lines:
+            if any(keyword in line.lower() for keyword in query_lower.split()):
+                relevant_lines.append(line.strip())
+                if len(relevant_lines) >= 3:  # 最多3个段落
+                    break
+        
+        if relevant_lines:
+            snippet = '\n'.join(relevant_lines)
+        else:
+            # 如果没有匹配段落，取开头
+            snippet = text[:300].strip()
+        
+        if len(snippet) > 300:
+            snippet = snippet[:300] + "..."
+        
+        summary_parts.append(f"\n【{idx}】{title}\n{snippet}")
+    
+    summary_parts.append("\n\n💡 建议查看下方参考来源获取完整信息")
+    
+    return "".join(summary_parts)
+
+def _build_improved_prompt(query: str, docs: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    """构建改进的 prompt"""
+    
+    # 提取前3个最相关文档的内容
+    context_parts = []
+    for idx, doc in enumerate(docs[:3], start=1):
+        title = doc.get('title', '未知文档')
+        text = doc.get('text', '')[:800]  # 限制长度
+        context_parts.append(f"【文档{idx}】{title}\n{text}")
+    
+    context = "\n\n".join(context_parts)
+    
+    # 改进的系统提示
+    system_prompt = """你是 UCL（伦敦大学学院）的官方智能助手。
+
+你的职责：
+1. **严格基于提供的资料回答**，不要编造信息
+2. 如果资料不足，明确说明"根据提供的资料无法完整回答"
+3. 用清晰、专业的中文回答
+4. 回答要结构化、易读
+
+回答格式要求：
+- 开头直接回答核心问题
+- 使用要点列表（如果适用）
+- 简洁明了，避免冗余
+- 长度控制在150字以内"""
+
+    # 用户提示
+    user_prompt = f"""参考资料：
+{context}
+
+用户问题：{query}
+
+请基于以上资料回答用户问题。如果资料中没有相关信息，请诚实说明。"""
+
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt}
+    ]
+
+def answer_enhanced(query: str, top_k: int = 5) -> Dict[str, object]:
+    """
+    增强版问答主函数
+    
+    Args:
+        query: 用户问题
+        top_k: 返回文档数量
+    
+    Returns:
+        包含答案、引用等信息的字典
+    """
+    logger.info(f"\n{'='*60}\n收到查询: {query}\n{'='*60}")
+    
+    # 1. 查询处理
+    lang, rewrites = _detect_language_and_rewrite(query)
+    logger.info(f"检测语言: {lang}")
+    
+    # 2. 文档检索
+    docs = _retrieve_documents(query, top_k)
+    
+    if not docs:
+        logger.warning("⚠️  未检索到相关文档")
+        return {
+            "intent": lang,
+            "answer": "抱歉，没有找到相关信息。请尝试换个问法或访问 UCL 官网。",
+            "citations": [],
+            "rewritten_queries": rewrites,
+            "reranked": [],
+        }
+    
+    # 3. 生成答案
+    answer = None
+    
+    # 尝试使用 LLM
+    if HAVE_LLM:
+        try:
+            messages = _build_improved_prompt(query, docs)
+            logger.info(f"📤 调用 LLM ({OLLAMA_MODEL})...")
+            
+            answer = chat_completion(
+                messages, 
+                temperature=0.3,  # 降低温度提高准确性
+                timeout=60
+            )
+            
+            if answer:
+                logger.info(f"✅ LLM 生成答案成功 (长度: {len(answer)})")
+            else:
+                raise LLMUnavailable("LLM 返回空答案")
+                
+        except LLMUnavailable as e:
+            logger.warning(f"⚠️  LLM 不可用: {e}，降级到本地摘要")
+            answer = None
+        except Exception as e:
+            logger.error(f"❌ LLM 调用失败: {e}")
+            traceback.print_exc()
+            answer = None
+    else:
+        logger.info("ℹ️  LLM 未配置，使用本地摘要模式")
+    
+    # 降级到本地摘要
+    if not answer:
+        logger.info("📝 使用本地摘要生成答案")
+        answer = _generate_local_summary(query, docs)
+    
+    # 4. 构建引用列表
+    citations = [
+        {
+            "title": doc.get("title", "未知来源"),
+            "url": doc.get("url", "#")
+        }
+        for doc in docs[:5]
+    ]
+    
+    result = {
+        "intent": lang,
+        "answer": answer or "无法生成答案",
+        "citations": citations,
+        "rewritten_queries": rewrites,
+        "reranked": docs,
+    }
+    
+    logger.info(f"✅ 问答完成\n{'='*60}\n")
+    
+    return result
+
+
+# ==================== 测试代码 ====================
+if __name__ == "__main__":
+    # 测试问题
+    test_queries = [
+        "计算机科学硕士的语言要求",
+        "如何预约心理咨询",
+        "商科硕士入学要求"
+    ]
+    
+    print("\n" + "="*60)
+    print("QA 系统测试")
+    print("="*60)
+    
+    for q in test_queries:
+        print(f"\n问题: {q}")
+        result = answer_enhanced(q, top_k=3)
+        print(f"\n答案:\n{result['answer']}")
+        print(f"\n引用文档: {len(result['citations'])} 个")
+        print("-"*60)
