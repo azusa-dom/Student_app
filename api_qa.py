@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""api_qa.py - 完整可运行版：支持中英文 + Groq + 无 slowapi"""
+"""api_qa.py"""
 
 import os
 import time
@@ -20,7 +20,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("api_qa")
 
-# 导入 wrapper（自动适配 llm_client 或 groq_client）
+# 导入 wrapper（自动适配 llm_client ）
 try:
     from scripts.qa_enhanced_wrapper import answer_enhanced
 except Exception as e:
