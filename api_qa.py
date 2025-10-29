@@ -77,16 +77,14 @@ if (BASE_DIR / "public").exists():
 
 # ============ 🔥 语言自动检测 ============
 def detect_language(text: str) -> str:
-    """检测文本语言"""
-    # 检测中文字符
+    """检测文本语言 - 🔥 只有中文占比 > 40% 才判定为中文"""
     chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', text))
     total_chars = len(text.strip())
     
-    if chinese_chars > 0:
-        return "zh"  # 只要有中文就用中文
+    # 🔥 严格检测：中文字符必须超过 40%
+    if total_chars > 0 and chinese_chars / total_chars > 0.4:
+        return "zh"
     return "en"
-
-# ============ 请求 ID ============
 def new_request_id() -> str:
     return uuid.uuid4().hex
 

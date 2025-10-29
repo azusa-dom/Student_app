@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 # scripts/supplement_assessment.py
 # 终极增量补爬：补全 Assessment + Structure
 # 输入：data/missing_assessment_urls.txt

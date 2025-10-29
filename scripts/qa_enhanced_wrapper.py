@@ -1,467 +1,292 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""qa_enhanced_wrapper_v2.py - 智能答案生成器
+"""
+qa_enhanced_wrapper_FIXED_V2.py - 修复 logging 错误
 
-核心改进:
-1. 智能查询验证 - 识别无意义查询
-2. 改进的意图识别 - 更精确的理解
-3. 更好的 Prompt - 告诉 LLM 如何思考
-4. 质量检查 - 验证答案相关性
+关键修复：正确处理 llm_client 的所有异常
 """
 
-import os, sys, json, time, logging, re
-from functools import lru_cache
+import os, re, json, time, logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("qa_wrapper")
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "scripts"))
+PROGRAMS_PATH = ROOT / "public" / "data" / "ucl_programs.json"
+SERVICES_PATH = ROOT / "public" / "data" / "ucl_services.json"
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("qa_wrapper_v2")
+def _load_documents() -> List[Dict]:
+    docs: List[Dict] = []
+    for p in (PROGRAMS_PATH, SERVICES_PATH):
+        if p.exists():
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+                if isinstance(data, list):
+                    docs.extend(data)
+                    logger.info(f"✅ 加载 {p.name}: {len(data)} 个文档")
+            except Exception as e:
+                logger.warning(f"⚠️ 加载 {p.name} 失败: {e}")
+    logger.info(f"📚 总共加载 {len(docs)} 个文档")
+    return docs
 
-# 导入依赖
-try:
-    from scripts.llm_client import chat_with_groq, is_configured as groq_configured
-    logger.info("✅ Using llm_client.py")
-except:
-    try:
-        from scripts.groq_client import chat_with_groq, is_configured as groq_configured
-        logger.info("✅ Using groq_client.py")
-    except:
-        def groq_configured(): return False
-        def chat_with_groq(*a, **k): raise Exception("LLM not available")
+def _detect_language(text: str) -> str:
+    if not text:
+        return "en"
+    text = text.strip()
+    if not text:
+        return "en"
+    chinese_chars = len(re.findall(r"[\u4e00-\u9fff]", text))
+    total_chars = len(text)
+    if total_chars == 0:
+        return "en"
+    chinese_ratio = chinese_chars / total_chars
+    logger.debug(f"语言检测: '{text[:50]}...' | 中文: {chinese_chars}/{total_chars} ({chinese_ratio:.1%})")
+    return "zh" if chinese_ratio > 0.2 else "en"
 
-try:
-    from scripts.enhanced_retriever import EnhancedRetriever
-    HAVE_RETRIEVER = True
-except:
-    HAVE_RETRIEVER = False
+def _detect_intent(q: str) -> str:
+    ql = (q or "").lower()
+    intent_patterns = {
+        "language_requirements": ["ielts", "toefl", "language requirement", "english", "语言要求", "雅思", "托福"],
+        "requirements": ["entry requirement", "admission", "prerequisite", "入学", "申请", "要求", "资格"],
+        "modules": ["module", "course", "curriculum", "syllabus", "课程", "模块", "compulsory", "core", "必修"],
+        "fees": ["fee", "tuition", "cost", "scholarship", "学费", "费用", "奖学金", "price"],
+        "career": ["career", "employment", "job", "就业", "职业", "工作"],
+        "services": ["service", "support", "counseling", "咨询", "服务", "支持"],
+    }
+    for intent, patterns in intent_patterns.items():
+        if any(k in ql for k in patterns):
+            return intent
+    return "general"
 
-try:
-    from scripts.web_search import search_web
-    HAVE_WEB_SEARCH = True
-except:
-    HAVE_WEB_SEARCH = False
-
-PROGRAMS_PATH = ROOT / "public/data/ucl_programs.json"
-SERVICES_PATH = ROOT / "public/data/ucl_services.json"
-
-# ============================================================================
-# 智能查询验证
-# ============================================================================
-
-def is_valid_query(query: str) -> tuple[bool, str]:
-    """验证查询是否有意义
-    
-    Returns:
-        (is_valid, reason)
-    """
-    if not query or len(query.strip()) < 2:
-        return False, "too_short"
-    
-    query_lower = query.lower().strip()
-    
-    # 1. 检测测试查询
-    test_queries = [
-        'test', 'hello', 'hi', 'hey', 'testing', 
-        '测试', '你好', 'こんにちは'
-    ]
-    if query_lower in test_queries:
-        return False, "test_query"
-    
-    # 2. 检测单个无意义词
-    meaningless = [
-        'a', 'the', 'is', 'are', 'what', 'how',
-        'why', 'when', 'where', 'who'
-    ]
-    if query_lower in meaningless:
-        return False, "meaningless"
-    
-    # 3. 检测是否包含实质性内容
-    # 移除停用词后至少要有一个实质性词汇
-    words = re.findall(r'\b[a-zA-Z]+\b', query_lower)
-    stopwords = {'the', 'is', 'are', 'what', 'how', 'a', 'an', 'in', 'on', 'at', 'to', 'for'}
-    meaningful_words = [w for w in words if w not in stopwords and len(w) > 2]
-    
-    if len(meaningful_words) == 0:
-        return False, "no_meaningful_words"
-    
-    return True, "valid"
-
-def get_friendly_response(query: str, reason: str, language: str = "en") -> str:
-    """为无效查询生成友好回应"""
-    if language == "zh":
-        responses = {
-            "test_query": "你好！我是 UCL AI 助手 👋\n\n我可以帮你解答关于 UCL 的问题，比如：\n• 专业课程信息\n• 入学要求\n• 学费和奖学金\n• 校园服务\n\n请问有什么我可以帮你的？",
-            "too_short": "你的问题太短了，我无法理解。请详细描述一下你想了解什么？",
-            "meaningless": "请问你想了解 UCL 的什么信息？\n\n比如：\n• 数据科学专业的课程？\n• 入学语言要求？\n• 奖学金信息？",
-            "no_meaningful_words": "我没理解你的问题。能否换个方式表达？"
-        }
-        return responses.get(reason, "请换个方式提问")
-    else:
-        responses = {
-            "test_query": "Hello! I'm UCL AI Assistant 👋\n\nI can help you with:\n• Program information\n• Entry requirements\n• Fees & funding\n• Campus services\n\nWhat would you like to know?",
-            "too_short": "Your query is too short. Could you elaborate?",
-            "meaningless": "What would you like to know about UCL?\n\nFor example:\n• Course modules?\n• Entry requirements?\n• Scholarships?",
-            "no_meaningful_words": "I didn't understand your query. Could you rephrase?"
-        }
-        return responses.get(reason, "Please rephrase your question")
-
-# ============================================================================
-# 改进的意图识别
-# ============================================================================
-
-def detect_intent_smart(query: str) -> str:
-    """智能意图识别"""
-    ql = query.lower()
-    
-    # 多级检测 - 从具体到一般
-    
-    # 1. 语言/入学要求相关
-    if any(k in ql for k in ['ielts', 'toefl', 'language requirement', 'english requirement', 
-                              '语言要求', 'language proficiency', 'language test']):
-        return 'language_requirements'
-    
-    # 2. 一般入学要求
-    if any(k in ql for k in ['entry requirement', 'admission', 'qualification', 'prerequisite',
-                              '入学', '申请', 'requirement']):
-        return 'requirements'
-    
-    # 3. 课程模块
-    if any(k in ql for k in ['module', 'course', 'curriculum', 'syllabus', 'core',
-                              '课程', '模块', 'compulsory']):
-        return 'modules'
-    
-    # 4. 学费费用
-    if any(k in ql for k in ['fee', 'tuition', 'cost', 'price', 'funding', 'scholarship',
-                              '学费', '费用', '奖学金']):
-        return 'fees'
-    
-    # 5. 职业/就业
-    if any(k in ql for k in ['career', 'job', 'employment', 'graduate outcome',
-                              '就业', '职业', 'placement']):
-        return 'career'
-    
-    # 6. 服务支持
-    if any(k in ql for k in ['service', 'support', 'counseling', 'help', 'guidance',
-                              '服务', '支持', '咨询']):
-        return 'services'
-    
-    # 7. 专业比较
-    if ' vs ' in ql or ' versus ' in ql or '比较' in ql or 'compare' in ql:
-        return 'comparison'
-    
-    return 'general'
-
-# ============================================================================
-# 改进的上下文构建
-# ============================================================================
-
-def build_smart_context(results: List[Dict], query: str, intent: str) -> str:
-    """智能构建上下文 - 只提取真正相关的内容"""
+def _pick_best_snippets(results: List[Dict]) -> str:
     if not results:
         return ""
-    
-    snippets = []
-    query_lower = query.lower()
-    
-    for idx, result in enumerate(results[:3], 1):  # 只用前3个最相关的
-        doc = result.get("doc", {})
-        title = doc.get("title", "Unknown")
-        sections = result.get("matched_sections", [])
-        
-        if not sections:
-            continue
-        
-        # 筛选真正相关的章节
-        relevant_sections = []
-        for section in sections[:3]:  # 每个文档最多3个章节
-            if not isinstance(section, dict):
+    parts = []
+    for r in results[:3]:
+        doc = r.get("doc", {})
+        title = doc.get("title", "")
+        matched_sections = r.get("matched_sections", [])
+        for sec in matched_sections[:2]:
+            heading = sec.get("heading", "")
+            text = sec.get("text", "")
+            if not text:
                 continue
-            
-            heading = section.get("heading", "").lower()
-            text = section.get("text", "")
-            
-            if not text or len(text) < 50:
-                continue
-            
-            # 检查相关性
-            relevance_score = 0
-            
-            # 标题相关性
-            if any(word in heading for word in query_lower.split() if len(word) > 3):
-                relevance_score += 2
-            
-            # 意图匹配
-            intent_keywords = {
-                'language_requirements': ['ielts', 'toefl', 'english', 'language level'],
-                'requirements': ['entry', 'requirement', 'qualification', 'admission'],
-                'modules': ['module', 'course', 'curriculum', 'compulsory'],
-                'fees': ['fee', 'tuition', 'cost', 'scholarship'],
-            }
-            
-            if intent in intent_keywords:
-                if any(kw in heading or kw in text.lower()[:200] 
-                       for kw in intent_keywords[intent]):
-                    relevance_score += 3
-            
-            if relevance_score >= 2:  # 只保留相关的
-                relevant_sections.append({
-                    'heading': section.get('heading', ''),
-                    'text': text[:400],  # 限制长度
-                    'score': relevance_score
-                })
-        
-        if relevant_sections:
-            # 按相关性排序
-            relevant_sections.sort(key=lambda x: x['score'], reverse=True)
-            
-            doc_text = f"[{idx}] {title}\n"
-            for sec in relevant_sections[:2]:  # 每个文档最多2个最相关章节
-                if sec['heading']:
-                    doc_text += f"• {sec['heading']}: {sec['text']}\n"
-                else:
-                    doc_text += f"• {sec['text']}\n"
-            
-            snippets.append(doc_text)
-    
-    context = "\n\n".join(snippets)
-    logger.info(f"📝 Smart context: {len(context)} chars from {len(snippets)} docs")
-    return context
+            text = text.replace("\u00a0", " ")
+            text = re.sub(r'\s+', ' ', text).strip()
+            text = text[:800]
+            if title and heading:
+                snippet = f"【{title} - {heading}】\n{text}"
+            elif title:
+                snippet = f"【{title}】\n{text}"
+            else:
+                snippet = text
+            parts.append(snippet)
+    context = "\n\n".join(parts)
+    return context[:2500]
 
-# ============================================================================
-# 改进的 LLM Prompt
-# ============================================================================
-
-def generate_smart_answer(
-    query: str,
-    context: str,
-    intent: str,
-    language: str = "en"
-) -> str:
-    """使用改进的 Prompt 生成智能答案"""
-    
+def _format_answer_with_llm(context: str, query: str, lang: str) -> str:
+    """使用 LLM 格式化答案（完整修复版）"""
     if not context:
-        if language == "zh":
-            return "抱歉，我找不到相关信息。\n\n建议：\n• 访问 UCL 官网获取最新信息\n• 换个方式描述你的问题\n• 联系 UCL 招生办"
-        return "Sorry, I couldn't find relevant information.\n\nSuggestions:\n• Visit UCL website\n• Rephrase your question\n• Contact UCL admissions"
+        if lang == "zh":
+            return "抱歉，未检索到相关信息。建议访问 UCL 官网获取最新信息。"
+        else:
+            return "Sorry, no relevant information found. Please check the UCL official website."
     
-    # 构建智能 Prompt
-    if language == "zh":
-        system = """你是 UCL 智能助手，专门回答关于 UCL 的问题。
+    # 🔥 修复：三层异常处理
+    try:
+        # 第1层：尝试导入
+        try:
+            from scripts.llm_client import chat_with_groq, is_configured
+        except ImportError as e:
+            logger.warning(f"⚠️ 无法导入 llm_client: {e}")
+            return _format_answer_simple(context, lang)
+        
+        # 第2层：检查配置
+        try:
+            if not is_configured():
+                logger.warning("⚠️ LLM 未配置 (GROQ_API_KEY 未设置)")
+                return _format_answer_simple(context, lang)
+        except Exception as e:
+            logger.warning(f"⚠️ 检查 LLM 配置失败: {e}")
+            return _format_answer_simple(context, lang)
+        
+        # 构建提示词
+        if lang == "zh":
+            system_prompt = "你是 UCL（伦敦大学学院）的AI助手。用简洁、专业、友好的中文回答。"
+            user_prompt = f"""根据参考信息用中文回答。
 
-核心原则:
-1. 只回答与 UCL 相关的问题
-2. 直接给出答案，不要说"根据文档"、"文档显示"等废话
-3. 用简洁的要点形式（•）列出关键信息
-4. 如果信息不完整，诚实告知并建议访问官网
-5. 100-150字内完成回答
+问题：{query}
+参考：{context}
 
-禁止:
-❌ "文档中提到..."
-❌ "根据提供的信息..."
-❌ 重复问题
-❌ 过度啰嗦"""
+要求：
+1. 必须用中文
+2. 清晰组织答案
+3. 专业但友好
+4. 只基于参考信息
 
-        user = f"""信息来源:
-{context}
-
-用户问题: {query}
-
-要求:
-1. 直接回答问题
-2. 用 • 列出关键要点
-3. 100-150字
-4. 纯中文"""
-    
-    else:
-        system = """You are UCL AI Assistant, specialized in answering UCL-related questions.
-
-Core principles:
-1. Answer only UCL-related questions
-2. Give direct answers, no "according to documents" nonsense
-3. Use bullet points (•) for key information
-4. If incomplete info, be honest and suggest visiting website
-5. Keep under 150 words
-
-Forbidden:
-❌ "The documents mention..."
-❌ "Based on provided information..."
-❌ Repeating the question
-❌ Being overly verbose"""
-
-        user = f"""Information:
-{context}
+回答："""
+        else:
+            system_prompt = "You are UCL AI assistant. Answer in concise, professional English."
+            user_prompt = f"""Answer based on reference.
 
 Question: {query}
+Reference: {context}
 
 Requirements:
-1. Answer directly
-2. Use • for key points
-3. Under 150 words
-4. English only"""
-    
-    messages = [
-        {"role": "system", "content": system},
-        {"role": "user", "content": user}
-    ]
-    
-    # 调用 LLM
-    try:
-        if groq_configured():
-            logger.info(f"🤖 LLM call (lang={language}, intent={intent})...")
-            answer = chat_with_groq(messages, temperature=0.1)
-            
-            # 后处理 - 移除常见废话
-            forbidden_phrases = [
-                "according to the documents",
-                "based on the information provided",
-                "the documents mention",
-                "根据文档",
-                "文档中提到",
-                "提供的信息显示"
-            ]
-            
-            for phrase in forbidden_phrases:
-                if phrase in answer.lower():
-                    logger.warning(f"⚠️  Found forbidden phrase: {phrase}")
-                    # 尝试清理
-                    answer = re.sub(f".*{phrase}.*?[,.]\\s*", "", answer, flags=re.IGNORECASE)
-            
-            return answer.strip()
+1. English only
+2. Clear organization
+3. Professional tone
+4. Reference-based only
+
+Answer:"""
+        
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+        
+        logger.info(f"🤖 使用 LLM 生成 {lang} 答案...")
+        
+        # 第3层：调用 API
+        try:
+            answer = chat_with_groq(messages=messages, temperature=0.3, max_retries=2)
+        except Exception as e:
+            logger.error(f"❌ Groq API 调用失败: {e}")
+            return _format_answer_simple(context, lang)
+        
+        if not answer or len(answer.strip()) < 20:
+            logger.warning("⚠️ LLM 返回答案过短")
+            return _format_answer_simple(context, lang)
+        
+        # 验证语言
+        detected_lang = _detect_language(answer)
+        if detected_lang != lang and lang == "zh" and detected_lang == "en":
+            logger.warning(f"⚠️ 语言不匹配，降级")
+            return _format_answer_simple(context, lang)
+        
+        logger.info(f"✅ LLM 答案: {len(answer)} 字符")
+        return answer.strip()
         
     except Exception as e:
-        logger.error(f"❌ LLM failed: {e}")
-    
-    # Fallback
-    if language == "zh":
-        return "抱歉，暂时无法生成回答。请访问 UCL 官网或联系招生办。"
-    return "Sorry, unable to generate answer. Please visit UCL website or contact admissions."
+        logger.error(f"❌ LLM 异常: {e}")
+        logger.info("🔄 降级到简单格式化")
+        return _format_answer_simple(context, lang)
 
-# ============================================================================
-# 主函数
-# ============================================================================
+def _format_answer_simple(context: str, lang: str) -> str:
+    if not context:
+        return "抱歉，未找到相关信息。" if lang == "zh" else "Sorry, no information found."
+    sentences = re.split(r'[。！？.!?]+', context)
+    sentences = [s.strip() for s in sentences if len(s.strip()) > 20]
+    if not sentences:
+        return context[:500]
+    bullets = [f"• {s}" for s in sentences[:5]]
+    answer = "\n".join(bullets)
+    if lang == "zh":
+        answer += "\n\n💡 建议访问 UCL 官网获取详细信息。"
+    else:
+        answer += "\n\n💡 Visit UCL website for details."
+    return answer
 
-@lru_cache(maxsize=1)
-def _load_documents() -> List[Dict]:
-    """加载文档"""
-    documents = []
-    for path, name in [(PROGRAMS_PATH, "programs"), (SERVICES_PATH, "services")]:
-        if not path.exists():
-            continue
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                documents.extend(data)
-            logger.info(f"✅ Loaded {len(data)} {name}")
-        except Exception as e:
-            logger.error(f"❌ Load {name} failed: {e}")
-    return documents
-
-def answer_enhanced(
-    query: str,
-    top_k: int = 8,
-    language: str = "auto"
-) -> Dict[str, Any]:
-    """主函数 - 智能版本"""
-    start = time.time()
-    
-    # 语言检测
-    if language == "auto" or not language:
-        chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', query))
-        language = "zh" if chinese_chars > 0 else "en"
-    
-    logger.info(f"{'='*60}")
-    logger.info(f"🔍 Query: {query}")
-    logger.info(f"🌐 Language: {language}")
-    logger.info(f"{'='*60}")
-    
-    # 1. 验证查询
-    is_valid, reason = is_valid_query(query)
-    if not is_valid:
-        logger.info(f"⚠️  Invalid query: {reason}")
-        answer = get_friendly_response(query, reason, language)
-        return {
-            "intent": "invalid",
-            "answer": answer,
-            "citations": [],
-            "reranked": [],
-            "response_time": f"{time.time()-start:.2f}s",
-            "num_docs": 0,
-            "query_validation": reason
-        }
-    
-    # 2. 意图识别
-    intent = detect_intent_smart(query)
-    logger.info(f"🎯 Intent: {intent}")
-    
-    # 3. 检索
+def answer_enhanced(query: str, top_k: int = 8, language: str = "auto", **kwargs) -> Dict[str, Any]:
+    t0 = time.time()
+    if language == "auto":
+        language = _detect_language(query)
+    intent = _detect_intent(query)
+    logger.info(f"🔍 查询: '{query}' | 语言: {language} | 意图: {intent}")
     docs = _load_documents()
-    search_results = []
-    
-    if HAVE_RETRIEVER and docs:
-        try:
-            retriever = EnhancedRetriever(enable_semantic=False, cache_embeddings=False)
-            raw = retriever.search_with_context(query, docs, top_k)
-            search_results = [
-                {
-                    'doc': r.get('doc', r),
-                    'score': r.get('score', 0),
-                    'intent': intent,
-                    'matched_sections': r.get('matched_sections', []),
-                    'source': 'local'
-                }
-                for r in raw
-            ]
-            logger.info(f"✅ Retrieved: {len(search_results)} results")
-        except Exception as e:
-            logger.error(f"❌ Retrieval failed: {e}")
-    
-    # 4. 构建智能上下文
-    context = build_smart_context(search_results, query, intent)
-    
-    # 5. 生成答案
-    answer = generate_smart_answer(query, context, intent, language)
-    
-    # 6. 构建引用
+    reranked: List[Dict[str, Any]] = []
+    semantic_used = False
+    try:
+        from scripts.enhanced_retriever import EnhancedRetriever
+        logger.info("🧠 语义检索...")
+        retriever = EnhancedRetriever(enable_semantic=True)
+        raw = retriever.search_with_context(query=query, documents=docs, top_k=max(5, top_k), intent=intent)
+        if raw:
+            logger.info(f"✅ 语义检索: {len(raw)} 个结果")
+            for r in raw:
+                reranked.append({"doc": r.get("doc", {}), "score": float(r.get("score", 0.0)), "matched_sections": r.get("matched_sections", [])})
+            semantic_used = True
+    except Exception as e:
+        logger.error(f"❌ 语义检索失败: {e}")
+    if not reranked:
+        logger.info("🔄 关键词检索...")
+        reranked = _keyword_fallback(query, docs, intent, top_k)
+    logger.info(f"✅ 查询完成: {len(reranked)} 个结果")
+    context = _pick_best_snippets(reranked)
+    answer = _format_answer_with_llm(context, query, language)
     citations = []
-    for d in search_results[:5]:
-        doc = d.get('doc', {})
-        citations.append({
-            'title': doc.get('title', ''),
-            'url': doc.get('url', ''),
-            'relevance_score': d.get('score', 0),
-            'source': d.get('source', 'local')
-        })
-    
-    rt = f"{time.time()-start:.2f}s"
-    logger.info(f"✅ Completed: {rt}")
-    
-    return {
-        "intent": intent,
-        "answer": answer,
-        "citations": citations,
-        "reranked": search_results,
-        "response_time": rt,
-        "num_docs": len(search_results),
-        "language": language
-    }
+    for item in reranked[:5]:
+        d = item.get("doc", {})
+        citations.append({"title": d.get("title", ""), "url": d.get("url", ""), "relevance_score": float(item.get("score", 0.0)), "source": "local"})
+    rt = f"{time.time() - t0:.2f}s"
+    result = {"intent": intent, "answer": answer, "citations": citations, "reranked": reranked, "rewritten_queries": [], "response_time": rt, "num_docs": len(reranked), "language": language, "web_search_used": False, "semantic_used": semantic_used}
+    logger.info(f"✅ 问答完成: {rt}, {len(answer)} 字符")
+    return result
 
-if __name__ == "__main__":
-    # 测试
-    test_queries = [
-        "test",
-        "Computer Science MSc language requirements",
-        "数据科学的核心课程",
-    ]
-    
-    for q in test_queries:
-        print(f"\n{'='*60}")
-        print(f"Query: {q}")
-        print('='*60)
-        result = answer_enhanced(q)
-        print(f"Intent: {result['intent']}")
-        print(f"Answer:\n{result['answer']}")
-        print(f"Time: {result['response_time']}")
+def _keyword_fallback(query: str, docs: List[Dict], intent: str, top_k: int) -> List[Dict]:
+    keywords = _extract_keywords(query)
+    if not keywords:
+        return []
+    scored: List[Dict[str, Any]] = []
+    for d in docs:
+        if not d or not isinstance(d, dict):
+            continue
+        result = _score_document_keyword(d, keywords, intent)
+        if result["score"] > 0:
+            scored.append({"doc": d, "score": result["score"], "matched_sections": result.get("matched_sections", [])})
+    scored.sort(key=lambda x: x["score"], reverse=True)
+    return scored[:max(1, min(top_k, 10))]
+
+def _extract_keywords(query: str) -> List[str]:
+    stopwords = {"what", "how", "where", "when", "which", "who", "the", "a", "an", "is", "are", "was", "were", "do", "does", "did", "about", "for", "的", "是", "有", "在", "吗", "呢", "啊", "了"}
+    keywords = []
+    english_words = re.findall(r"\b[a-z]+\b", query.lower())
+    keywords.extend([w for w in english_words if w not in stopwords and len(w) > 2])
+    chinese_matches = re.findall(r"[\u4e00-\u9fff]+", query)
+    for chunk in chinese_matches:
+        for i in range(len(chunk) - 1):
+            keywords.append(chunk[i:i+2])
+            if i + 3 <= len(chunk):
+                keywords.append(chunk[i:i+3])
+    return list(set(keywords))
+
+def _score_document_keyword(doc: Dict, keywords: List[str], intent: str) -> Dict[str, Any]:
+    score = 0.0
+    title = (doc.get("title") or "").lower()
+    title_hits = []
+    for k in keywords:
+        if k and k in title:
+            score += 8
+            title_hits.append(k)
+    level = str(doc.get("level", "")).lower()
+    if any(x in level for x in ["msc", "master", "postgraduate"]):
+        score += 3
+    matched_sections: List[Dict] = []
+    sections = doc.get("sections") or []
+    intent_headings = {
+        "modules": ["module", "curriculum", "syllabus", "compulsory", "optional", "课程"],
+        "requirements": ["entry", "requirement", "admission", "qualification", "入学", "要求"],
+        "fees": ["fee", "tuition", "cost", "scholarship", "学费", "费用"],
+        "career": ["career", "employment", "就业", "职业"],
+        "services": ["service", "support", "咨询", "服务"],
+    }.get(intent, [])
+    for s in sections[:30]:
+        if not isinstance(s, dict):
+            continue
+        heading = (s.get("heading") or "")
+        text = (s.get("text") or "")
+        if not heading and not text:
+            continue
+        hlow, tlow = heading.lower(), text.lower()
+        sec_score = 0.0
+        if any(h in hlow for h in intent_headings):
+            sec_score += 8
+        hitk = sum(1 for k in keywords[:50] if k and (k in hlow or k in tlow))
+        sec_score += min(hitk, 6) * 2
+        if sec_score > 0:
+            matched_sections.append({"heading": heading, "text": text[:600].replace("\u00a0", " "), "score": sec_score})
+            score += sec_score
+    matched_sections.sort(key=lambda x: x["score"], reverse=True)
+    return {"score": score, "title_hits": list(set(title_hits)), "matched_sections": matched_sections[:5]}

@@ -1,0 +1,174 @@
+#!/usr/bin/env python3
+logger = logging.getLogger("web_search")
+if not logging.getLogger().handlers:
+    logging.basicConfig(level=logging.INFO)
+if not logging.getLogger().handlers:
+    logging.basicConfig(level=logging.INFO)
+# -*- coding: utf-8 -*-
+"""web_search.py - 修复版网络搜索
+
+主要修复：
+1. 增加详细调试日志
+2. 添加 fallback 机制
+3. 修复 UCL 结果过滤逻辑
+"""
+
+import requests
+import logging
+from typing import List, Dict
+from bs4 import BeautifulSoup
+
+
+def search_web(query: str, language: str = "en", max_results: int = 5) -> List[Dict]:
+    """
+    网络搜索函数 - 修复版
+    
+    Args:
+        query: 搜索查询
+        language: 语言 (zh/en)
+        max_results: 最大结果数
+    
+    Returns:
+        搜索结果列表
+    """
+    
+    # 🔥 方案1: 使用 DuckDuckGo HTML 搜索
+    results = _search_duckduckgo(query, max_results)
+    
+    # 🔥 如果 DuckDuckGo 失败，尝试其他方案
+    if not results:
+        logger.warning("⚠️ DuckDuckGo 搜索失败，尝试备用方案...")
+        # 这里可以添加其他搜索引擎作为备用
+    
+    # 🔥 过滤 UCL 相关结果（放宽条件）
+    ucl_results = []
+    for r in results:
+        url = r.get('url', '').lower()
+        title = r.get('title', '').lower()
+        snippet = r.get('snippet', '').lower()
+        
+        # 🔥 放宽 UCL 匹配条件
+        is_ucl = (
+            'ucl.ac.uk' in url or 
+            'ucl' in title or 
+            'university college london' in title or
+            'ucl' in snippet
+        )
+        
+        if is_ucl:
+            ucl_results.append(r)
+    
+    logger.info(f"🌐 搜索结果: 总共 {len(results)} 个，UCL 相关 {len(ucl_results)} 个")
+    
+    # 🔥 如果没有 UCL 结果，返回所有结果（而不是空）
+    return ucl_results if ucl_results else results[:max_results]
+
+
+def _search_duckduckgo(query: str, max_results: int = 5) -> List[Dict]:
+    """DuckDuckGo 搜索实现"""
+    try:
+        # 🔥 构建搜索 URL - 明确指定站点
+        search_query = f"site:ucl.ac.uk {query}"
+        url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(search_query)}"
+        
+        logger.info(f"🔍 搜索 URL: {url}")
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        logger.info(f"📡 响应状态: {response.status_code}")
+        
+        if response.status_code != 200:
+            logger.error(f"❌ HTTP {response.status_code}")
+            return []
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        results = []
+        
+        # 🔥 尝试多种选择器
+        result_divs = (
+            soup.select('.result') or 
+            soup.select('.web-result') or 
+            soup.select('.links_main')
+        )
+        
+        logger.info(f"📊 找到 {len(result_divs)} 个原始结果")
+        
+        for idx, result_div in enumerate(result_divs[:max_results]):
+            try:
+                # 提取标题
+                title_elem = (
+                    result_div.select_one('.result__title') or
+                    result_div.select_one('.result__a') or
+                    result_div.select_one('a.result__url')
+                )
+                title = title_elem.get_text(strip=True) if title_elem else f"Result {idx+1}"
+                
+                # 提取 URL
+                url_elem = result_div.select_one('a.result__url')
+                url = url_elem.get('href', '') if url_elem else ''
+                
+                # 提取摘要
+                snippet_elem = (
+                    result_div.select_one('.result__snippet') or
+                    result_div.select_one('.result__description')
+                )
+                snippet = snippet_elem.get_text(strip=True) if snippet_elem else ''
+                
+                if title and (url or snippet):
+                    results.append({
+                        'title': title,
+                        'url': url,
+                        'snippet': snippet,
+                        'source': 'web'
+                    })
+                    logger.debug(f"✅ 结果 {idx+1}: {title[:50]}...")
+            
+            except Exception as e:
+                logger.warning(f"⚠️ 解析结果 {idx+1} 失败: {e}")
+                continue
+        
+        return results
+    
+    except requests.Timeout:
+        logger.error("❌ 搜索超时")
+        return []
+    except requests.RequestException as e:
+        logger.error(f"❌ 网络请求失败: {e}")
+        return []
+    except Exception as e:
+        logger.error(f"❌ 搜索失败: {e}")
+        return []
+
+
+# 🔥 添加一个测试函数
+def test_search():
+    """测试搜索功能"""
+    test_queries = [
+        "Computer Science MSc",
+        "Data Science MSc modules",
+        "UCL language requirements"
+    ]
+    
+    for query in test_queries:
+        print(f"\n{'='*60}")
+        print(f"测试查询: {query}")
+        print('='*60)
+        
+        results = search_web(query, max_results=3)
+        
+        print(f"找到 {len(results)} 个结果:\n")
+        for i, r in enumerate(results, 1):
+            print(f"{i}. {r['title']}")
+            print(f"   URL: {r['url']}")
+            print(f"   摘要: {r['snippet'][:100]}...")
+            print()
+
+
+if __name__ == "__main__":
+    # 设置日志级别
+    logging.basicConfig(level=logging.INFO)
+    test_search()

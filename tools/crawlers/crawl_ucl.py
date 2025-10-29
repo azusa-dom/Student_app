@@ -1,3 +1,5 @@
+logger = logging.getLogger(__name__)
+
 import scrapy
 from scrapy.crawler import CrawlerProcess
 from datetime import datetime, timezone

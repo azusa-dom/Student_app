@@ -1,0 +1,495 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+UCL 全面爬虫系统 - 基于 Scrapy
+扩展现有爬虫，覆盖所有数据类型
+"""
+logger = logging.getLogger(__name__)
+
+
+import scrapy
+from scrapy.crawler import CrawlerProcess
+from scrapy.utils.project import get_project_settings
+from datetime import datetime, timezone
+import logging
+from pathlib import Path
+
+# ============================================================================
+# 1. 课程爬虫（已有，这里是增强版）
+# ============================================================================
+
+class UclProgramSpider(scrapy.Spider):
+    """课程信息爬虫 - 增强版"""
+    name = 'ucl_programs'
+    allowed_domains = ['ucl.ac.uk']
+    
+    start_urls = [
+        # 本科课程
+        'https://www.ucl.ac.uk/prospective-students/undergraduate/degrees',
+        'https://www.ucl.ac.uk/prospective-students/undergraduate/degrees/degrees-z',
+        
+        # 研究生授课型
+        'https://www.ucl.ac.uk/prospective-students/graduate/taught-degrees',
+        'https://www.ucl.ac.uk/prospective-students/graduate/taught-degrees/taught-degrees-z',
+        
+        # 研究型学位
+        'https://www.ucl.ac.uk/prospective-students/graduate/research-degrees',
+    ]
+
+    custom_settings = {
+        'DOWNLOAD_DELAY': 2,
+        'CONCURRENT_REQUESTS': 2,
+        'ROBOTSTXT_OBEY': True,
+        'USER_AGENT': 'Mozilla/5.0 (compatible; UCLBot/1.0; +https://your-site.com/bot)',
+        'RETRY_TIMES': 3,
+        'FEEDS': {
+            'data/ucl_programs_raw.jsonl': {
+                'format': 'jsonlines',
+                'encoding': 'utf8',
+                'overwrite': False,
+            }
+        }
+    }
+
+    def parse(self, response):
+        """解析课程列表"""
+        # 查找课程链接 - 多种选择器
+        course_selectors = [
+            'a[href*="/prospective-students/"][href*="-msc"]',
+            'a[href*="/prospective-students/"][href*="-bsc"]',
+            'a[href*="/prospective-students/"][href*="-ba"]',
+            'a[href*="/prospective-students/"][href*="-ma"]',
+            'a[href*="/prospective-students/"][href*="-phd"]',
+            '.course-link a',
+            '.programme-link a',
+            'a[class*="course"]',
+        ]
+        
+        found_links = set()
+        for selector in course_selectors:
+            for link in response.css(selector):
+                url = response.urljoin(link.attrib.get('href', ''))
+                if url and url not in found_links:
+                    found_links.add(url)
+                    yield scrapy.Request(url, callback=self.parse_course)
+        
+        self.logger.info(f"找到 {len(found_links)} 个课程链接")
+        
+        # 分页
+        next_page = response.css('a.next::attr(href), a.pagination-next::attr(href)').get()
+        if next_page:
+            yield response.follow(next_page, self.parse)
+
+    def parse_course(self, response):
+        """解析课程详情"""
+        title = (response.css('h1::text').get() or 
+                response.css('title::text').get() or 
+                'Unknown').strip()
+        
+        # 提取所有相关章节
+        sections = []
+        keywords = [
+            'overview', 'about', 'summary', 'description',
+            'admission', 'entry', 'requirement', 'qualification',
+            'module', 'structure', 'content', 'curriculum',
+            'assessment', 'examination', 'coursework',
+            'research', 'dissertation', 'project', 'thesis',
+            'career', 'employment', 'graduate', 'outcome',
+            'fee', 'funding', 'scholarship', 'cost',
+            'staff', 'faculty', 'teaching', 'professor',
+            'international', 'english', 'language',
+            'contact', 'location', 'facility'
+        ]
+        
+        for heading in response.css('h2, h3, .section-title'):
+            heading_text = heading.css('::text').get(default='').strip().lower()
+            
+            if not heading_text or not any(k in heading_text for k in keywords):
+                continue
+            
+            # 提取该标题下的内容
+            content_parts = []
+            for elem in heading.xpath('following-sibling::*[self::p or self::ul or self::div][position() <= 5]'):
+                texts = elem.css('::text, li::text').getall()
+                content_parts.extend([t.strip() for t in texts if t.strip()])
+            
+            content = ' '.join(content_parts).strip()
+            if content and len(content) > 50:
+                sections.append({
+                    'heading': heading_text.title(),
+                    'text': content[:2000]  # 限制长度
+                })
+        
+        if sections:
+            yield {
+                'source': 'web',
+                'school': 'ucl',
+                'type': 'program',
+                'url': response.url,
+                'title': title,
+                'sections': sections,
+                'last_crawled_at': datetime.now(timezone.utc).isoformat()
+            }
+
+# ============================================================================
+# 2. 服务爬虫（增强版）
+# ============================================================================
+
+class UclServicesSpider(scrapy.Spider):
+    """学生服务爬虫 - 增强版"""
+    name = 'ucl_services'
+    allowed_domains = ['ucl.ac.uk']
+    
+    start_urls = [
+        # 职业服务
+        'https://www.ucl.ac.uk/careers/',
+        'https://www.ucl.ac.uk/careers/what-we-do',
+        'https://www.ucl.ac.uk/careers/whats-on',
+        'https://www.ucl.ac.uk/careers/your-resources',
+        
+        # 健康与福利
+        'https://www.ucl.ac.uk/students/support-and-wellbeing',
+        'https://www.ucl.ac.uk/students/support-and-wellbeing/mental-health-support',
+        'https://www.ucl.ac.uk/students/support-and-wellbeing/disability-support',
+        'https://www.ucl.ac.uk/students/support-and-wellbeing/health-services',
+        
+        # 学术支持
+        'https://www.ucl.ac.uk/students/academic-support',
+        'https://www.ucl.ac.uk/students/academic-writing-centre',
+        'https://www.ucl.ac.uk/library/support',
+        
+        # 国际学生
+        'https://www.ucl.ac.uk/students/international-students',
+        'https://www.ucl.ac.uk/students/international-students/visas-and-immigration',
+        
+        # IT服务
+        'https://www.ucl.ac.uk/isd/',
+        'https://www.ucl.ac.uk/isd/services',
+    ]
+
+    custom_settings = {
+        'DOWNLOAD_DELAY': 1.5,
+        'CONCURRENT_REQUESTS': 2,
+        'DEPTH_LIMIT': 2,
+        'FEEDS': {
+            'data/ucl_services_raw.jsonl': {
+                'format': 'jsonlines',
+                'encoding': 'utf8',
+                'overwrite': False,
+            }
+        }
+    }
+
+    def parse(self, response):
+        """解析服务页面"""
+        title = (response.css('h1::text').get() or 
+                response.css('title::text').get() or 
+                'Unknown Service').strip()
+        
+        # 提取描述
+        description_parts = []
+        for p in response.css('p, .description, .summary, .intro'):
+            text = ' '.join(p.css('::text').getall()).strip()
+            if text and len(text) > 20:
+                description_parts.append(text)
+        
+        description = ' '.join(description_parts[:5])[:1500]
+        
+        # 提取联系方式
+        contact_info = {}
+        
+        # 电子邮件
+        emails = response.css('a[href^="mailto:"]::attr(href)').getall()
+        if emails:
+            contact_info['email'] = emails[0].replace('mailto:', '')
+        
+        # 电话
+        phones = response.css('a[href^="tel:"]::text').getall()
+        if phones:
+            contact_info['phone'] = phones[0]
+        
+        # 地址
+        address_selectors = ['.address', '.location', '[class*="address"]', '[class*="location"]']
+        for sel in address_selectors:
+            addr = response.css(f'{sel}::text').get()
+            if addr:
+                contact_info['address'] = addr.strip()
+                break
+        
+        # 分类
+        url_lower = response.url.lower()
+        if 'career' in url_lower:
+            category = 'careers'
+        elif any(k in url_lower for k in ['wellbeing', 'health', 'disability', 'mental']):
+            category = 'wellbeing'
+        elif 'library' in url_lower:
+            category = 'library'
+        elif 'isd' in url_lower or 'it' in url_lower:
+            category = 'it_services'
+        elif 'international' in url_lower:
+            category = 'international'
+        else:
+            category = 'support'
+        
+        yield {
+            'source': 'web',
+            'school': 'ucl',
+            'type': 'service',
+            'url': response.url,
+            'name': title,
+            'category': category,
+            'description': description,
+            'contact': contact_info,
+            'last_crawled_at': datetime.now(timezone.utc).isoformat()
+        }
+        
+        # 跟踪相关链接
+        if response.meta.get('depth', 0) < 1:
+            for href in response.css('a[href*="support"], a[href*="service"]::attr(href)').getall():
+                yield response.follow(href, self.parse, meta={'depth': response.meta.get('depth', 0) + 1})
+
+# ============================================================================
+# 3. 住宿爬虫（新增）
+# ============================================================================
+
+class UclAccommodationSpider(scrapy.Spider):
+    """住宿信息爬虫"""
+    name = 'ucl_accommodation'
+    allowed_domains = ['ucl.ac.uk']
+    
+    start_urls = [
+        'https://www.ucl.ac.uk/accommodation/residences',
+        'https://www.ucl.ac.uk/accommodation/search',
+    ]
+
+    custom_settings = {
+        'DOWNLOAD_DELAY': 2,
+        'FEEDS': {
+            'data/ucl_accommodation_raw.jsonl': {
+                'format': 'jsonlines',
+                'encoding': 'utf8',
+            }
+        }
+    }
+
+    def parse(self, response):
+        """解析住宿列表"""
+        # 查找宿舍链接
+        for hall in response.css('.residence-card, .accommodation-item'):
+            hall_link = hall.css('a::attr(href)').get()
+            if hall_link:
+                yield response.follow(hall_link, self.parse_hall)
+        
+        # 直接列表页
+        for link in response.css('a[href*="/residences/"]::attr(href)').getall():
+            if 'residences/' in link:
+                yield response.follow(link, self.parse_hall)
+
+    def parse_hall(self, response):
+        """解析宿舍详情"""
+        name = response.css('h1::text').get(default='Unknown Hall').strip()
+        
+        # 提取价格
+        price_text = response.css('.price, [class*="price"], [class*="cost"]::text').get(default='')
+        
+        # 提取位置
+        location = response.css('.location, [class*="location"]::text').get(default='')
+        
+        # 提取设施
+        facilities = []
+        for item in response.css('.facility, .amenity, li'):
+            text = item.css('::text').get(default='').strip()
+            if text and len(text) < 100:
+                facilities.append(text)
+        
+        # 提取描述
+        description = ' '.join(response.css('p::text').getall()[:3])
+        
+        yield {
+            'source': 'web',
+            'school': 'ucl',
+            'type': 'accommodation',
+            'url': response.url,
+            'name': name,
+            'price': price_text,
+            'location': location,
+            'facilities': facilities[:20],
+            'description': description[:1000],
+            'last_crawled_at': datetime.now(timezone.utc).isoformat()
+        }
+
+# ============================================================================
+# 4. 图书馆爬虫（新增）
+# ============================================================================
+
+class UclLibrariesSpider(scrapy.Spider):
+    """图书馆信息爬虫"""
+    name = 'ucl_libraries'
+    allowed_domains = ['ucl.ac.uk']
+    
+    start_urls = [
+        'https://www.ucl.ac.uk/library/',
+        'https://www.ucl.ac.uk/library/about-us/library-locations',
+        'https://www.ucl.ac.uk/library/opening-hours',
+    ]
+
+    custom_settings = {
+        'DOWNLOAD_DELAY': 1,
+        'FEEDS': {
+            'data/ucl_libraries_raw.jsonl': {
+                'format': 'jsonlines',
+                'encoding': 'utf8',
+            }
+        }
+    }
+
+    def parse(self, response):
+        """解析图书馆信息"""
+        # 查找图书馆位置链接
+        for link in response.css('a[href*="library"]::attr(href)').getall():
+            if 'location' in link or 'library' in link:
+                yield response.follow(link, self.parse_library)
+        
+        # 如果是图书馆详情页
+        if 'library' in response.url:
+            yield from self.parse_library(response)
+
+    def parse_library(self, response):
+        """解析图书馆详情"""
+        name = response.css('h1::text').get(default='').strip()
+        
+        if not name or 'UCL' not in name:
+            return
+        
+        # 提取开放时间
+        hours_text = ' '.join(response.css('.hours, .opening-hours, [class*="opening"]::text').getall())
+        
+        # 提取地址
+        address = response.css('.address, [class*="address"]::text').get(default='')
+        
+        # 提取服务
+        services = []
+        for item in response.css('.service li, .facility li'):
+            text = item.css('::text').get(default='').strip()
+            if text:
+                services.append(text)
+        
+        yield {
+            'source': 'web',
+            'school': 'ucl',
+            'type': 'library',
+            'url': response.url,
+            'name': name,
+            'address': address,
+            'opening_hours': hours_text[:500],
+            'services': services,
+            'last_crawled_at': datetime.now(timezone.utc).isoformat()
+        }
+
+# ============================================================================
+# 5. 新闻/活动爬虫（新增）
+# ============================================================================
+
+class UclNewsSpider(scrapy.Spider):
+    """新闻和活动爬虫"""
+    name = 'ucl_news'
+    allowed_domains = ['ucl.ac.uk']
+    
+    start_urls = [
+        'https://www.ucl.ac.uk/news/',
+        'https://www.ucl.ac.uk/events/',
+    ]
+
+    custom_settings = {
+        'DOWNLOAD_DELAY': 1,
+        'DEPTH_LIMIT': 1,
+        'FEEDS': {
+            'data/ucl_news_raw.jsonl': {
+                'format': 'jsonlines',
+                'encoding': 'utf8',
+            }
+        }
+    }
+
+    def parse(self, response):
+        """解析新闻/活动列表"""
+        # 新闻文章
+        for article in response.css('article, .news-item, .event-item'):
+            title = article.css('h2::text, h3::text, .title::text').get(default='').strip()
+            link = article.css('a::attr(href)').get()
+            date = article.css('.date, time::text').get(default='')
+            summary = article.css('p::text, .summary::text').get(default='')
+            
+            if title and link:
+                yield {
+                    'source': 'web',
+                    'school': 'ucl',
+                    'type': 'news' if '/news/' in response.url else 'event',
+                    'url': response.urljoin(link),
+                    'title': title,
+                    'date': date,
+                    'summary': summary[:500],
+                    'last_crawled_at': datetime.now(timezone.utc).isoformat()
+                }
+
+# ============================================================================
+# 主运行函数
+# ============================================================================
+
+def run_spider(spider_class, output_file=None):
+    """运行单个爬虫"""
+    process = CrawlerProcess({
+        'USER_AGENT': 'Mozilla/5.0 (compatible; UCLBot/1.0)',
+        'ROBOTSTXT_OBEY': True,
+        'LOG_LEVEL': 'INFO',
+        'CONCURRENT_REQUESTS': 2,
+        'DOWNLOAD_DELAY': 1.5,
+    })
+    
+    process.crawl(spider_class)
+    process.start()
+
+def run_all_spiders():
+    """运行所有爬虫"""
+    spiders = [
+        UclProgramSpider,
+        UclServicesSpider,
+        UclAccommodationSpider,
+        UclLibrariesSpider,
+        UclNewsSpider,
+    ]
+    
+    process = CrawlerProcess({
+        'USER_AGENT': 'Mozilla/5.0 (compatible; UCLBot/1.0)',
+        'ROBOTSTXT_OBEY': True,
+        'LOG_LEVEL': 'INFO',
+        'CONCURRENT_REQUESTS': 2,
+        'DOWNLOAD_DELAY': 2,
+    })
+    
+    for spider in spiders:
+        process.crawl(spider)
+    
+    process.start()
+
+if __name__ == "__main__":
+    import sys
+    
+    if len(sys.argv) > 1:
+        spider_name = sys.argv[1]
+        spider_map = {
+            'programs': UclProgramSpider,
+            'services': UclServicesSpider,
+            'accommodation': UclAccommodationSpider,
+            'libraries': UclLibrariesSpider,
+            'news': UclNewsSpider,
+        }
+        
+        if spider_name in spider_map:
+            run_spider(spider_map[spider_name])
+        else:
+            print(f"Unknown spider: {spider_name}")
+            print(f"Available: {', '.join(spider_map.keys())}")
+    else:
+        print("🚀 运行所有爬虫...")
+        run_all_spiders()

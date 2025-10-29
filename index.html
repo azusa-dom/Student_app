@@ -890,114 +890,146 @@
     }
     
     // Main Ask Function
-    async function ask() {
-      const text = (q.value || '').trim();
-      if (!text) {
-        q.focus();
-        return;
+    
+  
+  async function ask() {
+    const text = (q.value || '').trim();
+    if (!text) { q.focus(); return; }
+
+    askBtn.disabled = true;
+    askBtn.innerHTML = '<span data-i18n="thinking">' + translations[currentLang]['thinking'] + '</span>';
+
+    stage.innerHTML = `
+      <div class="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">${translations[currentLang]['searching']}</div>
+        <div class="loading-subtext">${translations[currentLang]['analyzing']}</div>
+      </div>
+    `;
+
+    try {
+      const resp = await fetch(API_BASE + '/api/qa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: text, top_k: 5, language: currentLang })
+      });
+
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+      let data;
+      try {
+        data = await resp.json();
+      } catch (e) {
+        throw new Error('返回的不是合法 JSON：' + e.message);
       }
-      
-      askBtn.disabled = true;
-      askBtn.innerHTML = '<span data-i18n="thinking">' + translations[currentLang]['thinking'] + '</span>';
-      
+
+      // 类型兜底
+      if (!data || typeof data !== 'object') data = {};
+      if (!Array.isArray(data.citations)) data.citations = [];
+      if (!Array.isArray(data.reranked)) data.reranked = [];
+
+      // 自动推断是否使用了网络来源
+      const webSearchUsed = data.citations.some(s => s && s.source === 'web');
+
+      // 缺省值
+      data.intent = data.intent || 'general';
+      data.answer = (typeof data.answer === 'string' && data.answer.trim()) ? data.answer : '未找到相关信息';
+      data.response_time = (typeof data.response_time === 'string') ? data.response_time : '-';
+      data.num_docs = (typeof data.num_docs === 'number') ? data.num_docs : (Array.isArray(data.reranked) ? data.reranked.length : 0);
+
+      // 传入推断值，避免前端再读一个未定义字段
+      data.web_search_used = webSearchUsed;
+
+      renderAnswer(data);
+    } catch (error) {
+      console.error('[Error]', error);
+      // 显示原始响应（如果有）
+      let rawText = '';
+      try {
+        // 如果 resp 已存在并可读，尝试打印其文本
+        if (typeof resp !== 'undefined' && resp && resp.text) {
+          rawText = await resp.clone().text();
+        }
+      } catch (e) {
+        rawText = '[无法读取原始响应: ' + e.message + ']';
+      }
+
       stage.innerHTML = `
-        <div class="loading">
-          <div class="spinner"></div>
-          <div class="loading-text">${translations[currentLang]['searching']}</div>
-          <div class="loading-subtext">${translations[currentLang]['analyzing']}</div>
+        <div class="error">
+          <div class="error-title">${translations[currentLang]['error-title']}</div>
+          <div style="margin-bottom:8px;">${escapeHtml(error.message)}</div>
+          <details open style="margin-top:8px;">
+            <summary>调试信息（原始响应）</summary>
+            <pre id="rawResp" style="white-space:pre-wrap;font-size:12px;background:#fff;padding:12px;border-radius:8px;overflow:auto;"></pre>
+          </details>
         </div>
       `;
-      
+
+      // 填充原始响应内容（若有）
       try {
-        console.log('[Query]', text, '[Language]', currentLang);
-        
-        // 使用 POST 请求并传递语言参数
-        const response = await fetch(API_BASE + '/api/qa', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            query: text,
-            top_k: 5,
-            language: currentLang  // 传递当前语言
-          })
-        });
-        
-        console.log('[Status]', response.status);
-        
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-        
-        const data = await response.json();
-        console.log('[Data]', data);
-         
-        renderAnswer(data);
-      } catch (error) {
-        console.error('[Error]', error);
-        stage.innerHTML = `
-          <div class="error">
-            <div class="error-title">${translations[currentLang]['error-title']}</div>
-            <div>${escapeHtml(error.message)}</div>
-          </div>
-        `;
-      } finally {
-        askBtn.disabled = false;
-        askBtn.innerHTML = '<span data-i18n="ask-btn">' + translations[currentLang]['ask-btn'] + '</span>';
+        const pre = document.getElementById('rawResp');
+        if (pre) pre.textContent = rawText || JSON.stringify({ error: String(error) }, null, 2);
+      } catch (e) {
+        console.warn('无法写入 rawResp:', e);
       }
+    } finally {
+      askBtn.disabled = false;
+      askBtn.innerHTML = '<span data-i18n="ask-btn">' + translations[currentLang]['ask-btn'] + '</span>';
     }
-    
-    // Render Answer
-    function renderAnswer(data) {
+  }
+
+  function renderAnswer(data) {
+    try {
       const intent = data.intent || 'general';
       let answer = data.answer || '未找到相关信息';
-      
-      // Format answer
       answer = escapeHtml(answer)
-        .replace(/\n/g, '<br/>')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\\n/g, '<br/>')
+        .replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>')
         .replace(/• /g, '&bull; ');
-      
-      const docs = data.num_docs || 0;
-      const responseTime = data.response_time || '-';
-      
-      // 🔥 检查是否使用了网络搜索
-      const webSearchUsed = data.web_search_used || false;
-      const webSearchBadge = webSearchUsed 
-        ? '<span style="background: rgba(72,187,120,0.2); padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 8px;">🌐 含网络搜索</span>' 
+
+      const docs = (typeof data.num_docs === 'number') ? data.num_docs : 0;
+      const responseTime = (typeof data.response_time === 'string') ? data.response_time : '-';
+
+      const webSearchBadge = data.web_search_used
+        ? '<span style="background: rgba(72,187,120,0.2); padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 8px;">🌐 含网络搜索</span>'
         : '';
-      
-      // Intent labels
+
       const intentLabels = {
         modules: '📚 课程模块',
         requirements: '✅ 入学要求',
+        language_requirements: '✅ 语言要求',
         career: '💼 职业发展',
         fees: '💰 学费查询',
         services: '🎯 学生服务',
         general: '🔍 通用查询'
       };
-      
-      // Build sources HTML
+
+      // 构建引用
       let sourcesHtml = '';
-      if (data.citations && data.citations.length > 0) {
+      if (Array.isArray(data.citations) && data.citations.length > 0) {
         sourcesHtml = `
           <div class="sources">
             <h4>${translations[currentLang]['sources-title']}</h4>
             ${data.citations.map((source, index) => {
-              // 🔥 标记网络来源
-              const sourceType = source.source === 'web' 
-                ? '<span style="color: #48bb78; font-weight: 600;">🌐 网络</span>' 
+              if (!source || typeof source !== 'object') return '';
+              const isWeb = source.source === 'web';
+              const sourceType = isWeb
+                ? '<span style="color: #48bb78; font-weight: 600;">🌐 网络</span>'
                 : '<span style="color: #8B7BE8; font-weight: 600;">📚 本地</span>';
-              
-              const scoreText = source.relevance_score 
-                ? `<span class="source-score">相关度: ${source.relevance_score.toFixed(1)} | ${sourceType}</span>` 
+              const hasScore = typeof source.relevance_score === 'number' && !isNaN(source.relevance_score);
+              const scoreText = hasScore
+                ? `<span class="source-score">相关度: ${source.relevance_score.toFixed(1)} | ${sourceType}</span>`
                 : `<span class="source-score">${sourceType}</span>`;
-              
+
+              const url = (typeof source.url === 'string' && source.url.trim()) ? source.url : '';
+              const title = (typeof source.title === 'string' && source.title.trim()) ? source.title : '来源';
+
               return `
                 <div class="source-item">
-                  <a href="${escapeHtml(source.url || '#')}" target="_blank" ${!source.url ? 'style="pointer-events: none; color: #718096;"' : ''}>
+                  <a href="${escapeHtml(url || '#')}" target="_blank" ${!url ? 'style="pointer-events: none; color: #718096;"' : ''}>
                     <div class="source-number">${index + 1}</div>
                     <div class="source-content">
-                      <div class="source-title">${escapeHtml(source.title)}</div>
+                      <div class="source-title">${escapeHtml(title)}</div>
                       ${scoreText}
                     </div>
                   </a>
@@ -1007,8 +1039,7 @@
           </div>
         `;
       }
-        
-      // Render final result
+
       stage.innerHTML = `
         <div class="answer-container">
           <div class="intent-badge">
@@ -1023,7 +1054,7 @@
             </div>
             <div class="stat">
               <div class="stat-label">${translations[currentLang]['stat-time']}</div>
-              <div class="stat-value">${responseTime.replace('s', '<small>s</small>')}</div>
+              <div class="stat-value">${escapeHtml(String(responseTime)).replace('s', '<small>s</small>')}</div>
             </div>
             <div class="stat">
               <div class="stat-label">${translations[currentLang]['stat-intent']}</div>
@@ -1033,8 +1064,17 @@
           ${sourcesHtml}
         </div>
       `;
+    } catch (e) {
+      console.error('[RenderError]', e);
+      stage.innerHTML = `
+        <div class="error">
+          <div class="error-title">❌ 渲染出错</div>
+          <div>${escapeHtml(e.message)}</div>
+        </div>
+      `;
     }
-    
+  }
+
     // Utility: Escape HTML
     function escapeHtml(text) {
       const div = document.createElement('div');

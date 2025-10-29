@@ -9,6 +9,8 @@ import os
 import time
 import logging
 
+# ============ 日志配置（必须在最前面）============
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("llm_client")
 
 # ============ 全局客户端（延迟初始化）============
@@ -28,9 +30,8 @@ def _init_client():
     
     try:
         from groq import Groq
-        # 🔥 只传递 api_key，不传递其他参数（避免 proxies 错误）
         _groq_client = Groq(api_key=api_key)
-        logger.info(f"✅ Groq client initialized")
+        logger.info("✅ Groq client initialized")
         return _groq_client
     except Exception as e:
         logger.error(f"❌ Failed to initialize Groq: {e}")
@@ -100,55 +101,3 @@ def chat_with_groq(
             time.sleep(wait)
     
     return None
-
-
-# ============ 测试 ============
-if __name__ == "__main__":
-    import sys
-    
-    print("=" * 60)
-    print("🧪 Testing llm_client.py")
-    print("=" * 60)
-    
-    # 检查配置
-    if not is_configured():
-        print("❌ GROQ_API_KEY not set!")
-        print("\nRun: export GROQ_API_KEY='your_key_here'")
-        sys.exit(1)
-    
-    print(f"✅ GROQ_API_KEY configured")
-    
-    # 测试初始化
-    print("\n📝 Testing client init...")
-    client = _init_client()
-    if client is None:
-        print("❌ Init failed")
-        sys.exit(1)
-    print("✅ Client initialized")
-    
-    # 测试中文对话
-    print("\n📝 Testing Chinese response...")
-    test_messages = [
-        {"role": "system", "content": "你是助手。必须用中文回答。"},
-        {"role": "user", "content": "用一句话介绍 UCL"}
-    ]
-    
-    try:
-        response = chat_with_groq(test_messages)
-        print(f"\n✅ SUCCESS!\n\nResponse:\n{response}\n")
-        
-        # 验证中文
-        import re
-        cn = len(re.findall(r'[\u4e00-\u9fff]', response))
-        if cn > 10:
-            print(f"✅ Chinese verified ({cn} chars)")
-        else:
-            print(f"⚠️  Warning: May not be Chinese")
-        
-    except Exception as e:
-        print(f"\n❌ FAILED: {e}\n")
-        sys.exit(1)
-    
-    print("\n" + "=" * 60)
-    print("🎉 All tests passed!")
-    print("=" * 60)

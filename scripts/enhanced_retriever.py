@@ -1,46 +1,50 @@
-"""增强版检索器 - 修复空值错误版本
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+enhanced_retriever.py - 启动时预计算版本
 
-主要修复:
-1. 所有空值检查和容错处理
-2. 防止 NoneType 迭代错误
-3. 完善的异常处理
+🔥 关键优化：
+1. 启动时一次性预计算所有文档embeddings
+2. 查询时直接使用缓存，不再实时计算
+3. 支持增量更新缓存
 """
 
-from __future__ import annotations
-
+import os
 import json
 import logging
 import math
 import re
+import time
 from collections import Counter
-from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import numpy as np
 
+# ============================================================================
+# 日志配置
+# ============================================================================
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ============================================================================
 # 依赖检查
 # ============================================================================
 try:
-    from sentence_transformers import SentenceTransformer, util  # type: ignore
-    import torch  # type: ignore
-
+    from sentence_transformers import SentenceTransformer, util
+    import torch
     HAVE_SEMANTIC = True
-    logger.info("✅ sentence-transformers loaded for semantic search")
-except Exception:
+    logger.info("✅ sentence-transformers 加载成功")
+except Exception as e:
     HAVE_SEMANTIC = False
-    logger.warning("⚠️ sentence-transformers not available, semantic search disabled")
+    logger.warning(f"⚠️ sentence-transformers 不可用: {e}")
 
 try:
-    import jieba  # type: ignore
-
+    import jieba
     HAVE_JIEBA = True
-    logger.info("✅ jieba loaded for Chinese tokenization")
+    logger.info("✅ jieba 加载成功")
 except Exception:
     HAVE_JIEBA = False
-    logger.warning("⚠️ jieba not available, fallback to regex for Chinese")
-
+    logger.warning("⚠️ jieba 不可用，使用正则分词")
 
 # ============================================================================
 # 配置常量
@@ -78,436 +82,342 @@ class CommonPhrases:
 
 
 # ============================================================================
-# 主类
+# 主类 - 启动时预计算版本
 # ============================================================================
-
 class EnhancedRetriever:
-    """增强版检索器 - 完全修复空值处理"""
+    """增强版检索器 - 启动时预计算版本"""
 
-    def __init__(self, enable_semantic: bool = True, cache_embeddings: bool = True) -> None:
+    def __init__(self, enable_semantic: bool = True, preload_documents: Optional[List[Dict]] = None) -> None:
+        """
+        初始化检索器
+        
+        Args:
+            enable_semantic: 是否启用语义搜索
+            preload_documents: 启动时预加载的文档列表（如果提供，会立即预计算）
+        """
         self.enable_semantic = enable_semantic and HAVE_SEMANTIC
-        self.cache_embeddings = cache_embeddings
-
-        # 🔥 确保所有关键词列表都不为 None
-        self.intent_keywords: Dict[str, List[str]] = {
-            "modules": ["module", "course", "subject", "curriculum", "syllabus", "teaching", "learn", "课程", "模块"],
-            "requirements": ["requirement", "prerequisite", "entry", "admission", "qualification", "ielts", "toefl", "要求", "申请"],
-            "career": ["career", "job", "employment", "graduate", "prospect", "就业", "职业"],
-            "fees": ["fee", "tuition", "cost", "funding", "scholarship", "学费", "费用"],
-        }
-
-        self.intent_headings: Dict[str, List[str]] = {
-            "modules": [
-                "module", "curriculum", "syllabus", "teaching", "what you will learn",
-                "course structure", "compulsory", "optional", "placement", "supervisor"
-            ],
-            "requirements": ["entry", "requirement", "admission", "english", "qualification", "ielts", "toefl", "language"],
-            "career": ["career", "employment", "graduate", "prospects", "outcomes"],
-            "fees": ["fee", "tuition", "cost", "funding", "scholarship"],
-        }
-
-        self.custom_synonyms: Dict[str, List[str]] = {
-            "data science": ["data science", "数据科学", "analytics", "data"],
-            "computer science": ["computer science", "computing", "computer"],
-            "business analytics": ["business analytics", "商业分析"],
-            "management": ["management", "管理", "business"],
-        }
-
-        self.domain_vocab = self._build_domain_vocab()
-        self.semantic_model: Optional[Any] = None
-        self._section_embeddings_cache: Dict[int, Dict[int, Any]] = {}
-
+        
+        # 初始化语义模型
+        self.semantic_model = None
         if self.enable_semantic:
             self._load_semantic_model()
+        
+        # 缓存（改为持久化存储）
+        self._doc_embeddings_cache: Dict[str, np.ndarray] = {}  # key: doc_url, value: embedding
+        self._query_embedding_cache: Dict[str, np.ndarray] = {}
+        
+        # 文档索引（用于快速查找）
+        self._doc_index: Dict[str, Dict] = {}  # key: doc_url, value: doc
+        
+        # 领域词汇
+        self.domain_vocab = self._build_domain_vocab()
+        
+        logger.info(f"🚀 EnhancedRetriever 初始化完成 (semantic={self.enable_semantic})")
+        
+        # 🔥 启动时预计算
+        if preload_documents:
+            self.precompute_all_embeddings(preload_documents)
 
-    def detect_intent(self, query: str) -> str:
-        """🔥 检测查询意图 - 完全防护版本"""
-        if not query:
-            return "general"
-        
-        try:
-            query_lower = query.lower()
-        except (AttributeError, TypeError):
-            return "general"
-        
-        for intent, keywords in self.intent_keywords.items():
-            # 🔥 多重空值检查
-            if not keywords:
-                continue
-            try:
-                # 确保 keywords 是可迭代的且每个 kw 都是字符串
-                for kw in keywords:
-                    if kw and isinstance(kw, str) and kw in query_lower:
-                        return intent
-            except (TypeError, AttributeError):
-                continue
-        
-        return "general"
-
-    def _detect_intent(self, query: str, keywords: List[str]) -> str:
-        """🔥 检测查询意图（带关键词列表）- 完全防护版本"""
-        if not query:
-            return "general"
-        
-        try:
-            query_lower = query.lower()
-        except (AttributeError, TypeError):
-            return "general"
-        
-        # 🔥 确保 keywords 不为 None
-        if keywords is None:
-            keywords = []
-        
-        # 意图匹配规则
-        intent_patterns = {
-            "modules": [
-                "module", "course", "curriculum", "subject", "teaching",
-                "模块", "课程", "科目", "教学"
-            ],
-            "requirements": [
-                "requirement", "entry", "admission", "prerequisite", "qualify",
-                "要求", "入学", "条件", "资格", "申请"
-            ],
-            "fees": [
-                "fee", "tuition", "cost", "price", "funding", "scholarship",
-                "学费", "费用", "价格", "奖学金", "资助"
-            ],
-            "career": [
-                "career", "job", "employment", "graduate", "outcome",
-                "职业", "就业", "工作", "前景", "发展"
-            ],
-            "services": [
-                "service", "support", "help", "counseling", "wellbeing",
-                "服务", "支持", "帮助", "咨询", "辅导"
-            ]
-        }
-        
-        # 检测意图
-        for intent, patterns in intent_patterns.items():
-            if not patterns:
-                continue
-            try:
-                for pattern in patterns:
-                    if not pattern or not isinstance(pattern, str):
-                        continue
-                    # 检查查询中是否包含模式
-                    if pattern in query_lower:
-                        return intent
-                    # 检查关键词列表
-                    if keywords:
-                        for kw in keywords:
-                            if kw and isinstance(kw, str) and pattern in kw:
-                                return intent
-            except (TypeError, AttributeError):
-                continue
-        
-        return "general"
-
-    def search_with_context(self, query: str, documents: List[dict], top_k: int = 8) -> List[Dict]:
-        """🔥 修复后的主检索方法 - 完全防护版本"""
-        
-        # 🔥 空值检查
-        if not query:
-            logger.warning("⚠️  Empty query")
-            return []
-        
-        if not documents:
-            logger.warning("⚠️  Empty documents")
-            return []
+    def _load_semantic_model(self) -> None:
+        """加载语义模型"""
+        if not HAVE_SEMANTIC:
+            logger.warning("⚠️ sentence-transformers 未安装")
+            self.enable_semantic = False
+            return
 
         try:
-            # 🔥 提取关键词时添加空值检查
-            keywords = self._extract_smart_keywords(query)
-            if not keywords:
-                logger.warning("⚠️  No keywords extracted, using simple split")
-                keywords = [w for w in query.lower().split() if len(w) > 2]
-        except Exception as e:
-            logger.error(f"❌ Keyword extraction failed: {e}")
-            keywords = [w for w in query.lower().split() if len(w) > 2]
+            logger.info("📥 正在加载语义模型...")
+            self.semantic_model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
+            # 预热模型
+            _ = self.semantic_model.encode("warmup", convert_to_tensor=False, show_progress_bar=False)
+            logger.info("✅ 语义模型加载成功")
+        except Exception as exc:
+            logger.error(f"❌ 语义模型加载失败: {exc}")
+            self.enable_semantic = False
+            self.semantic_model = None
 
-        # 检测意图
-        try:
-            intent = self._detect_intent(query, keywords)
-        except Exception as e:
-            logger.error(f"❌ Intent detection failed: {e}")
-            intent = "general"
+    def precompute_all_embeddings(self, documents: List[Dict], batch_size: int = 32) -> None:
+        """
+        🔥 启动时一次性预计算所有文档的 embeddings
         
-        query_lower = query.lower()
-
-        logger.info(f"🔍 [检索] 查询: {query[:100]}")
-        logger.info(f"🎯 [检索] 意图: {intent}")
-        logger.info(f"🔑 [检索] 关键词: {keywords[:10]}")
-
-        # 预计算 embeddings
-        query_embedding = None
-        if self.enable_semantic:
-            try:
-                query_embedding = self._encode_query(query)
-            except Exception as e:
-                logger.warning(f"⚠️  Query encoding failed: {e}")
-
-        if self.enable_semantic and self.cache_embeddings and not self._section_embeddings_cache:
-            try:
-                logger.info("🔄 [缓存] 预计算文档 embeddings...")
-                self._precompute_embeddings(documents)
-            except Exception as e:
-                logger.warning(f"⚠️  Embedding precompute failed: {e}")
-
-        results: List[Dict] = []
-
-        for doc_idx, doc in enumerate(documents):
-            try:
-                # 🔥 添加空值检查
-                title_raw = doc.get("title")
-                if not title_raw or not isinstance(title_raw, str):
-                    continue
-                
-                title_lower = title_raw.lower()
-
-                # 标题评分
-                title_score, title_hits = self._score_title_similarity(title_lower, keywords, query_lower)
-                
-                # 学位级别评分
-                level_score = self._score_level(doc, query_lower)
-                
-                # 章节评分
-                sections = doc.get("sections")
-                if not sections or not isinstance(sections, list):
-                    sections = []
-                
-                sections_score, matched_sections = self._score_sections(sections, keywords, intent)
-
-                # 🔥 语义评分时添加空值检查
-                semantic_score = 0.0
-                if self.enable_semantic and query_embedding is not None:
-                    try:
-                        semantic_score = self._semantic_boost(doc_idx, sections, query_embedding)
-                    except Exception as e:
-                        logger.debug(f"⚠️  Semantic scoring failed for doc {doc_idx}: {e}")
-
-                base_score = title_score + level_score + sections_score + semantic_score
-
-                # 过滤低分结果
-                if base_score <= 0 or (not matched_sections and title_score < 25):
-                    continue
-
-                results.append({
-                    "doc": doc,
-                    "score": base_score,
-                    "title_score": title_score,
-                    "sections_score": sections_score,
-                    "semantic_score": semantic_score,
-                    "level_score": level_score,
-                    "matched_sections": matched_sections,
-                    "title_matches": title_hits,
-                    "intent": intent,
-                })
-            except Exception as e:
-                logger.debug(f"⚠️  Error processing doc {doc_idx}: {e}")
-                continue
-
-        # 排序
-        results.sort(key=lambda item: item["score"], reverse=True)
-
-        logger.info(f"📊 [检索] 找到 {len(results)} 个相关文档，返回 top {top_k}")
-
-        return results[:top_k]
-
-    def _score_level(self, doc: dict, query_lower: str) -> float:
-        """评分：学位级别匹配"""
-        if not doc or not isinstance(doc, dict):
-            return 0.0
+        Args:
+            documents: 文档列表
+            batch_size: 批处理大小
+        """
+        if not self.enable_semantic or self.semantic_model is None:
+            logger.warning("⚠️ 语义搜索未启用，跳过预计算")
+            return
         
-        level = str(doc.get("level", "")).lower()
-        if not level:
-            return 0.0
-
-        score = 0.0
-        postgraduate_markers = ("postgraduate", "msc", "master", "mres", "ma", "phd")
-        undergraduate_markers = ("undergraduate", "ba", "bsc")
-
-        try:
-            if any(marker in query_lower for marker in ("msc", "master", "postgraduate", "graduate", "硕士", "研究生")):
-                if any(marker in level for marker in postgraduate_markers):
-                    score += ScoringConfig.LEVEL_BOOST
-                if any(marker in level for marker in undergraduate_markers):
-                    score += ScoringConfig.LEVEL_PENALTY
-
-            if any(marker in query_lower for marker in ("bsc", "ba", "undergraduate", "bachelor", "本科")):
-                if any(marker in level for marker in undergraduate_markers):
-                    score += ScoringConfig.LEVEL_BOOST
-                if any(marker in level for marker in postgraduate_markers):
-                    score += ScoringConfig.LEVEL_PENALTY
-        except (TypeError, AttributeError):
-            pass
-
-        return score
-
-    def _score_title_similarity(self, title_lower: str, keywords: List[str], query_lower: str) -> Tuple[float, List[str]]:
-        """评分：标题相似度"""
-        score = 0.0
-        matches: List[str] = []
-
-        if not title_lower or not isinstance(title_lower, str):
-            return score, matches
+        start_time = time.time()
+        logger.info(f"📊 开始预计算 {len(documents)} 个文档的 embeddings...")
         
-        if not keywords:
-            keywords = []
-
-        try:
-            main_title = title_lower.split("|")[0].strip()
-
-            # 关键词匹配
-            for kw in keywords:
-                if not kw or not isinstance(kw, str) or len(kw) <= 2:
-                    continue
-                if kw in title_lower:
-                    score += ScoringConfig.KEYWORD_IN_TITLE
-                    if kw not in matches:
-                        matches.append(kw)
-
-            # 完全查询匹配
-            normalized_query = re.sub(r"\s+", " ", query_lower.strip())
-            if normalized_query and normalized_query in title_lower:
-                score += ScoringConfig.EXACT_QUERY_MATCH
-
-            # 同义词匹配
-            for phrase, synonyms in self.custom_synonyms.items():
-                if not synonyms:
-                    continue
-                if any(syn and syn in query_lower for syn in synonyms) and phrase in title_lower:
-                    score += ScoringConfig.SYNONYM_MATCH
-                    if phrase not in matches:
-                        matches.append(phrase)
-
-            # 模糊匹配
-            ratio = SequenceMatcher(None, query_lower, title_lower).ratio()
-            if ratio > 0.42:
-                score += ratio * ScoringConfig.FUZZY_MATCH_MULTIPLIER
-
-            # 学位标签匹配
-            for tag in ("msc", "mres", "ma", "pgdip", "bsc", "ba", "phd"):
-                if tag in query_lower and tag in title_lower:
-                    score += ScoringConfig.DEGREE_TAG_MATCH
-                    if tag not in matches:
-                        matches.append(tag)
-
-        except Exception as e:
-            logger.debug(f"⚠️  Title scoring error: {e}")
-
-        return score, matches
-
-    def _score_sections(self, sections: List[dict], keywords: List[str], intent: str) -> Tuple[float, List[dict]]:
-        """评分：章节内容"""
+        # 准备文本和对应的 URL
+        texts = []
+        urls = []
         
-        # 🔥 添加空值检查
-        if not sections or not isinstance(sections, list):
-            return 0.0, []
-        
-        if not keywords:
-            keywords = []
-        
-        score = 0.0
-        relevant_sections: List[dict] = []
-        target_headings = self.intent_headings.get(intent, [])
-
-        for section in sections:
-            if not section or not isinstance(section, dict):
+        for doc in documents:
+            if not doc or not isinstance(doc, dict):
                 continue
             
-            try:
-                heading = section.get("heading") or ""
-                text = section.get("text") or ""
-                
-                if not isinstance(heading, str):
-                    heading = ""
-                if not isinstance(text, str):
-                    text = ""
-                
-                if not heading and not text:
-                    continue
-
-                heading_lower = heading.lower()
-                text_lower = text.lower()
-                section_score = 0.0
-                reasons: List[str] = []
-
-                # 意图相关标题匹配
-                for th in target_headings:
-                    if th and isinstance(th, str) and th in heading_lower:
-                        section_score += ScoringConfig.INTENT_HEADING_MATCH
-                        reasons.append(f"intent_heading:{th}")
-
-                # 标题关键词匹配
-                for kw in keywords:
-                    if kw and isinstance(kw, str) and kw in heading_lower:
-                        section_score += ScoringConfig.KEYWORD_IN_HEADING
-                        reasons.append(f"heading_kw:{kw}")
-
-                # 文本关键词匹配
-                for kw in keywords:
-                    if not kw or not isinstance(kw, str):
-                        continue
-                    occurrences = text_lower.count(kw)
-                    if occurrences:
-                        kw_score = min(
-                            occurrences * ScoringConfig.KEYWORD_IN_TEXT_PER_OCCURRENCE,
-                            ScoringConfig.MAX_KEYWORD_TEXT_SCORE
-                        )
-                        section_score += kw_score
-                        reasons.append(f"text_kw:{kw}x{occurrences}")
-
-                # 模块意图特殊处理
-                if intent == "modules":
-                    if "•" in text or "\n-" in text or text.count("\n") > 5:
-                        section_score += ScoringConfig.LIST_STRUCTURE_BONUS
-                        reasons.append("list_structure")
-                    if re.search(r"\b[A-Z]{4}\d{4}\b", text):
-                        section_score += ScoringConfig.COURSE_CODE_BONUS
-                        reasons.append("course_code")
-
-                # 长度归一化
-                text_len = max(len(text), 1)
-                normalization_factor = 1 + math.log10(text_len / ScoringConfig.SECTION_LENGTH_NORMALIZATION_BASE + 1)
-                section_score /= normalization_factor
-
-                if section_score > 0:
-                    snippet = text.strip().replace("\u00a0", " ")[:1000]
-                    relevant_sections.append({
-                        "heading": heading,
-                        "text": snippet,
-                        "score": section_score,
-                        "reasons": reasons,
-                    })
-                    score += section_score
-
-            except Exception as e:
-                logger.debug(f"⚠️  Section scoring error: {e}")
+            url = doc.get("url", "") or doc.get("title", "")
+            if not url:
                 continue
+            
+            # 提取文档文本
+            doc_text = self._extract_doc_text(doc)
+            if doc_text:
+                texts.append(doc_text)
+                urls.append(url)
+                self._doc_index[url] = doc
+        
+        if not texts:
+            logger.warning("⚠️ 没有有效的文档文本，跳过预计算")
+            return
+        
+        # 🔥 批量计算 embeddings（大幅提速）
+        logger.info(f"🚀 批量计算 embeddings (batch_size={batch_size})...")
+        try:
+            # 使用 show_progress_bar=True 显示进度
+            embeddings = self.semantic_model.encode(
+                texts,
+                batch_size=batch_size,
+                convert_to_numpy=True,  # 直接转为 numpy
+                show_progress_bar=True,
+                normalize_embeddings=True  # L2 归一化，加速相似度计算
+            )
+            
+            # 存入缓存
+            for url, emb in zip(urls, embeddings):
+                self._doc_embeddings_cache[url] = emb
+            
+            elapsed = time.time() - start_time
+            logger.info(f"✅ 预计算完成: {len(self._doc_embeddings_cache)} 个文档，耗时 {elapsed:.2f}s")
+            logger.info(f"📈 平均速度: {len(texts) / elapsed:.1f} docs/s")
+        
+        except Exception as e:
+            logger.error(f"❌ 批量预计算失败: {e}", exc_info=True)
 
-        relevant_sections.sort(key=lambda item: item["score"], reverse=True)
-        return score, relevant_sections[:5]
+    def search_with_context(
+        self, 
+        query: str, 
+        documents: List[Dict], 
+        top_k: int = 5,
+        intent: str = "general"
+    ) -> List[Dict]:
+        """
+        主搜索入口 - 优先使用预计算的 embeddings
+        
+        Args:
+            query: 搜索查询
+            documents: 文档列表（通常不需要，直接使用缓存）
+            top_k: 返回结果数量
+            intent: 查询意图
+        
+        Returns:
+            排序后的搜索结果列表
+        """
+        logger.info(f"🔍 开始搜索: query='{query}', top_k={top_k}, cached_docs={len(self._doc_embeddings_cache)}")
+        
+        results = []
+        
+        # 🔥 优先尝试语义搜索（使用预计算的 embeddings）
+        if self.enable_semantic and self.semantic_model is not None and self._doc_embeddings_cache:
+            try:
+                results = self._semantic_search_cached(query, top_k)
+                if results:
+                    logger.info(f"✅ 语义搜索成功: 找到 {len(results)} 个结果")
+                    return results
+                else:
+                    logger.warning("⚠️ 语义搜索返回空结果")
+            except Exception as e:
+                logger.error(f"❌ 语义搜索异常: {e}", exc_info=True)
+        
+        # 🔥 降级到关键词检索
+        logger.info("🔄 降级到关键词检索...")
+        # 如果 documents 为空，使用缓存的文档
+        docs_to_search = documents if documents else list(self._doc_index.values())
+        results = self._keyword_search(query, docs_to_search, top_k, intent)
+        logger.info(f"✅ 关键词搜索完成: 找到 {len(results)} 个结果")
+        
+        return results
 
-    def _extract_smart_keywords(self, query: str) -> List[str]:
-        """智能提取查询关键词"""
-        if not query or not isinstance(query, str):
+    def _semantic_search_cached(self, query: str, top_k: int) -> List[Dict]:
+        """
+        🔥 使用预计算的 embeddings 进行语义搜索（极速版）
+        
+        Returns:
+            搜索结果列表
+        """
+        if not self._doc_embeddings_cache:
+            logger.warning("⚠️ 缓存为空，无法执行语义搜索")
             return []
         
+        try:
+            logger.info("⚡ 执行缓存语义搜索...")
+            
+            # 1. 编码查询（带缓存）
+            query_embedding = self._encode_query_cached(query)
+            if query_embedding is None:
+                logger.error("❌ 查询编码失败")
+                return []
+            
+            # 2. 计算所有文档的相似度（向量化计算，极快）
+            urls = list(self._doc_embeddings_cache.keys())
+            doc_embeddings = np.array([self._doc_embeddings_cache[url] for url in urls])
+            
+            # 🔥 批量计算余弦相似度（已归一化，直接点积）
+            similarities = np.dot(doc_embeddings, query_embedding)
+            
+            # 3. 获取 top_k
+            top_indices = np.argsort(similarities)[::-1][:top_k * 2]  # 取 2 倍，过滤后再截断
+            
+            results = []
+            for idx in top_indices:
+                sim = float(similarities[idx])
+                if sim < 0.1:  # 过滤低分
+                    continue
+                
+                url = urls[idx]
+                doc = self._doc_index.get(url)
+                if not doc:
+                    continue
+                
+                results.append({
+                    'doc': doc,
+                    'score': sim * 100,  # 归一化到 0-100
+                    'matched_sections': self._find_relevant_sections(doc, query)
+                })
+            
+            logger.info(f"✅ 缓存语义搜索完成: {len(results)} 个结果")
+            return results[:top_k]
+        
+        except Exception as e:
+            logger.error(f"❌ 缓存语义搜索失败: {e}", exc_info=True)
+            return []
+
+    def _encode_query_cached(self, query: str) -> Optional[np.ndarray]:
+        """编码查询（带缓存）"""
+        if query in self._query_embedding_cache:
+            return self._query_embedding_cache[query]
+        
+        try:
+            # 直接返回 numpy，且 L2 归一化
+            embedding = self.semantic_model.encode(
+                query,
+                convert_to_numpy=True,
+                normalize_embeddings=True,
+                show_progress_bar=False
+            )
+            
+            self._query_embedding_cache[query] = embedding
+            return embedding
+        except Exception as e:
+            logger.error(f"❌ 查询编码失败: {e}")
+            return None
+
+    def _extract_doc_text(self, doc: Dict) -> str:
+        """提取文档文本用于 embedding"""
+        text_parts = []
+        
+        # 标题（权重更高，重复3次）
+        title = doc.get("title", "")
+        if title:
+            text_parts.append(f"{title}. {title}. {title}.")
+        
+        # Level/Degree
+        level = doc.get("level", "")
+        if level:
+            text_parts.append(f"Level: {level}.")
+        
+        # Sections（只取前 10 个，每个截断到 200 字符）
+        sections = doc.get("sections", [])
+        if sections and isinstance(sections, list):
+            for section in sections[:10]:
+                if not isinstance(section, dict):
+                    continue
+                heading = section.get("heading", "")
+                text = section.get("text", "")
+                if heading:
+                    text_parts.append(f"{heading}: {text[:200]}")
+                elif text:
+                    text_parts.append(text[:200])
+        
+        return " ".join(text_parts)
+
+    def _find_relevant_sections(self, doc: Dict, query: str) -> List[Dict]:
+        """找到相关的 sections"""
+        relevant = []
+        query_lower = query.lower()
+        query_words = set(query_lower.split())
+        
+        sections = doc.get("sections", [])
+        if not sections or not isinstance(sections, list):
+            return []
+        
+        for section in sections[:20]:
+            if not isinstance(section, dict):
+                continue
+            
+            heading = section.get("heading", "").lower()
+            text = section.get("text", "").lower()
+            
+            # 计算关键词匹配度
+            matches = sum(1 for word in query_words if len(word) > 2 and (word in heading or word in text))
+            
+            if matches > 0:
+                relevant.append({
+                    "heading": section.get("heading", ""),
+                    "text": section.get("text", "")[:500],
+                    "score": matches
+                })
+        
+        relevant.sort(key=lambda x: x["score"], reverse=True)
+        return relevant[:3]
+
+    def _keyword_search(self, query: str, documents: List[Dict], top_k: int, intent: str) -> List[Dict]:
+        """关键词检索（降级方案）"""
+        logger.info("🔎 执行关键词检索...")
+        
+        keywords = self._extract_keywords(query)
+        logger.info(f"📝 提取关键词: {keywords[:10]}")
+        
+        if not keywords:
+            logger.warning("⚠️ 未提取到有效关键词")
+            return []
+        
+        scored_docs = []
+        for doc in documents:
+            if not doc or not isinstance(doc, dict):
+                continue
+            
+            score_result = self._score_document(doc, keywords, intent)
+            if score_result["score"] > 0:
+                scored_docs.append({
+                    "doc": doc,
+                    "score": score_result["score"],
+                    "matched_sections": score_result.get("matched_sections", [])
+                })
+        
+        scored_docs.sort(key=lambda x: x["score"], reverse=True)
+        return scored_docs[:top_k]
+
+    def _extract_keywords(self, query: str) -> List[str]:
+        """提取查询关键词"""
         stopwords = {
             "what", "how", "where", "when", "which", "who", "the", "a", "an",
             "is", "are", "was", "were", "do", "does", "did", "about", "for",
             "的", "是", "有", "在", "吗", "呢", "啊", "了",
         }
-
+        
         try:
             query_lower = query.lower()
-
-            # 提取英文单词
+            
+            # 英文关键词
             english_words = re.findall(r"\b[a-z]+\b", query_lower)
-            english_keywords = [word for word in english_words if word not in stopwords and len(word) > 2]
-
-            # 提取中文关键词
-            chinese_keywords: List[str] = []
+            english_keywords = [w for w in english_words if w not in stopwords and len(w) > 2]
+            
+            # 中文关键词
+            chinese_keywords = []
             chinese_matches = re.findall(r"[\u4e00-\u9fff]+", query)
             for chunk in chinese_matches:
                 if HAVE_JIEBA:
@@ -516,142 +426,138 @@ class EnhancedRetriever:
                         if len(token) > 1 and token not in stopwords
                     ])
                 else:
-                    chinese_keywords.extend([
-                        chunk[i : i + j] 
-                        for i in range(len(chunk)) 
-                        for j in range(2, 5) 
-                        if i + j <= len(chunk)
-                    ])
-
-            keywords: List[str] = english_keywords + chinese_keywords
-
+                    for i in range(len(chunk)):
+                        for j in range(2, 4):
+                            if i + j <= len(chunk):
+                                chinese_keywords.append(chunk[i:i+j])
+            
+            keywords = english_keywords + chinese_keywords
+            
             # 扩展常见短语
             for phrase, expansions in CommonPhrases.PHRASES.items():
                 if phrase in query_lower:
                     keywords.extend(expansions)
-
+            
             # 去重
-            expanded: List[str] = []
             seen = set()
+            unique_keywords = []
             for kw in keywords:
-                if not kw or not isinstance(kw, str) or kw in seen:
-                    continue
-                expanded.append(kw)
-                seen.add(kw)
-
-            # 过滤领域词汇
-            domain_filtered = [kw for kw in expanded if len(kw) > 3 or kw in self.domain_vocab]
-
-            return domain_filtered or expanded
-
+                if kw and kw not in seen:
+                    unique_keywords.append(kw)
+                    seen.add(kw)
+            
+            return unique_keywords
+        
         except Exception as e:
-            logger.error(f"❌ Keyword extraction error: {e}")
+            logger.error(f"❌ 关键词提取失败: {e}")
             return []
 
-    def _load_semantic_model(self) -> None:
-        """加载语义模型"""
-        if not HAVE_SEMANTIC:
-            return
-
-        try:
-            self.semantic_model = SentenceTransformer("all-MiniLM-L6-v2")
-            logger.info("✅ 语义模型加载成功")
-        except Exception as exc:
-            logger.warning(f"⚠️  语义模型加载失败: {exc}")
-            self.enable_semantic = False
-
-    def _precompute_embeddings(self, documents: List[dict]) -> None:
-        """预计算文档 embeddings"""
-        if not self.enable_semantic or self.semantic_model is None:
-            return
-
-        for doc_idx, doc in enumerate(documents):
-            if not doc or not isinstance(doc, dict):
-                continue
+    def _score_document(self, doc: Dict, keywords: List[str], intent: str) -> Dict[str, Any]:
+        """为文档打分"""
+        score = 0.0
+        matched_sections = []
+        
+        # 标题匹配
+        title = (doc.get("title") or "").lower()
+        title_hits = 0
+        for kw in keywords:
+            if kw and kw.lower() in title:
+                score += ScoringConfig.KEYWORD_IN_TITLE
+                title_hits += 1
+        
+        # Level 匹配
+        level = str(doc.get("level", "")).lower()
+        if any(x in level for x in ["msc", "master", "postgraduate"]):
+            score += ScoringConfig.LEVEL_BOOST
+        
+        # Section 匹配
+        sections = doc.get("sections", [])
+        if sections and isinstance(sections, list):
+            intent_headings = {
+                "modules": ["module", "curriculum", "syllabus", "compulsory", "optional"],
+                "requirements": ["entry", "requirement", "admission", "qualification"],
+                "fees": ["fee", "tuition", "cost", "scholarship"],
+                "career": ["career", "employment", "prospect"],
+                "services": ["service", "support", "counseling"],
+            }.get(intent, [])
             
-            if doc_idx in self._section_embeddings_cache:
-                continue
-
-            self._section_embeddings_cache[doc_idx] = {}
-            sections = doc.get("sections", [])
-            if not sections or not isinstance(sections, list):
-                continue
-            
-            for sec_idx, section in enumerate(sections):
-                if not section or not isinstance(section, dict):
+            for section in sections[:30]:
+                if not isinstance(section, dict):
                     continue
-                text = section.get("text") or ""
-                if text and isinstance(text, str) and len(text) > 50:
-                    try:
-                        emb = self.semantic_model.encode(text, convert_to_tensor=True)
-                        self._section_embeddings_cache[doc_idx][sec_idx] = emb
-                    except Exception as exc:
-                        logger.debug(f"⚠️  计算 embedding 失败: {exc}")
-
-    def _encode_query(self, query: str) -> Optional[Any]:
-        """编码查询"""
-        if not self.enable_semantic or self.semantic_model is None:
-            return None
-
-        try:
-            return self.semantic_model.encode(query, convert_to_tensor=True)
-        except Exception as exc:
-            logger.warning(f"⚠️  查询编码失败: {exc}")
-            return None
-
-    def _semantic_boost(self, doc_idx: int, sections: List[dict], query_emb: Any) -> float:
-        """语义相似度加成"""
-        if not sections or query_emb is None:
-            return 0.0
-
-        best_sim = 0.0
-
-        if doc_idx in self._section_embeddings_cache:
-            for sec_idx, section_emb in self._section_embeddings_cache[doc_idx].items():
-                try:
-                    similarity = util.pytorch_cos_sim(query_emb, section_emb).item()
-                    best_sim = max(best_sim, similarity)
-                except Exception:
-                    continue
-
-        return best_sim * ScoringConfig.SEMANTIC_MULTIPLIER
+                
+                heading = (section.get("heading") or "").lower()
+                text = (section.get("text") or "").lower()
+                
+                sec_score = 0.0
+                
+                if any(h in heading for h in intent_headings):
+                    sec_score += ScoringConfig.INTENT_HEADING_MATCH
+                
+                matches = 0
+                for kw in keywords[:20]:
+                    if kw and (kw.lower() in heading or kw.lower() in text):
+                        matches += 1
+                
+                sec_score += min(matches * ScoringConfig.KEYWORD_IN_HEADING, ScoringConfig.MAX_KEYWORD_TEXT_SCORE)
+                
+                if sec_score > 0:
+                    matched_sections.append({
+                        "heading": section.get("heading", ""),
+                        "text": section.get("text", "")[:500],
+                        "score": sec_score
+                    })
+                    score += sec_score
+        
+        matched_sections.sort(key=lambda x: x["score"], reverse=True)
+        
+        return {
+            "score": score,
+            "title_hits": title_hits,
+            "matched_sections": matched_sections[:5]
+        }
 
     def _build_domain_vocab(self) -> set:
         """构建领域词汇表"""
-        repo_root = Path(__file__).resolve().parents[1]
-        data_paths = [
-            repo_root / "public" / "data" / "ucl_programs.json",
-            repo_root / "public" / "data" / "ucl_services.json",
-        ]
-
-        words: List[str] = []
-        for path in data_paths:
-            if not path.exists():
-                continue
-            try:
-                with path.open("r", encoding="utf-8") as fh:
-                    data = json.load(fh)
-                    if not data or not isinstance(data, list):
-                        continue
-                    for item in data:
-                        if not item or not isinstance(item, dict):
+        try:
+            repo_root = Path(__file__).resolve().parents[1]
+            data_paths = [
+                repo_root / "public" / "data" / "ucl_programs.json",
+                repo_root / "public" / "data" / "ucl_services.json",
+            ]
+            
+            words = []
+            for path in data_paths:
+                if not path.exists():
+                    continue
+                try:
+                    with path.open("r", encoding="utf-8") as fh:
+                        data = json.load(fh)
+                        if not data or not isinstance(data, list):
                             continue
-                        title = item.get("title", "")
-                        if not title or not isinstance(title, str):
-                            continue
-                        tokens = re.findall(r"\b\w+\b|[\u4e00-\u9fff]+", title.lower())
-                        words.extend(tokens)
-            except Exception as exc:
-                logger.warning(f"⚠️  读取数据文件失败: {exc}")
-                continue
+                        for item in data:
+                            if not item or not isinstance(item, dict):
+                                continue
+                            title = item.get("title", "")
+                            if title and isinstance(title, str):
+                                tokens = re.findall(r"\b\w+\b|[\u4e00-\u9fff]+", title.lower())
+                                words.extend(tokens)
+                except Exception as e:
+                    logger.debug(f"读取文件失败: {e}")
+            
+            counter = Counter(words)
+            vocab = {token for token, freq in counter.items() if freq > 1 and len(token) > 2}
+            
+            logger.info(f"📚 领域词汇表构建完成: {len(vocab)} 个词")
+            return vocab
+        
+        except Exception as e:
+            logger.warning(f"⚠️ 领域词汇表构建失败: {e}")
+            return set()
 
-        counter = Counter(words)
-        vocab = {token for token, freq in counter.items() if freq > 1 and len(token) > 2}
 
-        logger.info(f"📚 Built domain vocab with {len(vocab)} words")
-        return vocab
-
-
-def create_retriever(enable_semantic: bool = True, cache_embeddings: bool = True) -> EnhancedRetriever:
-    """工厂函数：创建检索器"""
-    return EnhancedRetriever(enable_semantic=enable_semantic, cache_embeddings=cache_embeddings)
+# ============================================================================
+# 工厂函数
+# ============================================================================
+def create_retriever(enable_semantic: bool = True, preload_documents: Optional[List[Dict]] = None) -> EnhancedRetriever:
+    """创建检索器实例"""
+    return EnhancedRetriever(enable_semantic=enable_semantic, preload_documents=preload_documents)
