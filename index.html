@@ -667,14 +667,14 @@
           <input 
             id="q" 
             data-i18n-placeholder="search-placeholder"
-            placeholder="请输入您的问题，例如：Data Science MSc 有哪些课程模块？"
+            placeholder="请输入您的问题,例如:Data Science MSc 有哪些课程模块?"
             onkeypress="if(event.key==='Enter')ask()"
           />
           <button id="ask" onclick="ask()">
             <span data-i18n="ask-btn">提问</span>
           </button>
         </div>
-        <p class="search-hint" data-i18n="search-hint">💡 支持中英文提问，可询问专业信息、入学要求、课程模块等</p>
+        <p class="search-hint" data-i18n="search-hint">💡 支持中英文提问,可询问专业信息、入学要求、课程模块等</p>
       </div>
 
       <!-- Results Stage -->
@@ -696,9 +696,9 @@
         'status-disconnected': '后端未启动',
         'quick-questions': '💡 快速问题',
         'custom-query': '🔍 自定义查询',
-        'search-placeholder': '请输入您的问题，例如：Data Science MSc 有哪些课程模块？',
+        'search-placeholder': '请输入您的问题,例如:Data Science MSc 有哪些课程模块?',
         'ask-btn': '提问',
-        'search-hint': '💡 支持中英文提问，可询问专业信息、入学要求、课程模块等',
+        'search-hint': '💡 支持中英文提问,可询问专业信息、入学要求、课程模块等',
         'thinking': '思考中...',
         'searching': '🔍 智能检索中...',
         'analyzing': '正在分析相关信息...',
@@ -710,37 +710,37 @@
         questions: [
           {
             icon: '📊',
-            text: '请问 Data Science MSc 专业有哪些核心课程模块？',
+            text: '请问 Data Science MSc 专业有哪些核心课程模块?',
             category: '课程信息',
             query: 'What are the core modules in Data Science MSc?'
           },
           {
             icon: '💻',
-            text: '申请 Computer Science MSc 需要满足什么语言要求？',
+            text: '申请 Computer Science MSc 需要满足什么语言要求?',
             category: '入学要求',
             query: 'Computer Science MSc language requirements'
           },
           {
             icon: '🧠',
-            text: '我想了解 UCL 的心理咨询服务，如何预约？',
+            text: '我想了解 UCL 的心理咨询服务,如何预约?',
             category: '学生服务',
             query: '如何预约心理咨询'
           },
           {
             icon: '📈',
-            text: 'Business Analytics MSc 的入学要求和申请条件是什么？',
+            text: 'Business Analytics MSc 的入学要求和申请条件是什么?',
             category: '申请信息',
             query: 'Business Analytics MSc entry requirements'
           },
           {
             icon: '💰',
-            text: '国际学生就读工程类硕士的学费是多少？',
+            text: '国际学生就读工程类硕士的学费是多少?',
             category: '费用咨询',
             query: 'Engineering MSc tuition fees for international students'
           },
           {
             icon: '🌍',
-            text: 'UCL 为国际学生提供哪些语言支持和帮助？',
+            text: 'UCL 为国际学生提供哪些语言支持和帮助?',
             category: '学生支持',
             query: 'Language support for international students at UCL'
           }
@@ -909,15 +909,28 @@
       `;
       
       try {
-        console.log('[Query]', text);
-        const response = await fetch(API_BASE + '/api/qa?query=' + encodeURIComponent(text));
+        console.log('[Query]', text, '[Language]', currentLang);
+        
+        // 使用 POST 请求并传递语言参数
+        const response = await fetch(API_BASE + '/api/qa', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            query: text,
+            top_k: 5,
+            language: currentLang  // 传递当前语言
+          })
+        });
+        
         console.log('[Status]', response.status);
         
         if (!response.ok) throw new Error('HTTP ' + response.status);
         
         const data = await response.json();
         console.log('[Data]', data);
-        
+         
         renderAnswer(data);
       } catch (error) {
         console.error('[Error]', error);
@@ -947,12 +960,19 @@
       const docs = data.num_docs || 0;
       const responseTime = data.response_time || '-';
       
+      // 🔥 检查是否使用了网络搜索
+      const webSearchUsed = data.web_search_used || false;
+      const webSearchBadge = webSearchUsed 
+        ? '<span style="background: rgba(72,187,120,0.2); padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 8px;">🌐 含网络搜索</span>' 
+        : '';
+      
       // Intent labels
       const intentLabels = {
         modules: '📚 课程模块',
         requirements: '✅ 入学要求',
         career: '💼 职业发展',
         fees: '💰 学费查询',
+        services: '🎯 学生服务',
         general: '🔍 通用查询'
       };
       
@@ -963,12 +983,18 @@
           <div class="sources">
             <h4>${translations[currentLang]['sources-title']}</h4>
             ${data.citations.map((source, index) => {
+              // 🔥 标记网络来源
+              const sourceType = source.source === 'web' 
+                ? '<span style="color: #48bb78; font-weight: 600;">🌐 网络</span>' 
+                : '<span style="color: #8B7BE8; font-weight: 600;">📚 本地</span>';
+              
               const scoreText = source.relevance_score 
-                ? `<span class="source-score">相关度: ${source.relevance_score}</span>` 
-                : '';
+                ? `<span class="source-score">相关度: ${source.relevance_score.toFixed(1)} | ${sourceType}</span>` 
+                : `<span class="source-score">${sourceType}</span>`;
+              
               return `
                 <div class="source-item">
-                  <a href="${escapeHtml(source.url)}" target="_blank">
+                  <a href="${escapeHtml(source.url || '#')}" target="_blank" ${!source.url ? 'style="pointer-events: none; color: #718096;"' : ''}>
                     <div class="source-number">${index + 1}</div>
                     <div class="source-content">
                       <div class="source-title">${escapeHtml(source.title)}</div>
@@ -981,12 +1007,13 @@
           </div>
         `;
       }
-      
+        
       // Render final result
       stage.innerHTML = `
         <div class="answer-container">
           <div class="intent-badge">
             ${intentLabels[intent] || '🔍 ' + intent}
+            ${webSearchBadge}
           </div>
           <div class="answer-box">${answer}</div>
           <div class="stats">

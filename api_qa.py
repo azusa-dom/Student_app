@@ -16,6 +16,14 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import logging
 from typing import List, Dict, Optional, Any
+from dotenv import load_dotenv
+
+# 加载 .env 文件
+load_dotenv()
+
+# 现在可以访问环境变量
+groq_api_key = os.getenv("GROQ_API_KEY")
+print(f"GROQ_API_KEY: {groq_api_key}")
 
 # ============ 日志配置 ============
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -64,12 +72,8 @@ BASE_DIR = Path(__file__).parent
 
 # ============ 静态资源挂载 ============
 if (BASE_DIR / "public").exists():
-    app.mount("/public", StaticFiles(directory="public"), name="public")
+    app.mount("/public", StaticFiles(directory=str(BASE_DIR / "public")), name="public")
     logger.info("✅ Mounted /public")
-
-if (BASE_DIR / "dist/assets").exists():
-    app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
-    logger.info("✅ Mounted /assets")
 
 # ============ 🔥 语言自动检测 ============
 def detect_language(text: str) -> str:
@@ -171,6 +175,8 @@ async def _handle_qa(
             "intent": "error",
             "answer": "⚠️ AI 服务未配置，请联系管理员设置 GROQ_API_KEY 环境变量",
             "citations": [],
+            "reranked": [],
+            "rewritten_queries": [],
             "num_docs": 0,
             "num_queries": 0,
             "response_time": "0s",
@@ -217,6 +223,8 @@ async def _handle_qa(
             "intent": "error",
             "answer": f"抱歉，服务暂时不可用。错误信息：{str(last_exc)[:200]}",
             "citations": [],
+            "reranked": [],
+            "rewritten_queries": [],
             "num_docs": 0,
             "num_queries": 0,
             "response_time": f"{time.time() - start:.2f}s",
@@ -235,6 +243,11 @@ async def _handle_qa(
             "rewritten_queries": []
         }
 
+    # 补齐缺失字段
+    result.setdefault("citations", [])
+    result.setdefault("reranked", [])
+    result.setdefault("rewritten_queries", [])
+
     rt = f"{time.time() - start:.2f}s"
     logger.info(f"[{req_id}] ⏱️  完成: {rt}")
 
@@ -243,8 +256,10 @@ async def _handle_qa(
         "intent": result.get("intent", "general"),
         "answer": result.get("answer", ""),
         "citations": result.get("citations", []),
+        "reranked": result.get("reranked", []),
+        "rewritten_queries": result.get("rewritten_queries", []),
         "num_docs": len(result.get("reranked", [])),
-        "num_queries": len(result.get("rewritten_queries", [])),  # 🔥 修复
+        "num_queries": len(result.get("rewritten_queries", [])),
         "response_time": rt,
         "request_id": req_id,
         "model": os.getenv("MODEL_PROVIDER", "groq"),

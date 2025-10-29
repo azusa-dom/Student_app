@@ -1,0 +1,343 @@
+"""增强版检索器 - 智能语义检索与意图识别"""
+import re
+import logging
+from typing import List, Dict, Tuple
+from collections import Counter
+import json
+import os
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+# 尝试导入 sentence-transformers 用于语义搜索
+try:
+    from sentence_transformers import SentenceTransformer, util
+    HAVE_SEMANTIC = True
+    logger.info("✅ sentence-transformers loaded for semantic search")
+except ImportError:
+    HAVE_SEMANTIC = False
+    logger.warning("⚠️ sentence-transformers not available, semantic search disabled")
+
+# 尝试导入 jieba 用于中文分词
+try:
+    import jieba
+    HAVE_JIEBA = True
+    logger.info("✅ jieba loaded for Chinese tokenization")
+except ImportError:
+    HAVE_JIEBA = False
+    logger.warning("⚠️ jieba not available, fallback to regex for Chinese")
+
+class EnhancedRetriever:
+    """增强版检索器"""
+    
+    def __init__(self):
+        self.intent_keywords = {
+            'modules': ['module', 'course', 'subject', 'curriculum', 'syllabus', 'teaching', 'learn', '课程', '模块'],
+            'requirements': ['requirement', 'prerequisite', 'entry', 'admission', 'qualification', 'ielts', 'toefl', '要求', '申请'],
+            'career': ['career', 'job', 'employment', 'graduate', 'prospect', '就业', '职业'],
+            'fees': ['fee', 'tuition', 'cost', 'funding', 'scholarship', '学费', '费用'],
+        }
+        
+        # 扩展 intent_headings
+        self.intent_headings = {
+            'modules': ['module', 'curriculum', 'syllabus', 'teaching', 'what you will learn', 'course structure', 'compulsory', 'optional', 'supervisor', 'placement', 'research topic'],
+            'requirements': ['entry', 'requirement', 'admission', 'english', 'qualification', 'ielts', 'toefl'],
+            'career': ['career', 'employment', 'graduate', 'prospects', 'outcomes'],
+            'fees': ['fee', 'tuition', 'cost', 'funding'],
+        }
+        
+        # 语义模型（如果可用）
+        if HAVE_SEMANTIC:
+            self.semantic_model = SentenceTransformer('all-MiniLM-L6-v2')
+            self.embedding_cache = {}  # 缓存: (doc_id, section_id) -> embedding
+            self.embedding_cache_file = Path(__file__).parent / 'embedding_cache.json'
+            self._load_embedding_cache()
+        else:
+            self.semantic_model = None
+        
+        # 领域词表和同义词
+        self.domain_vocab = set()  # 高频词
+        self.custom_synonyms = {
+            'data science': ['data science', '数据科学', 'analytics', '大数据'],
+            'management': ['management', '管理', 'business', '商业'],
+            # 可以手动添加更多领域特定
+        }
+        self._build_domain_vocab()  # 尝试从 JSON 构建
+        
+    def _build_domain_vocab(self):
+        """从 JSON 文档标题统计高频词"""
+        # 🔥 修复路径
+        root = Path(__file__).resolve().parent.parent  # 回到项目根目录
+        paths = [
+            root / "public" / "data" / "ucl_programs.json",
+            root / "public" / "data" / "ucl_services.json"
+        ]
+        
+        titles = []
+        for path in paths:
+            if path.exists():
+                try:
+                    with open(path, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        titles.extend([d.get('title', '') for d in data])
+                        logger.info(f"✅ Loaded {len(data)} titles from {path.name}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to load {path} for vocab: {e}")
+            else:
+                logger.warning(f"⚠️ File not found: {path}")
+        
+        if not titles:
+            logger.warning("⚠️ No titles loaded, using empty vocab")
+            return
+        
+        # 统计高频词
+        all_words = []
+        for title in titles:
+            words = re.findall(r'\b\w+\b|[\u4e00-\u9fff]+', title.lower())
+            all_words.extend(words)
+        
+        counter = Counter(all_words)
+        # 🔥 降低阈值，增加词表
+        self.domain_vocab = {w for w, c in counter.items() if c >= 1 and len(w) > 2}
+        
+        # 添加到 custom_synonyms
+        for word in list(self.domain_vocab)[:100]:  # 增加到 100
+            if word not in self.custom_synonyms:
+                self.custom_synonyms[word] = [word]
+        
+        logger.info(f"📚 Built domain vocab with {len(self.domain_vocab)} words")
+    
+    def _load_embedding_cache(self):
+        """加载 embedding 缓存"""
+        if self.embedding_cache_file.exists():
+            try:
+                with open(self.embedding_cache_file, 'r') as f:
+                    self.embedding_cache = json.load(f)
+                logger.info(f"✅ Loaded {len(self.embedding_cache)} embeddings from cache")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load embedding cache: {e}")
+    
+    def _save_embedding_cache(self):
+        """保存 embedding 缓存"""
+        try:
+            with open(self.embedding_cache_file, 'w') as f:
+                json.dump(self.embedding_cache, f)
+            logger.info(f"💾 Saved {len(self.embedding_cache)} embeddings to cache")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to save embedding cache: {e}")
+    
+    def detect_intent(self, query: str) -> str:
+        """检测查询意图"""
+        query_lower = query.lower()
+        for intent, keywords in self.intent_keywords.items():
+            if any(kw in query_lower for kw in keywords):
+                return intent
+        return 'general'
+    
+    def search_with_context(self, query: str, documents: List[dict], top_k: int = 8) -> List[Dict]:
+        """上下文感知的智能检索"""
+        intent = self.detect_intent(query)
+        query_lower = query.lower()
+        
+        # 提取关键词
+        keywords = self._extract_smart_keywords(query)
+        
+        logger.info(f"🔍 [检索] 查询: {query}")
+        logger.info(f"🎯 [检索] 意图: {intent}")
+        logger.info(f"🔑 [检索] 关键词: {keywords}")
+        
+        # 如果有语义模型，计算 query embedding
+        query_emb = None
+        if HAVE_SEMANTIC:
+            query_emb = self.semantic_model.encode(query, convert_to_tensor=True)
+        
+        results = []
+        
+        for doc_idx, doc in enumerate(documents):
+            score = 0
+            matched_sections = []
+            
+            title = doc.get('title', '').lower()
+            level = doc.get('level', '').lower() if doc.get('level') else ''
+            
+            # 1. 标题匹配（权重最高）
+            title_score = 0
+            for kw in keywords:
+                if kw in title:
+                    title_score += 15
+            
+            # 精确匹配加倍
+            if query_lower in title:
+                title_score += 30
+            
+            score += title_score
+            
+            # 2. Level 匹配（硕士课程优先）
+            if level and ('postgraduate' in level or 'msc' in level.lower()):
+                if 'master' in query_lower or 'msc' in query_lower or '硕士' in query_lower:
+                    score += 10
+            
+            # 3. Sections 深度匹配（核心改进）
+            sections_score, relevant_sections = self._score_sections(
+                doc.get('sections', []), 
+                keywords, 
+                intent
+            )
+            score += sections_score
+            matched_sections = relevant_sections
+            
+            # 4. 语义相似度（如果可用）
+            semantic_score = 0
+            if HAVE_SEMANTIC and query_emb is not None:
+                doc_semantic_score = 0
+                for sec_idx, section in enumerate(doc.get('sections', [])):
+                    text = section.get('text', '')
+                    if not text:
+                        continue
+                    cache_key = f"{doc_idx}_{sec_idx}"
+                    if cache_key not in self.embedding_cache:
+                        sec_emb = self.semantic_model.encode(text, convert_to_tensor=True)
+                        self.embedding_cache[cache_key] = sec_emb.tolist()  # 保存为 list
+                    else:
+                        sec_emb = util.pytorch_cos_sim(query_emb, torch.tensor(self.embedding_cache[cache_key]))
+                    
+                    sim = util.pytorch_cos_sim(query_emb, sec_emb).item()
+                    doc_semantic_score = max(doc_semantic_score, sim)
+                
+                # 归一化到 0-100
+                semantic_score = int(doc_semantic_score * 100)
+                score += semantic_score  # 线性组合
+            
+            if score > 0 or semantic_score > 30:  # 即使 heuristic score=0，如果语义>阈值也纳入
+                results.append({
+                    'doc': doc,
+                    'score': score,
+                    'title_score': title_score,
+                    'sections_score': sections_score,
+                    'semantic_score': semantic_score,
+                    'matched_sections': matched_sections,
+                    'intent': intent
+                })
+        
+        # 保存缓存（如果使用了语义）
+        if HAVE_SEMANTIC:
+            self._save_embedding_cache()
+        
+        # 排序
+        results.sort(key=lambda x: x['score'], reverse=True)
+        
+        logger.info(f"📊 [检索] 找到 {len(results)} 个相关文档，返回 top {top_k}")
+        
+        return results[:top_k]
+    
+    def _score_sections(self, sections: List[dict], keywords: List[str], intent: str) -> Tuple[int, List[dict]]:
+        """对sections进行智能评分"""
+        score = 0
+        relevant_sections = []
+        
+        target_headings = self.intent_headings.get(intent, [])
+        
+        for section in sections:
+            heading = section.get('heading', '').lower()
+            text = section.get('text', '').lower()
+            section_score = 0
+            reasons = []
+            
+            # 1. Heading 匹配意图（高权重）
+            for th in target_headings:
+                if th in heading:
+                    section_score += 20
+                    reasons.append(f"Heading match: {th}")
+            
+            # 2. Heading 匹配关键词
+            for kw in keywords:
+                if kw in heading:
+                    section_score += 10
+                    reasons.append(f"Keyword in heading: {kw}")
+            
+            # 3. Text 内容匹配
+            for kw in keywords:
+                count = text.count(kw)
+                if count > 0:
+                    section_score += min(count * 3, 15)  # 单个关键词最多贡献15分
+                    reasons.append(f"Keyword in text: {kw} (count: {count})")
+            
+            # 4. 特殊加权（modules 相关）
+            if intent == 'modules':
+                # 检查是否有列表结构
+                if '•' in text or '\n-' in text or text.count('\n') > 5:
+                    section_score += 15
+                    reasons.append("List structure detected")
+                
+                # 检查是否包含课程代码（如 COMP0001）
+                if re.search(r'\b[A-Z]{4}\d{4}\b', text):
+                    section_score += 10
+                    reasons.append("Course code detected")
+            
+            # 归一化：除以长度（避免长文本偏高）
+            text_len = len(text)
+            if text_len > 0:
+                section_score /= max(1, text_len / 100)  # 每100字符归一
+            
+            if section_score > 0:
+                score += section_score
+                relevant_sections.append({
+                    'heading': section.get('heading', ''),
+                    'text': section.get('text', '')[:800],  # 保留前800字符
+                    'score': section_score,
+                    'reasons': reasons  # 新增 reasons
+                })
+        
+        # 按分数排序相关sections
+        relevant_sections.sort(key=lambda x: x['score'], reverse=True)
+        
+        return score, relevant_sections[:5]  # 最多返回5个最相关的section
+    
+    def _extract_smart_keywords(self, query: str) -> List[str]:
+        """智能提取关键词"""
+        # 停用词
+        stopwords = {
+            'what', 'how', 'where', 'when', 'which', 'who', 'the', 'a', 'an', 
+            'is', 'are', 'was', 'were', 'do', 'does', 'did', 'about', 'for',
+            '的', '是', '有', '在', '吗', '呢', '啊', '了'
+        }
+        
+        keywords = []
+        
+        # 中文处理
+        chinese_parts = re.findall(r'[\u4e00-\u9fff]+', query)
+        for part in chinese_parts:
+            if HAVE_JIEBA:
+                segs = jieba.cut(part)
+                keywords.extend([s for s in segs if s not in stopwords and len(s) > 1])
+            else:
+                # Fallback: 2-4字窗口
+                for i in range(len(part)):
+                    for j in range(2, 5):
+                        if i + j <= len(part):
+                            word = part[i:i+j]
+                            if word not in stopwords:
+                                keywords.append(word)
+        
+        # 英文单词
+        english_words = re.findall(r'\b[a-z]+\b', query.lower())
+        keywords.extend([w for w in english_words if w not in stopwords and len(w) > 2])
+        
+        # 过滤到领域词表
+        keywords = [kw for kw in keywords if kw in self.domain_vocab or len(kw) > 3]
+        
+        # 同义词扩展（保留原始顺序）
+        expanded = []
+        seen = set()
+        for kw in keywords:
+            if kw in seen:
+                continue
+            expanded.append(kw)
+            seen.add(kw)
+            if kw in self.custom_synonyms:
+                for syn in self.custom_synonyms[kw]:
+                    if syn != kw and syn not in seen:
+                        expanded.append(syn)
+                        seen.add(syn)
+        
+        return expanded

@@ -1,257 +1,250 @@
-// backend/server.js - Express代理服务器
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+const { spawn } = require('child_process');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const cron = require('node-cron');
-const Redis = require('redis');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
-// 中间件
-app.use(cors({
-  origin: [process.env.CORS_ORIGIN || 'http://localhost:5173', 'http://localhost:3000'],
-  credentials: true
-}));
+// ============================================================================
+// 中间件配置
+// ============================================================================
+
+app.use(cors());
 app.use(express.json());
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
+app.use(express.static(path.join(__dirname, '..', 'dist')));
 
-// 静态资源与无图标情况的处理（避免控制台 404）
-app.get('/favicon.ico', (_req, res) => res.status(204).end());
+// 速率限制：15分钟内最多100个请求
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: 'Too many requests, please try again later.'
+}));
 
-// Redis缓存客户端（可选）
-let redisClient = null;
-try {
-  if (process.env.REDIS_URL) {
-    redisClient = Redis.createClient({ url: process.env.REDIS_URL });
-    redisClient.on('error', (err) => console.log('Redis Client Error', err));
-    redisClient.connect().catch(err => console.log('Redis connect error', err));
-  }
-} catch (error) {
-  console.log('Redis not available, using in-memory cache');
-}
+// ============================================================================
+// 缓存系统（内存缓存）
+// ============================================================================
 
-// 内存缓存
 const memoryCache = new Map();
 
-// 缓存辅助函数
-async function getCache(key) {
-  if (redisClient) {
-    try {
-      const val = await redisClient.get(key);
-      return val;
-    } catch (error) {
-      console.error('Redis get error:', error);
+function getCache(key) {
+  const cached = memoryCache.get(key);
+  if (!cached) return null;
+  
+  // 检查是否过期
+  if (Date.now() > cached.expiry) {
+    memoryCache.delete(key);
+    return null;
+  }
+  
+  return cached.value;
+}
+
+function setCache(key, value, expireInSeconds = 1800) {
+  memoryCache.set(key, {
+    value,
+    expiry: Date.now() + (expireInSeconds * 1000)
+  });
+}
+
+function clearCache() {
+  memoryCache.clear();
+}
+
+// ============================================================================
+// 健康检查端点
+// ============================================================================
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    cacheSize: memoryCache.size
+  });
+});
+
+// Preflight 请求处理
+app.options('*', cors());
+
+// ============================================================================
+// 主 QA API 端点
+// ============================================================================
+
+app.post('/api/chat', async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    const { query } = req.body;
+    
+    // 验证请求
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({
+        error: 'Query is required and must be a string',
+        timestamp: new Date().toISOString()
+      });
     }
-  }
-  return memoryCache.get(key);
-}
 
-async function setCache(key, value, expireInSeconds = 1800) {
-  if (redisClient) {
-    try {
-      await redisClient.setEx(key, expireInSeconds, value);
-    } catch (error) {
-      console.error('Redis set error:', error);
+    if (query.trim().length === 0) {
+      return res.status(400).json({
+        error: 'Query cannot be empty',
+        timestamp: new Date().toISOString()
+      });
     }
-  }
-  memoryCache.set(key, value);
-  // 内存缓存过期清理
-  setTimeout(() => memoryCache.delete(key), expireInSeconds * 1000);
-}
 
-// UCL学生会活动爬取
-async function scrapeStudentUnionEvents() {
-  try {
-    const response = await axios.get('https://studentsunionucl.org/whats-on', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; UCL-Student-App/1.0)',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-      },
-      timeout: 15000
+    if (query.length > 500) {
+      return res.status(400).json({
+        error: 'Query too long (max 500 characters)',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`🔍 Query: ${query}`);
+    console.log(`📅 Time: ${new Date().toISOString()}`);
+    console.log(`${'='.repeat(60)}`);
+
+    // 检查缓存
+    const cacheKey = `query:${query.toLowerCase().trim()}`;
+    const cachedResult = getCache(cacheKey);
+    
+    if (cachedResult) {
+      console.log('✅ Cache hit');
+      return res.json({
+        ...JSON.parse(cachedResult),
+        cached: true,
+        response_time: `${Date.now() - startTime}ms`
+      });
+    }
+
+    // 调用 Python QA 系统
+    const pythonPath = process.env.PYTHON_PATH || 'python3';
+    const scriptPath = path.join(__dirname, '..', 'scripts', 'qa_enhanced_wrapper.py');
+    
+    console.log(`🐍 Calling Python: ${pythonPath}`);
+    console.log(`📄 Script: ${scriptPath}`);
+
+    const python = spawn(pythonPath, [scriptPath, query]);
+    
+    let output = '';
+    let errorOutput = '';
+    
+    // 超时处理
+    const timeout = setTimeout(() => {
+      python.kill();
+      console.error('⏱️ Python process timeout');
+    }, 30000); // 30秒超时
+
+    python.stdout.on('data', (data) => {
+      output += data.toString();
     });
-
-    const $ = cheerio.load(response.data);
-    const events = [];
-
-    $('.event-item, .event-card, .whats-on-item').each((index, element) => {
+    
+    python.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+      console.error('⚠️ Python stderr:', data.toString());
+    });
+    
+    python.on('close', (code) => {
+      clearTimeout(timeout);
+      
+      if (code !== 0) {
+        console.error(`❌ Python exited with code: ${code}`);
+        console.error(`Error output: ${errorOutput}`);
+        
+        return res.status(500).json({
+          error: 'Failed to process query',
+          details: process.env.NODE_ENV === 'development' ? errorOutput : undefined,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       try {
-        const $el = $(element);
-        const event = {
-          id: generateId('su'),
-          title: $el.find('.event-title, .title, h2, h3').first().text().trim(),
-          description: $el.find('.event-description, .description, p').first().text().trim(),
-          date: parseDate($el.find('.event-date, .date').text()),
-          time: $el.find('.event-time, .time').text().trim() || 'TBD',
-          location: $el.find('.event-location, .location, .venue').text().trim() || 'TBD',
-          url: absolutizeUrl('https://studentsunionucl.org', $el.find('a').first().attr('href')),
-          type: 'club',
-          category: inferCategory($el.text()),
-          organizer: 'UCL Students Union',
-          source: 'student_union',
-          lastUpdated: new Date().toISOString()
-        };
-        if (event.title && event.title.length > 3) events.push(event);
-      } catch (error) {
-        console.error('Error parsing student union event:', error);
+        const result = JSON.parse(output);
+        
+        // 缓存结果（30分钟）
+        setCache(cacheKey, output, 1800);
+        
+        console.log(`✅ Success in ${Date.now() - startTime}ms`);
+        
+        res.json({
+          ...result,
+          cached: false,
+          response_time: `${Date.now() - startTime}ms`,
+          timestamp: new Date().toISOString()
+        });
+        
+      } catch (parseError) {
+        console.error('❌ JSON parse error:', parseError);
+        console.error('Raw output:', output);
+        
+        res.status(500).json({
+          error: 'Failed to parse response',
+          details: process.env.NODE_ENV === 'development' ? output : undefined,
+          timestamp: new Date().toISOString()
+        });
       }
     });
-    return events;
+    
+    python.on('error', (error) => {
+      clearTimeout(timeout);
+      console.error('❌ Python spawn error:', error);
+      
+      res.status(500).json({
+        error: 'Failed to start Python process',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        timestamp: new Date().toISOString()
+      });
+    });
+    
   } catch (error) {
-    console.error('Error scraping student union events:', error);
-    return [];
+    console.error('❌ API error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      timestamp: new Date().toISOString()
+    });
   }
-}
+});
 
-// UCL职业服务活动爬取
-async function scrapeCareerEvents() {
-  try {
-    const response = await axios.get('https://www.ucl.ac.uk/careers/events', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; UCL-Student-App/1.0)' },
-      timeout: 15000
-    });
-    const $ = cheerio.load(response.data);
-    const events = [];
+// ============================================================================
+// 活动爬取 API
+// ============================================================================
 
-    $('.event-listing, .career-event, .event-item').each((index, element) => {
-      try {
-        const $el = $(element);
-        const event = {
-          id: generateId('career'),
-          title: $el.find('.event-title, .title, h2, h3').first().text().trim(),
-          description: $el.find('.event-summary, .summary, p').first().text().trim(),
-          date: parseDate($el.find('.event-date, .date').text()),
-          time: $el.find('.event-time, .time').text().trim() || 'TBD',
-          location: $el.find('.event-location, .location').text().trim() || 'Online',
-          url: absolutizeUrl('https://www.ucl.ac.uk', $el.find('a').first().attr('href')),
-          type: 'career',
-          category: 'career',
-          organizer: 'UCL Career Services',
-          source: 'ucl_careers',
-          lastUpdated: new Date().toISOString()
-        };
-        if (event.title && event.title.length > 3) events.push(event);
-      } catch (error) {
-        console.error('Error parsing career event:', error);
-      }
-    });
-    return events;
-  } catch (error) {
-    console.error('Error scraping career events:', error);
-    return [];
-  }
-}
-
-// UCL官方活动爬取
-async function scrapeUCLEvents() {
-  try {
-    const response = await axios.get('https://www.ucl.ac.uk/events', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; UCL-Student-App/1.0)' },
-      timeout: 15000
-    });
-    const $ = cheerio.load(response.data);
-    const events = [];
-
-    $('.event, .event-teaser').each((index, element) => {
-      try {
-        const $el = $(element);
-        const event = {
-          id: generateId('ucl'),
-          title: $el.find('.event-title, .title, h2, h3').first().text().trim(),
-          description: $el.find('.event-summary, .summary, p').first().text().trim(),
-          date: parseDate($el.find('.event-date, .date').text()),
-          time: $el.find('.event-time, .time').text().trim() || 'TBD',
-          location: $el.find('.event-location, .location').text().trim() || 'UCL Campus',
-          url: absolutizeUrl('https://www.ucl.ac.uk', $el.find('a').first().attr('href')),
-          type: 'event',
-          category: inferCategory($el.text()),
-          organizer: 'UCL',
-          source: 'ucl_events',
-          lastUpdated: new Date().toISOString()
-        };
-        if (event.title && event.title.length > 3) events.push(event);
-      } catch (error) {
-        console.error('Error parsing UCL event:', error);
-      }
-    });
-    return events;
-  } catch (error) {
-    console.error('Error scraping UCL events:', error);
-    return [];
-  }
-}
-
-// 主要的API端点
 app.get('/api/activities', async (req, res) => {
   try {
-    const cacheKey = 'all_activities';
-    const cached = await getCache(cacheKey);
-    if (cached) return res.json(JSON.parse(cached));
+    const cacheKey = 'ucl:activities';
+    const cached = getCache(cacheKey);
+    
+    if (cached) {
+      return res.json(JSON.parse(cached));
+    }
 
-    console.log('Fetching fresh activity data...');
-    const [studentUnionEvents, careerEvents, uclEvents] = await Promise.all([
-      scrapeStudentUnionEvents(),
-      scrapeCareerEvents(),
-      scrapeUCLEvents()
-    ]);
-
-    const allEvents = [...studentUnionEvents, ...careerEvents, ...uclEvents];
-    const uniqueEvents = deduplicateEvents(allEvents);
-    const sortedEvents = uniqueEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
-
+    console.log('🔄 Fetching UCL activities...');
+    
+    const activities = await scrapeUCLActivities();
     const result = {
-      activities: sortedEvents.slice(0, 50),
-      totalCount: sortedEvents.length,
-      lastUpdated: new Date().toISOString(),
-      sources: [
-        { name: 'UCL Students Union', count: studentUnionEvents.length },
-        { name: 'UCL Careers', count: careerEvents.length },
-        { name: 'UCL Events', count: uclEvents.length }
-      ]
+      activities,
+      total: activities.length,
+      lastUpdated: new Date().toISOString()
     };
-
-    await setCache(cacheKey, JSON.stringify(result), 1800);
+    
+    // 缓存1小时
+    setCache(cacheKey, JSON.stringify(result), 3600);
+    
     res.json(result);
+    
   } catch (error) {
-    console.error('Error in /api/activities:', error);
+    console.error('❌ Activities fetch error:', error);
     res.status(500).json({
       error: 'Failed to fetch activities',
-      message: error.message,
-      fallback: getFallbackActivities()
+      timestamp: new Date().toISOString()
     });
-  }
-});
-
-// 健康检查端点
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
-});
-
-// RSS/XML订阅源处理
-app.get('/api/activities/rss', async (req, res) => {
-  try {
-    const rssUrls = [
-      'https://studentsunionucl.org/events.xml',
-      'https://www.ucl.ac.uk/events.rss'
-    ];
-    const rssPromises = rssUrls.map(async (url) => {
-      try {
-        const response = await axios.get(url, { timeout: 10000 });
-        return parseRSSFeed(response.data, url);
-      } catch (error) {
-        console.error(`Failed to fetch RSS from ${url}:`, error);
-        return [];
-      }
-    });
-    const rssResults = await Promise.all(rssPromises);
-    const allRSSEvents = rssResults.flat();
-    res.json({ activities: allRSSEvents, count: allRSSEvents.length, lastUpdated: new Date().toISOString() });
-  } catch (error) {
-    console.error('Error fetching RSS feeds:', error);
-    res.status(500).json({ error: 'Failed to fetch RSS feeds' });
   }
 });
 
@@ -259,127 +252,169 @@ app.get('/api/activities/rss', async (req, res) => {
 app.get('/api/activities/:type', async (req, res) => {
   try {
     const { type } = req.params;
-    const cacheKey = `activities_${type}`;
-    const cached = await getCache(cacheKey);
-    if (cached) return res.json(JSON.parse(cached));
+    const cacheKey = `ucl:activities:${type}`;
+    const cached = getCache(cacheKey);
+    
+    if (cached) {
+      return res.json(JSON.parse(cached));
+    }
 
-    const allActivitiesResponse = await axios.get(`http://localhost:${port}/api/activities`);
-    const filteredActivities = allActivitiesResponse.data.activities.filter(
-      a => a.type === type || a.category === type
-    );
-
-    const result = { activities: filteredActivities, type, count: filteredActivities.length, lastUpdated: new Date().toISOString() };
-    await setCache(cacheKey, JSON.stringify(result), 900);
+    const allActivities = await scrapeUCLActivities();
+    const filtered = allActivities.filter(a => a.type === type);
+    
+    const result = {
+      activities: filtered,
+      total: filtered.length,
+      type,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    setCache(cacheKey, JSON.stringify(result), 3600);
     res.json(result);
+    
   } catch (error) {
-    console.error(`Error fetching ${req.params.type} activities:`, error);
-    res.status(500).json({ error: 'Failed to fetch activities by type' });
+    console.error('❌ Activities filter error:', error);
+    res.status(500).json({
+      error: 'Failed to filter activities',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
-// 强制刷新缓存
-app.post('/api/activities/refresh', async (req, res) => {
+// 刷新缓存端点
+app.post('/api/refresh-cache', async (req, res) => {
   try {
-    if (redisClient) await redisClient.flushAll();
-    memoryCache.clear();
-    const response = await axios.get(`http://localhost:${port}/api/activities`);
-    res.json({ message: 'Cache refreshed successfully', data: response.data });
+    clearCache();
+    console.log('🔄 Cache cleared');
+    
+    // 预热缓存
+    const activities = await scrapeUCLActivities();
+    setCache('ucl:activities', JSON.stringify({
+      activities,
+      total: activities.length,
+      lastUpdated: new Date().toISOString()
+    }), 3600);
+    
+    res.json({
+      message: 'Cache refreshed successfully',
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error('Error refreshing cache:', error);
-    res.status(500).json({ error: 'Failed to refresh cache' });
+    console.error('❌ Cache refresh error:', error);
+    res.status(500).json({
+      error: 'Failed to refresh cache',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
-// 定时任务 - 每30分钟更新一次缓存
-cron.schedule('*/30 * * * *', async () => {
-  console.log('Running scheduled cache refresh...');
+// ============================================================================
+// 爬虫功能
+// ============================================================================
+
+async function scrapeUCLActivities() {
+  const activities = [];
+  
   try {
-    await axios.post(`http://localhost:${port}/api/activities/refresh`);
-    console.log('Cache refreshed successfully');
+    // 爬取学生会活动
+    const unionResponse = await axios.get('https://studentsunionucl.org/whats-on', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      timeout: 10000
+    });
+    
+    const $ = cheerio.load(unionResponse.data);
+    
+    $('.event-item, .activity-card, .event-card').each((_, element) => {
+      try {
+        const $el = $(element);
+        const activity = {
+          id: generateId('union'),
+          title: $el.find('.event-title, .title, h2, h3').first().text().trim(),
+          description: $el.find('.event-description, .description, p').first().text().trim(),
+          date: parseDate($el.find('.event-date, .date, time').first().text()),
+          location: $el.find('.event-location, .location').first().text().trim() || 'UCL',
+          url: absolutizeUrl('https://studentsunionucl.org', $el.find('a').first().attr('href')),
+          type: 'event',
+          category: inferCategory($el.text()),
+          source: 'students_union',
+          lastUpdated: new Date().toISOString()
+        };
+        
+        if (activity.title) {
+          activities.push(activity);
+        }
+      } catch (error) {
+        console.error('Error parsing activity:', error);
+      }
+    });
+    
   } catch (error) {
-    console.error('Scheduled cache refresh failed:', error);
+    console.error('❌ Scraping error:', error);
   }
-});
+  
+  return deduplicateEvents(activities);
+}
 
-// 启动服务器
-app.listen(port, () => {
-  console.log(`🚀 Activity scraper proxy server running on port ${port}`);
-  console.log(`📡 Health check: http://localhost:${port}/api/health`);
-  console.log(`🎯 Activities API: http://localhost:${port}/api/activities`);
-});
-
+// ============================================================================
 // 工具函数
-function generateId(prefix = 'act') {
+// ============================================================================
+
+function generateId(prefix = 'event') {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
-function parseDate(dateStr) {
-  if (!dateStr) return new Date().toISOString().split('T')[0];
-  const cleaned = String(dateStr).trim().replace(/[^\w\s\-\/]/g, '');
+
+function parseDate(dateString) {
+  if (!dateString) return new Date().toISOString().split('T')[0];
+  
+  const cleaned = dateString.trim();
   const patterns = [
     /(\d{1,2})\/(\d{1,2})\/(\d{4})/,
     /(\d{4})-(\d{2})-(\d{2})/,
-    /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/i,
-    /(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/i
+    /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/i
   ];
+  
   for (const pattern of patterns) {
     const match = cleaned.match(pattern);
     if (match) {
       const date = new Date(match[0]);
-      if (!isNaN(date.getTime())) return date.toISOString().split('T')[0];
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
     }
   }
+  
   return new Date().toISOString().split('T')[0];
 }
+
 function inferCategory(text) {
   const categories = {
-    cultural: ['culture','art','music','dance','theater','exhibition','文化','艺术','音乐','舞蹈'],
-    academic: ['lecture','seminar','workshop','research','conference','讲座','研讨','学术','会议'],
-    sports: ['sport','fitness','gym','yoga','football','basketball','体育','健身','瑜伽'],
-    social: ['social','party','networking','meetup','mixer','社交','聚会','交流'],
-    career: ['career','job','internship','recruitment','employer','职业','招聘','实习','雇主'],
-    wellness: ['wellness','mental health','counseling','meditation','健康','心理','冥想']
+    cultural: ['culture', 'art', 'music', 'dance', 'theater', '文化', '艺术'],
+    academic: ['lecture', 'seminar', 'workshop', 'research', '讲座', '学术'],
+    sports: ['sport', 'fitness', 'gym', 'yoga', '体育', '健身'],
+    social: ['social', 'party', 'networking', '社交', '聚会'],
+    career: ['career', 'job', 'internship', 'recruitment', '职业', '招聘'],
+    wellness: ['wellness', 'mental health', 'meditation', '健康', '心理']
   };
+  
   const lower = String(text).toLowerCase();
+  
   for (const [category, keywords] of Object.entries(categories)) {
-    if (keywords.some(k => lower.includes(k))) return category;
+    if (keywords.some(k => lower.includes(k))) {
+      return category;
+    }
   }
+  
   return 'general';
 }
-function parseRSSFeed(xmlData, sourceUrl) {
-  try {
-    const $ = cheerio.load(xmlData, { xmlMode: true });
-    const items = [];
-    $('item').each((_, element) => {
-      const $item = $(element);
-      const item = {
-        id: generateId('rss'),
-        title: $item.find('title').text().trim(),
-        description: $item.find('description').text().trim(),
-        date: parseDate($item.find('pubDate').text()),
-        url: $item.find('link').text().trim(),
-        type: inferTypeFromSource(sourceUrl),
-        category: inferCategory($item.find('title').text() + ' ' + $item.find('description').text()),
-        source: 'rss',
-        lastUpdated: new Date().toISOString()
-      };
-      if (item.title) items.push(item);
-    });
-    return items;
-  } catch (error) {
-    console.error('Error parsing RSS feed:', error);
-    return [];
-  }
-}
-function inferTypeFromSource(sourceUrl) {
-  if (!sourceUrl) return 'event';
-  if (sourceUrl.includes('careers')) return 'career';
-  if (sourceUrl.includes('studentsunion')) return 'club';
-  return 'event';
-}
+
 function deduplicateEvents(events) {
   const unique = new Map();
+  
   events.forEach(event => {
-    const key = `${(event.title || '').toLowerCase().slice(0,50)}-${event.date}`;
+    const key = `${(event.title || '').toLowerCase().slice(0, 50)}-${event.date}`;
+    
     if (!unique.has(key)) {
       unique.set(key, {
         ...event,
@@ -389,12 +424,19 @@ function deduplicateEvents(events) {
       });
     }
   });
+  
   return Array.from(unique.values());
 }
+
 function cleanText(text) {
   if (!text) return '';
-  return String(text).trim().replace(/\s+/g, ' ').replace(/[^\w\s\u4e00-\u9fa5\-\.,!?]/g, '').substring(0, 200);
+  return String(text)
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/[^\w\s\u4e00-\u9fa5\-\.,!?]/g, '')
+    .substring(0, 200);
 }
+
 function absolutizeUrl(base, href) {
   try {
     if (!href) return base;
@@ -404,5 +446,80 @@ function absolutizeUrl(base, href) {
   }
 }
 
-module.exports = app;
+// ============================================================================
+// 定时任务
+// ============================================================================
 
+// 每小时刷新缓存
+cron.schedule('0 * * * *', async () => {
+  console.log('🔄 Running scheduled cache refresh...');
+  try {
+    const activities = await scrapeUCLActivities();
+    setCache('ucl:activities', JSON.stringify({
+      activities,
+      total: activities.length,
+      lastUpdated: new Date().toISOString()
+    }), 3600);
+    console.log(`✅ Cache refreshed: ${activities.length} activities`);
+  } catch (error) {
+    console.error('❌ Scheduled refresh failed:', error);
+  }
+});
+
+// ============================================================================
+// SPA 路由处理（必须放在最后）
+// ============================================================================
+
+app.get('*', (req, res) => {
+  const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error sending index.html:', err);
+      res.status(500).send('Internal Server Error');
+    }
+  });
+});
+
+// ============================================================================
+// 启动服务器
+// ============================================================================
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('\n' + '='.repeat(60));
+  console.log('✅ UCL AI Assistant Server Started');
+  console.log('='.repeat(60));
+  console.log(`🌐 Server: http://localhost:${PORT}`);
+  console.log(`💚 Health: http://localhost:${PORT}/health`);
+  console.log(`🤖 API: http://localhost:${PORT}/api/chat`);
+  console.log(`📅 Activities: http://localhost:${PORT}/api/activities`);
+  console.log(`⚙️  Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log('='.repeat(60) + '\n');
+});
+
+// ============================================================================
+// 错误处理
+// ============================================================================
+
+process.on('uncaughtException', (error) => {
+  console.error('\n❌ Uncaught Exception:');
+  console.error(error);
+  console.error('Stack:', error.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('\n❌ Unhandled Rejection:');
+  console.error('Promise:', promise);
+  console.error('Reason:', reason);
+});
+
+process.on('SIGTERM', () => {
+  console.log('\n⚠️  SIGTERM received, shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('\n⚠️  SIGINT received, shutting down gracefully...');
+  process.exit(0);
+});
+
+module.exports = app;
