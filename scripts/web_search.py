@@ -1,160 +1,114 @@
 #!/usr/bin/env python3
-logger = logging.getLogger("web_search")
-if not logging.getLogger().handlers:
-    logging.basicConfig(level=logging.INFO)
-if not logging.getLogger().handlers:
-    logging.basicConfig(level=logging.INFO)
-if not logging.getLogger().handlers:
-    logging.basicConfig(level=logging.INFO)
-if not logging.getLogger().handlers:
-    logging.basicConfig(level=logging.INFO)
 # -*- coding: utf-8 -*-
+
+import logging
+import requests
+import time
+from typing import List, Dict
+from bs4 import BeautifulSoup
+from urllib.parse import quote_plus
+
+# ✅ [本次修复] 优先使用 ddgs，如果失败则回退到 duckduckgo_search
+try:
+    from ddgs import DDGS # 优先使用新版
+    HAVE_DDGS_API = True
+    logger = logging.getLogger("web_search") # 成功导入后再定义 logger
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO)
+    logger.info("✅ 已加载 'ddgs' (新版) 库")
+except ImportError:
+    HAVE_DDGS_API = False
+    try:
+        from duckduckgo_search import DDGS # 尝试旧版
+        HAVE_DDGS_API = True
+        logger = logging.getLogger("web_search") # 成功导入后再定义 logger
+        if not logging.getLogger().handlers:
+            logging.basicConfig(level=logging.INFO)
+        logger.warning("⚠️ 建议更新: pip install ddgs")
+    except ImportError:
+        # 两个都失败
+        HAVE_DDGS_API = False
+        logger = logging.getLogger("web_search")
+        if not logging.getLogger().handlers:
+            logging.basicConfig(level=logging.INFO)
+        logger.error("❌ 'ddgs' 和 'duckduckgo_search' 均未安装!")
+
 """web_search.py - 修复版网络搜索
 
 主要修复：
-1. 增加详细调试日志
-2. 添加 fallback 机制
-3. 修复 UCL 结果过滤逻辑
+1. [关键] 放弃不稳定的 HTML 爬虫 (_search_google, _search_duckduckgo)
+2. [关键] 改用 'ddgs' (或 'duckduckgo_search') 库，它使用稳定的 API。
+3. [关键] 搜索 "UCL {query}" 以确保相关性。
 """
 
-import requests
-import logging
-from typing import List, Dict
-from bs4 import BeautifulSoup
-
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+HEADERS = {'User-Agent': USER_AGENT}
 
 def search_web(query: str, language: str = "en", max_results: int = 5) -> List[Dict]:
     """
-    网络搜索函数 - 修复版
-    
-    Args:
-        query: 搜索查询
-        language: 语言 (zh/en)
-        max_results: 最大结果数
-    
-    Returns:
-        搜索结果列表
+    网络搜索函数 - 修复版 (使用 DDGS API)
     """
     
-    # 🔥 方案1: 使用 DuckDuckGo HTML 搜索
-    results = _search_duckduckgo(query, max_results)
-    
-    # 🔥 如果 DuckDuckGo 失败，尝试其他方案
-    if not results:
-        logger.warning("⚠️ DuckDuckGo 搜索失败，尝试备用方案...")
-        # 这里可以添加其他搜索引擎作为备用
-    
-    # 🔥 过滤 UCL 相关结果（放宽条件）
-    ucl_results = []
-    for r in results:
-        url = r.get('url', '').lower()
-        title = r.get('title', '').lower()
-        snippet = r.get('snippet', '').lower()
-        
-        # 🔥 放宽 UCL 匹配条件
-        is_ucl = (
-            'ucl.ac.uk' in url or 
-            'ucl' in title or 
-            'university college london' in title or
-            'ucl' in snippet
-        )
-        
-        if is_ucl:
-            ucl_results.append(r)
-    
-    logger.info(f"🌐 搜索结果: 总共 {len(results)} 个，UCL 相关 {len(ucl_results)} 个")
-    
-    # 🔥 如果没有 UCL 结果，返回所有结果（而不是空）
-    return ucl_results if ucl_results else results[:max_results]
+    if not HAVE_DDGS_API:
+        logger.error("❌ 'ddgs' (或 'duckduckgo_search') 库未安装!")
+        logger.error("请运行: pip install ddgs")
+        return []
 
-
-def _search_duckduckgo(query: str, max_results: int = 5) -> List[Dict]:
-    """DuckDuckGo 搜索实现"""
+    # 搜索时自动加上 "UCL" 前缀
+    search_query = f"UCL {query}"
+    
+    # [新] 为中文查询设置 'zh-Hans' 区域
+    region = 'zh-Hans,cn-zh' if language == 'zh' else 'wt-wt'
+    
+    results = []
+    
     try:
-        # 🔥 构建搜索 URL - 明确指定站点
-        search_query = f"site:ucl.ac.uk {query}"
-        url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(search_query)}"
+        logger.info(f"🔍 [DDGS API] 搜索: {search_query} (区域: {region})")
         
-        logger.info(f"🔍 搜索 URL: {url}")
-        
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        
-        response = requests.get(url, headers=headers, timeout=10)
-        logger.info(f"📡 响应状态: {response.status_code}")
-        
-        if response.status_code != 200:
-            logger.error(f"❌ HTTP {response.status_code}")
-            return []
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        results = []
-        
-        # 🔥 尝试多种选择器
-        result_divs = (
-            soup.select('.result') or 
-            soup.select('.web-result') or 
-            soup.select('.links_main')
-        )
-        
-        logger.info(f"📊 找到 {len(result_divs)} 个原始结果")
-        
-        for idx, result_div in enumerate(result_divs[:max_results]):
-            try:
-                # 提取标题
-                title_elem = (
-                    result_div.select_one('.result__title') or
-                    result_div.select_one('.result__a') or
-                    result_div.select_one('a.result__url')
-                )
-                title = title_elem.get_text(strip=True) if title_elem else f"Result {idx+1}"
-                
-                # 提取 URL
-                url_elem = result_div.select_one('a.result__url')
-                url = url_elem.get('href', '') if url_elem else ''
-                
-                # 提取摘要
-                snippet_elem = (
-                    result_div.select_one('.result__snippet') or
-                    result_div.select_one('.result__description')
-                )
-                snippet = snippet_elem.get_text(strip=True) if snippet_elem else ''
-                
-                if title and (url or snippet):
-                    results.append({
-                        'title': title,
-                        'url': url,
-                        'snippet': snippet,
-                        'source': 'web'
-                    })
-                    logger.debug(f"✅ 结果 {idx+1}: {title[:50]}...")
+        # 实例化 API
+        with DDGS(headers=HEADERS, timeout=10) as ddgs:
+            # 执行文本搜索
+            api_results = ddgs.text(
+                search_query,
+                region=region,
+                safesearch='off',
+                max_results=max_results
+            )
             
-            except Exception as e:
-                logger.warning(f"⚠️ 解析结果 {idx+1} 失败: {e}")
-                continue
+            if not api_results:
+                logger.warning(f"⚠️ [DDGS API] 未返回任何结果 for: {search_query}")
+                return []
+            
+            # 格式化结果
+            for r in api_results:
+                results.append({
+                    'title': r.get('title', ''),
+                    'url': r.get('href', ''),
+                    'snippet': r.get('body', ''), # API 返回 'body' 作为摘要
+                    'source': 'web'
+                })
         
+        logger.info(f"🌐 [DDGS API] 搜索成功: 找到 {len(results)} 个结果")
         return results
-    
-    except requests.Timeout:
-        logger.error("❌ 搜索超时")
-        return []
-    except requests.RequestException as e:
-        logger.error(f"❌ 网络请求失败: {e}")
-        return []
+
     except Exception as e:
-        logger.error(f"❌ 搜索失败: {e}")
+        logger.error(f"❌ [DDGS API] 搜索失败: {e}", exc_info=True)
         return []
 
 
-# 🔥 添加一个测试函数
+# 🔥 测试函数
 def test_search():
     """测试搜索功能"""
+    if not HAVE_DDGS_API:
+        print("❌ 'ddgs' (或 'duckduckgo_search') 库未安装! 无法测试。")
+        print("请运行: pip install ddgs")
+        return
+        
     test_queries = [
         "Computer Science MSc",
         "Data Science MSc modules",
-        "UCL language requirements"
+        "UCL language requirements",
+        "全球健康管理" # ✅ 测试中文
     ]
     
     for query in test_queries:
