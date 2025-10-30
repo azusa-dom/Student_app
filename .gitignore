@@ -58,3 +58,5 @@ node_modules
 # Workspace files
 Student_app.code-workspace
 _replacements.txt
+.env
+.env
