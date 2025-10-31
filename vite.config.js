@@ -4,37 +4,21 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  
-  // 重要：Vercel 部署时使用根路径
-  base: '/',
-  
+  base: '/',  // ✅ Vercel 使用根路径，不需要 /Student_app/
   build: {
-    outDir: 'dist',
-    sourcemap: false,
-    // 优化打包
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-        }
-      }
-    }
+    sourcemap: false,  // 禁用sourcemap避免CSP问题
+    // 使用默认的esbuild压缩，更快且兼容性更好
   },
-  
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
+  // 开发服务器配置
   server: {
     port: 5173,
     host: true,
-    // 如果你有后端 API，配置代理
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      }
+    // 添加CSP兼容的开发配置
+    hmr: {
+      port: 5173
     }
-  },
-  
-  preview: {
-    port: 4173,
-    host: true
   }
 })
