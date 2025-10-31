@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/Student_app/graduation-cap.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 暂时移除CSP以确保应用能正常运行 -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="..." /> -->
+    <title>留学生家校通</title>
+    <script type="text/javascript">
+      // 简化的GitHub Pages SPA路由方案
+      var redirect = sessionStorage.redirect;
+      delete sessionStorage.redirect;
+      if (redirect && redirect !== location.href) {
+        history.replaceState(null, null, redirect);
+      }
+    </script>
+  </head>
+  <body>
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; font-family: system-ui, sans-serif;">
+      <div>
+        <h1>正在加载...</h1>
+        <p>请稍等...</p>
+      </div>
+    </div>
+    <script type="text/javascript">
+      // 为GitHub Pages SPA保存路径信息
+      (function(){
+        var repo = '/Student_app';
+        var l = location;
+        if (l.pathname.slice(0, repo.length + 1) === repo + '/') {
+          var path = l.pathname.slice(repo.length);
+          sessionStorage.redirect = repo + '/?/' + path.slice(1) + 
+                                   (l.search ? '&' + l.search.slice(1) : '') + l.hash;
+        }
+        location.replace(repo + '/');
+      })();
+    </script>
+  </body>
+</html>

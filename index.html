@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UCL Assistant</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .container { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); max-width: 900px; width: 100%; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px 24px; color: white; position: relative; }
+        .header-top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .brand { display:flex; align-items:center; gap:12px; }
+        .brand h1 { font-size: 1.8em; font-weight: 700; line-height: 1.1; }
+        .brand small { opacity: .9; display:block; font-weight:500; margin-top:4px; }
+        .lang-switch {
+            display:flex; align-items:center; gap:8px; background: rgba(255,255,255,.2);
+            border:1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 6px;
+        }
+        .lang-btn {
+            background: transparent; border: none; color: white; padding: 6px 12px; border-radius: 999px;
+            cursor: pointer; font-weight: 600; transition: all .2s; opacity: .8;
+        }
+        .lang-btn.active { background: rgba(255,255,255,.9); color: #5b64e3; opacity: 1; }
+        .chat-container { padding: 30px; min-height: 400px; max-height: 600px; overflow-y: auto; }
+        .input-section { padding: 20px 30px 30px; border-top: 1px solid #e0e0e0; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        #queryInput {
+            flex: 1; padding: 15px 20px; border: 2px solid #e0e0e0; border-radius: 50px; font-size: 16px;
+            transition: all .3s; outline: none;
+        }
+        #queryInput:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.1); }
+        #submitBtn {
+            padding: 15px 35px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
+            border: none; border-radius: 50px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all .3s; white-space: nowrap;
+        }
+        #submitBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(102,126,234,.4); }
+        #submitBtn:disabled { opacity: .6; cursor: not-allowed; }
+        .quick-queries { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .quick-query-btn {
+            padding: 8px 16px; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 20px; font-size: 14px;
+            cursor: pointer; transition: all .3s;
+        }
+        .quick-query-btn:hover { background: #667eea; color: white; border-color: #667eea; }
+        .message { margin-bottom: 25px; animation: fadeIn .5s; }
+        @keyframes fadeIn { from{opacity:0; transform: translateY(10px);} to{opacity:1; transform: translateY(0);} }
+        .message-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-weight: 600; color: #333; }
+        .message-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .user-message .message-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .assistant-message .message-icon { background: #f0f0f0; }
+        .message-content { background: #f8f9fa; padding: 20px; border-radius: 15px; margin-left: 42px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
+        .assistant-message .message-content { background: white; border: 1px solid #e0e0e0; }
+        .citations { margin-top: 20px; padding-top: 15px; border-top: 1px solid #e0e0e0; }
+        .citations-title { font-weight: 600; color: #666; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .citation-item { display: flex; align-items: center; padding: 12px; background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; transition: all .3s; text-decoration: none; color: inherit; }
+        .citation-item:hover { background: #e8ecff; transform: translateX(5px); }
+        .citation-number { background: #667eea; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-right: 12px; flex-shrink: 0; }
+        .citation-content { flex: 1; }
+        .citation-title { font-weight: 500; color: #333; margin-bottom: 4px; }
+        .citation-score { font-size: 12px; color: #666; }
+        .stats { display: flex; gap: 20px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0; flex-wrap: wrap; }
+        .stat-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #666; }
+        .stat-label { font-weight: 500; }
+        .stat-value { color: #667eea; font-weight: 600; }
+        .loading { display: none; text-align: center; padding: 20px; }
+        .loading.active { display: block; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0%{transform:rotate(0);} 100%{transform:rotate(360deg);} }
+        .welcome-message { text-align: center; padding: 40px; color: #666; }
+        .welcome-message h2 { color: #333; margin-bottom: 20px; }
+        .welcome-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
+        .feature-card { padding: 20px; background: #f8f9fa; border-radius: 10px; text-align: center; }
+        .feature-icon { font-size: 32px; margin-bottom: 10px; }
+        .feature-title { font-weight: 600; color: #333; margin-bottom: 5px; }
+        .feature-desc { font-size: 14px; color: #666; }
+        @media (max-width: 600px) {
+            .brand h1 { font-size: 1.4em; }
+            .search-box { flex-direction: column; }
+            #submitBtn { width: 100%; }
+            .stats { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-top">
+                <div class="brand">
+                    <div style="font-size:24px">🎓</div>
+                    <div>
+                        <h1 id="title-app">UCL Assistant</h1>
+                        <small id="subtitle-app">Intelligent Q&A System</small>
+                    </div>
+                </div>
+                <div class="lang-switch" role="group" aria-label="Language Switch">
+                    <button id="btn-zh" class="lang-btn">中文</button>
+                    <button id="btn-en" class="lang-btn">EN</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome-message" id="welcome">
+                <h2 id="welcome-title">Welcome to UCL Assistant</h2>
+                <p id="welcome-desc">I can help with programme info, entry requirements and modules.</p>
+                <div class="welcome-features" id="welcome-features">
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <div class="feature-title" data-i18n="feat_program_title">Programme Search</div>
+                        <div class="feature-desc" data-i18n="feat_program_desc">Explore programme details</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <div class="feature-title" data-i18n="feat_entry_title">Entry Requirements</div>
+                        <div class="feature-desc" data-i18n="feat_entry_desc">Understand application criteria</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💰</div>
+                        <div class="feature-title" data-i18n="feat_fee_title">Tuition Fees</div>
+                        <div class="feature-desc" data-i18n="feat_fee_desc">Check fee information</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌟</div>
+                        <div class="feature-title" data-i18n="feat_module_title">Course Modules</div>
+                        <div class="feature-desc" data-i18n="feat_module_desc">Learn about modules</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <div class="quick-queries" id="quickQueries">
+                <button class="quick-query-btn" id="qq1"></button>
+                <button class="quick-query-btn" id="qq2"></button>
+                <button class="quick-query-btn" id="qq3"></button>
+                <button class="quick-query-btn" id="qq4"></button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="queryInput" onkeypress="handleKeyPress(event)">
+                <button id="submitBtn" onclick="submitQuery()"></button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p id="loading-text">Searching…</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================== i18n ==================
+        const i18n = {
+            zh: {
+                app_title: "UCL 智能助手",
+                app_subtitle: "智能问答系统",
+                welcome_title: "欢迎使用 UCL 智能助手",
+                welcome_desc: "我可以帮助您了解 UCL 的专业信息、入学要求、课程设置等",
+                feat_program_title: "专业查询",
+                feat_program_desc: "查询各专业信息",
+                feat_entry_title: "入学要求",
+                feat_entry_desc: "了解申请条件",
+                feat_fee_title: "学费信息",
+                feat_fee_desc: "查询费用详情",
+                feat_module_title: "课程模块",
+                feat_module_desc: "了解课程内容",
+                qq1: "Data Science MSc 课程模块",
+                qq2: "计算机科学入学要求",
+                qq3: "硕士雅思要求",
+                qq4: "跨文化交流硕士",
+                placeholder: "请输入您的问题…",
+                btn_search: "🔍 查询",
+                btn_searching: "搜索中…",
+                loading: "正在搜索相关信息…",
+                label_user: "您的问题",
+                label_assistant: "UCL Assistant",
+                related_resources: "📚 相关资源",
+                relevance: "相关度",
+                stat_docs: "检索文档",
+                stat_time: "响应时间",
+                stat_intent: "意图识别",
+                stat_general: "通用",
+                not_found: "未找到相关信息",
+                error_prefix: "抱歉，系统遇到了问题。请稍后再试。\n错误信息："
+            },
+            en: {
+                app_title: "UCL Assistant",
+                app_subtitle: "Intelligent Q&A System",
+                welcome_title: "Welcome to UCL Assistant",
+                welcome_desc: "I can help with programme info, entry requirements and modules.",
+                feat_program_title: "Programme Search",
+                feat_program_desc: "Explore programme details",
+                feat_entry_title: "Entry Requirements",
+                feat_entry_desc: "Understand application criteria",
+                feat_fee_title: "Tuition Fees",
+                feat_fee_desc: "Check fee information",
+                feat_module_title: "Course Modules",
+                feat_module_desc: "Learn about modules",
+                qq1: "Data Science MSc modules",
+                qq2: "Computer Science entry requirements",
+                qq3: "IELTS requirements for MSc",
+                qq4: "Intercultural Communication MA",
+                placeholder: "Type your question…",
+                btn_search: "🔍 Search",
+                btn_searching: "Searching…",
+                loading: "Searching for related information…",
+                label_user: "Your Question",
+                label_assistant: "UCL Assistant",
+                related_resources: "📚 Sources",
+                relevance: "Relevance",
+                stat_docs: "Documents",
+                stat_time: "Response Time",
+                stat_intent: "Intent",
+                stat_general: "General",
+                not_found: "No relevant information found",
+                error_prefix: "Sorry, something went wrong. Please try again.\nError: "
+            }
+        };
+
+        let currentLang = (localStorage.getItem('lang') ||
+            (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en');
+
+        function t(key) {
+            return (i18n[currentLang] && i18n[currentLang][key]) || key;
+        }
+
+        function applyLanguage() {
+            document.documentElement.lang = currentLang === 'zh' ? 'zh' : 'en';
+
+            // Header
+            document.getElementById('title-app').textContent = t('app_title');
+            document.getElementById('subtitle-app').textContent = t('app_subtitle');
+
+            // Welcome
+            const welcome = document.getElementById('welcome');
+            if (welcome) {
+                document.getElementById('welcome-title').textContent = t('welcome_title');
+                document.getElementById('welcome-desc').textContent = t('welcome_desc');
+                document.querySelectorAll('[data-i18n]').forEach(node => {
+                    const key = node.getAttribute('data-i18n');
+                    node.textContent = t(key);
+                });
+            }
+
+            // Quick queries
+            const setBtn = (id, textKey, query) => {
+                const el = document.getElementById(id);
+                el.textContent = t(textKey);
+                el.onclick = () => setQuery(query || t(textKey));
+            };
+            setBtn('qq1', 'qq1');
+            setBtn('qq2', 'qq2');
+            setBtn('qq3', 'qq3');
+            setBtn('qq4', 'qq4');
+
+            // Search box
+            const qi = document.getElementById('queryInput');
+            qi.placeholder = t('placeholder');
+            const sb = document.getElementById('submitBtn');
+            sb.textContent = t('btn_search');
+            document.getElementById('loading-text').textContent = t('loading');
+
+            // Lang switch UI
+            document.getElementById('btn-zh').classList.toggle('active', currentLang === 'zh');
+            document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
+        }
+
+        function setLanguage(lang) {
+            currentLang = (lang === 'zh') ? 'zh' : 'en';
+            localStorage.setItem('lang', currentLang);
+            applyLanguage();
+        }
+
+        // ================== Chat logic ==================
+        let isLoading = false;
+
+        function setQuery(query) {
+            document.getElementById('queryInput').value = query;
+            submitQuery();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !isLoading) submitQuery();
+        }
+
+        async function submitQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+            if (!query || isLoading) return;
+
+            isLoading = true;
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const chatContainer = document.getElementById('chatContainer');
+
+            // 清除欢迎消息
+            const welcomeMsg = chatContainer.querySelector('.welcome-message');
+            if (welcomeMsg) welcomeMsg.remove();
+
+            // 显示用户消息
+            const userMessage = createMessage('user', query);
+            chatContainer.appendChild(userMessage);
+
+            // 更新UI状态
+            submitBtn.disabled = true;
+            submitBtn.textContent = t('btn_searching');
+            loading.classList.add('active');
+
+            try {
+                const response = await fetch('/api/qa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        top_k: 10,
+                        language: currentLang  // 与后端联动
+                    })
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+
+                // 显示助手回复
+                const assistantMessage = createAssistantMessage(data);
+                chatContainer.appendChild(assistantMessage);
+
+                // 滚动到底部
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // 清空输入框
+                document.getElementById('queryInput').value = '';
+
+            } catch (error) {
+                console.error('Error:', error);
+                const errorMessage = createMessage('assistant', t('error_prefix') + error.message);
+                chatContainer.appendChild(errorMessage);
+            } finally {
+                isLoading = false;
+                submitBtn.disabled = false;
+                submitBtn.textContent = t('btn_search');
+                loading.classList.remove('active');
+            }
+        }
+
+        function createMessage(type, content) {
+            const message = document.createElement('div');
+            message.className = `message ${type}-message`;
+
+            const header = document.createElement('div');
+            header.className = 'message-header';
+
+            const icon = document.createElement('div');
+            icon.className = 'message-icon';
+            icon.textContent = type === 'user' ? '👤' : '🤖';
+
+            const label = document.createElement('span');
+            label.textContent = type === 'user' ? t('label_user') : t('label_assistant');
+
+            header.appendChild(icon);
+            header.appendChild(label);
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+
+            message.appendChild(header);
+            message.appendChild(contentDiv);
+            return message;
+        }
+
+        function createAssistantMessage(data) {
+            const message = document.createElement('div');
+            message.className = 'message assistant-message';
+
+            // Header
+            const header = document.createElement('div');
+            header.className = 'message-header';
+
+            const icon = document.createElement('div');
+            icon.className = 'message-icon';
+            icon.textContent = '🤖';
+
+            const label = document.createElement('span');
+            label.textContent = t('label_assistant');
+
+            header.appendChild(icon);
+            header.appendChild(label);
+
+            // Content
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            // Answer text
+            const answerText = document.createElement('div');
+            answerText.style.whiteSpace = 'pre-wrap';
+            answerText.textContent = data.answer || t('not_found');
+            contentDiv.appendChild(answerText);
+
+            // Citations
+            if (data.citations && data.citations.length > 0) {
+                const citationsDiv = document.createElement('div');
+                citationsDiv.className = 'citations';
+
+                const citationsTitle = document.createElement('div');
+                citationsTitle.className = 'citations-title';
+                citationsTitle.textContent = t('related_resources');
+                citationsDiv.appendChild(citationsTitle);
+
+                data.citations.forEach((citation, index) => {
+                    const citationItem = document.createElement('a');
+                    citationItem.className = 'citation-item';
+                    citationItem.href = citation.url || '#';
+                    citationItem.target = '_blank';
+
+                    const number = document.createElement('div');
+                    number.className = 'citation-number';
+                    number.textContent = index + 1;
+
+                    const content = document.createElement('div');
+                    content.className = 'citation-content';
+
+                    const title = document.createElement('div');
+                    title.className = 'citation-title';
+                    title.textContent = citation.title || 'UCL Resource';
+
+                    const score = document.createElement('div');
+                    score.className = 'citation-score';
+                    const rel = (citation.relevance_score || 0);
+                    score.textContent = `${t('relevance')}: ${typeof rel === 'number' ? rel.toFixed(1) : rel}`;
+
+                    content.appendChild(title);
+                    content.appendChild(score);
+
+                    citationItem.appendChild(number);
+                    citationItem.appendChild(content);
+                    citationsDiv.appendChild(citationItem);
+                });
+
+                contentDiv.appendChild(citationsDiv);
+            }
+
+            // Stats
+            const stats = document.createElement('div');
+            stats.className = 'stats';
+
+            const statItems = [
+                { label: t('stat_docs'), value: data.num_docs || 0 },
+                { label: t('stat_time'), value: data.response_time || 'N/A' },
+                { label: t('stat_intent'), value: data.intent === 'general' ? t('stat_general') : '✓' }
+            ];
+
+            statItems.forEach(stat => {
+                const statItem = document.createElement('div');
+                statItem.className = 'stat-item';
+                statItem.innerHTML = `
+                    <span class="stat-label">${stat.label}</span>
+                    <span class="stat-value">${stat.value}</span>
+                `;
+                stats.appendChild(statItem);
+            });
+
+            contentDiv.appendChild(stats);
+
+            message.appendChild(header);
+            message.appendChild(contentDiv);
+
+            return message;
+        }
+
+        // Init language switch
+        document.getElementById('btn-zh').addEventListener('click', () => setLanguage('zh'));
+        document.getElementById('btn-en').addEventListener('click', () => setLanguage('en'));
+
+        // On load
+        window.onload = function() {
+            applyLanguage();
+            document.getElementById('queryInput').focus();
+        };
+    </script>
+</body>
+</html>
